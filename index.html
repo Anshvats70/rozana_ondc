@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROZANA ONDC - Discover Local Products</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>ROZANA ONDC</span>
+                </div>
+                <nav class="nav">
+                    <a href="#" class="nav-link active">Search</a>
+                    <a href="#" class="nav-link">Categories</a>
+                    <a href="#" class="nav-link">Orders</a>
+                    <a href="#" class="nav-link">Profile</a>
+                </nav>
+                <div class="header-actions">
+                    <button class="btn-icon" id="cartBtn">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count">0</span>
+                    </button>
+                    <button class="btn-icon" id="locationBtn">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="container">
+                <div class="hero-content">
+                    <h1 class="hero-title">Discover Amazing Products from Local Sellers</h1>
+                    <p class="hero-subtitle">Shop from verified sellers in your area through ONDC network</p>
+                    
+                    <!-- Search Bar -->
+                    <div class="search-container">
+                        <div class="search-box">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" id="searchInput" placeholder="Search for products, brands, or categories..." class="search-input">
+                            <button class="search-btn" id="searchBtn">Search</button>
+                        </div>
+                        <div class="search-suggestions" id="searchSuggestions">
+                            <!-- Dynamic suggestions will be added here -->
+                        </div>
+                    </div>
+
+                    <!-- Quick Filters -->
+                    <div class="quick-filters">
+                        <span class="filter-label">Popular:</span>
+                        <button class="filter-chip" data-category="groceries">Groceries</button>
+                        <button class="filter-chip" data-category="electronics">Electronics</button>
+                        <button class="filter-chip" data-category="fashion">Fashion</button>
+                        <button class="filter-chip" data-category="home">Home & Garden</button>
+                        <button class="filter-chip" data-category="health">Health & Beauty</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Location Section -->
+        <section class="location-section">
+            <div class="container">
+                <div class="location-card">
+                    <div class="location-info">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <span class="location-label">Delivering to</span>
+                            <span class="location-address" id="currentLocation">Mumbai, Maharashtra</span>
+                        </div>
+                    </div>
+                    <button class="btn-secondary" id="changeLocationBtn">Change</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Categories Section -->
+        <section class="categories-section">
+            <div class="container">
+                <h2 class="section-title">Shop by Category</h2>
+                <div class="categories-grid">
+                    <div class="category-card" data-category="groceries">
+                        <div class="category-icon">
+                            <i class="fas fa-shopping-basket"></i>
+                        </div>
+                        <span class="category-name">Groceries</span>
+                    </div>
+                    <div class="category-card" data-category="electronics">
+                        <div class="category-icon">
+                            <i class="fas fa-laptop"></i>
+                        </div>
+                        <span class="category-name">Electronics</span>
+                    </div>
+                    <div class="category-card" data-category="fashion">
+                        <div class="category-icon">
+                            <i class="fas fa-tshirt"></i>
+                        </div>
+                        <span class="category-name">Fashion</span>
+                    </div>
+                    <div class="category-card" data-category="home">
+                        <div class="category-icon">
+                            <i class="fas fa-home"></i>
+                        </div>
+                        <span class="category-name">Home & Garden</span>
+                    </div>
+                    <div class="category-card" data-category="health">
+                        <div class="category-icon">
+                            <i class="fas fa-heart"></i>
+                        </div>
+                        <span class="category-name">Health & Beauty</span>
+                    </div>
+                    <div class="category-card" data-category="books">
+                        <div class="category-icon">
+                            <i class="fas fa-book"></i>
+                        </div>
+                        <span class="category-name">Books</span>
+                    </div>
+                    <div class="category-card" data-category="sports">
+                        <div class="category-icon">
+                            <i class="fas fa-dumbbell"></i>
+                        </div>
+                        <span class="category-name">Sports</span>
+                    </div>
+                    <div class="category-card" data-category="toys">
+                        <div class="category-icon">
+                            <i class="fas fa-gamepad"></i>
+                        </div>
+                        <span class="category-name">Toys & Games</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Featured Products Section -->
+        <section class="featured-section">
+            <div class="container">
+                <h2 class="section-title">Featured Products</h2>
+                <div class="products-grid" id="featuredProducts">
+                    <!-- Dynamic products will be loaded here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Local Sellers Section -->
+        <section class="sellers-section">
+            <div class="container">
+                <h2 class="section-title">Local Sellers Near You</h2>
+                <div class="sellers-grid" id="localSellers">
+                    <!-- Dynamic sellers will be loaded here -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>ROZANA ONDC</h3>
+                    <p>Connecting buyers with local sellers through the Open Network for Digital Commerce.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#">How it works</a></li>
+                        <li><a href="#">Seller Directory</a></li>
+                        <li><a href="#">Support</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <ul>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Report Issue</a></li>
+                        <li><a href="#">Feedback</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 ROZANA ONDC. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Location Modal -->
+    <div class="modal" id="locationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Select Delivery Location</h3>
+                <button class="modal-close" id="closeLocationModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="location-search">
+                    <input type="text" id="locationSearch" placeholder="Enter city, area, or pincode">
+                    <button class="btn-primary" id="searchLocationBtn">Search</button>
+                </div>
+                <div class="recent-locations">
+                    <h4>Recent Locations</h4>
+                    <div class="location-list" id="recentLocations">
+                        <!-- Dynamic recent locations -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

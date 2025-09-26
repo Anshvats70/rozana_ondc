@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cart - ROZANA ONDC</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>ROZANA ONDC</span>
+                </div>
+                <nav class="nav">
+                    <a href="index.html" class="nav-link">Search</a>
+                    <a href="#" class="nav-link">Categories</a>
+                    <a href="#" class="nav-link">Orders</a>
+                    <a href="#" class="nav-link">Profile</a>
+                </nav>
+                <div class="header-actions">
+                    <button class="btn-icon" id="cartBtn">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count">0</span>
+                    </button>
+                    <button class="btn-icon" id="locationBtn">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Cart Header -->
+        <section class="cart-header">
+            <div class="container">
+                <div class="cart-header-content">
+                    <h1 class="cart-title">Shopping Cart</h1>
+                    <div class="cart-summary">
+                        <span class="item-count" id="totalItems">0 items</span>
+                        <span class="total-price" id="totalPrice">₹0</span>
+                    </div>
+                    <div class="dev-info" id="devInfo" style="display: none;">
+                        <span class="transaction-id-display">Transaction ID: <span id="currentTransactionId">Not set</span></span>
+                        <button class="btn-copy" id="copyTransactionId" title="Copy Transaction ID">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    <button class="dev-toggle" id="devToggle" title="Show Dev Info">
+                        <i class="fas fa-code"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Cart Content -->
+        <section class="cart-content">
+            <div class="container">
+                <div class="cart-layout">
+                    <!-- Cart Items -->
+                    <div class="cart-items-section">
+                        <div class="cart-items-header">
+                            <h2>Items in your cart</h2>
+                            <button class="btn-secondary" id="clearCartBtn">Clear Cart</button>
+                        </div>
+                        
+                        <div class="cart-items" id="cartItems">
+                            <!-- Cart items will be dynamically loaded here -->
+                        </div>
+                        
+                        <!-- Empty Cart State -->
+                        <div class="empty-cart" id="emptyCart" style="display: none;">
+                            <div class="empty-cart-content">
+                                <i class="fas fa-shopping-cart" style="font-size: 4rem; color: #94a3b8; margin-bottom: 1rem;"></i>
+                                <h3>Your cart is empty</h3>
+                                <p>Add some products to get started!</p>
+                                <a href="index.html" class="btn-primary">Continue Shopping</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Cart Summary -->
+                    <div class="cart-summary-section">
+                        <div class="summary-card">
+                            <h3>Order Summary</h3>
+                            
+                            <div class="summary-row">
+                                <span>Subtotal</span>
+                                <span id="subtotal">₹0</span>
+                            </div>
+                            
+                            <div class="summary-row">
+                                <span>Delivery Fee</span>
+                                <span id="deliveryFee">₹0</span>
+                            </div>
+                            
+                            <div class="summary-row">
+                                <span>Convenience Fee</span>
+                                <span id="convenienceFee">₹0</span>
+                            </div>
+                            
+                            <div class="summary-row">
+                                <span>Taxes</span>
+                                <span id="taxes">₹0</span>
+                            </div>
+                            
+                            <div class="summary-row total-row">
+                                <span>Total</span>
+                                <span id="total">₹0</span>
+                            </div>
+                            
+                            <div class="delivery-info">
+                                <i class="fas fa-truck"></i>
+                                <span>Free delivery on all orders</span>
+                            </div>
+                            
+                            <button class="btn-primary proceed-btn" id="proceedBtn">
+                                <i class="fas fa-arrow-right"></i>
+                                Proceed
+                            </button>
+                            
+                            <div class="payment-methods">
+                                <p>We accept:</p>
+                                <div class="payment-icons">
+                                    <i class="fab fa-cc-visa"></i>
+                                    <i class="fab fa-cc-mastercard"></i>
+                                    <i class="fas fa-mobile-alt"></i>
+                                    <i class="fas fa-university"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Recommended Products -->
+                        <div class="recommended-section">
+                            <h3>You might also like</h3>
+                            <div class="recommended-products" id="recommendedProducts">
+                                <!-- Recommended products will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>ONDC Buyer</h3>
+                    <p>Connecting buyers with local sellers through the Open Network for Digital Commerce.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="#">How it works</a></li>
+                        <li><a href="#">Seller Directory</a></li>
+                        <li><a href="#">Support</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <ul>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Report Issue</a></li>
+                        <li><a href="#">Feedback</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 ONDC Buyer. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Checkout Modal -->
+    <div class="modal" id="checkoutModal">
+        <div class="modal-content checkout-modal">
+            <div class="modal-header">
+                <h3>Checkout</h3>
+                <button class="modal-close" id="closeCheckoutModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="checkout-form">
+                    <div class="form-section">
+                        <h4>Delivery Address</h4>
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="fullName" placeholder="Enter your full name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <input type="tel" id="phoneNumber" placeholder="Enter your phone number" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Address</label>
+                            <textarea id="address" placeholder="Enter your complete address" rows="3" required></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>City</label>
+                                <input type="text" id="city" placeholder="City" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Pincode</label>
+                                <input type="text" id="pincode" placeholder="Pincode" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h4>Payment Method</h4>
+                        <div class="payment-options">
+                            <label class="payment-option">
+                                <input type="radio" name="payment" value="cod" checked>
+                                <span class="payment-label">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                    Cash on Delivery
+                                </span>
+                            </label>
+                            <label class="payment-option">
+                                <input type="radio" name="payment" value="online">
+                                <span class="payment-label">
+                                    <i class="fas fa-credit-card"></i>
+                                    Online Payment
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="order-summary">
+                        <h4>Order Summary</h4>
+                        <div id="checkoutOrderSummary">
+                            <!-- Order summary will be populated here -->
+                        </div>
+                    </div>
+                    
+                    <button class="btn-primary place-order-btn" id="placeOrderBtn">
+                        <i class="fas fa-check"></i>
+                        Place Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal" id="successModal">
+        <div class="modal-content success-modal">
+            <div class="success-content">
+                <i class="fas fa-check-circle" style="font-size: 4rem; color: #10b981; margin-bottom: 1rem;"></i>
+                <h3>Order Placed Successfully!</h3>
+                <p>Your order has been placed and will be delivered soon.</p>
+                <div class="order-details">
+                    <p><strong>Order ID:</strong> <span id="orderId">#ORD-12345</span></p>
+                    <p><strong>Estimated Delivery:</strong> <span id="deliveryDate">2-3 business days</span></p>
+                </div>
+                <div class="success-actions">
+                    <button class="btn-secondary" id="viewOrdersBtn">View Orders</button>
+                    <a href="index.html" class="btn-primary">Continue Shopping</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="ondc-select-handler.js"></script>
+    <script src="ondc-select-integration.js"></script>
+    <script src="cart.js"></script>
+</body>
+</html>

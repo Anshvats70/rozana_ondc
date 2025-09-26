@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Return Request - ROZANA ONDC</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>ROZANA ONDC</span>
+                </div>
+                <nav class="nav">
+                    <a href="index.html" class="nav-link">Search</a>
+                    <a href="#" class="nav-link">Categories</a>
+                    <a href="#" class="nav-link">Orders</a>
+                    <a href="#" class="nav-link">Profile</a>
+                </nav>
+                <div class="header-actions">
+                    <button class="btn-icon" id="cartBtn">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count">0</span>
+                    </button>
+                    <button class="btn-icon" id="locationBtn">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Return Header -->
+        <section class="return-header">
+            <div class="container">
+                <div class="return-header-content">
+                    <div class="return-icon">
+                        <i class="fas fa-undo-alt"></i>
+                    </div>
+                    <h1 class="return-title">Return Request</h1>
+                    <p class="return-subtitle">Select items you want to return and provide the reason</p>
+                    
+                    <div class="order-info-header">
+                        <div class="info-item">
+                            <div class="info-label">Order ID</div>
+                            <div class="info-value" id="orderIdDisplay">Loading...</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Transaction ID</div>
+                            <div class="info-value transaction-id" id="transactionIdDisplay">Loading...</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Order Date</div>
+                            <div class="info-value" id="orderDateDisplay">Loading...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Return Form -->
+        <section class="return-form-section">
+            <div class="container">
+                <div class="return-form-layout">
+                    <!-- Return Options -->
+                    <div class="return-options-section">
+                        <div class="form-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-list-check"></i> Return Options</h3>
+                            </div>
+                            <div class="return-type-selection">
+                                <div class="return-type-option">
+                                    <input type="radio" id="fullReturn" name="returnType" value="full" checked>
+                                    <label for="fullReturn" class="return-type-label">
+                                        <div class="return-type-icon">
+                                            <i class="fas fa-boxes"></i>
+                                        </div>
+                                        <div class="return-type-content">
+                                            <h4>Full Order Return</h4>
+                                            <p>Return all items in this order</p>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="return-type-option">
+                                    <input type="radio" id="partialReturn" name="returnType" value="partial">
+                                    <label for="partialReturn" class="return-type-label">
+                                        <div class="return-type-icon">
+                                            <i class="fas fa-box"></i>
+                                        </div>
+                                        <div class="return-type-content">
+                                            <h4>Partial Return</h4>
+                                            <p>Select specific items to return</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Item Selection (for partial returns) -->
+                        <div class="form-card" id="itemSelectionCard" style="display: none;">
+                            <div class="card-header">
+                                <h3><i class="fas fa-shopping-cart"></i> Select Items to Return</h3>
+                            </div>
+                            <div class="items-list" id="returnItemsList">
+                                <!-- Items will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Return Details -->
+                    <div class="return-details-section">
+                        <!-- Return Reason -->
+                        <div class="form-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-clipboard-list"></i> Return Reason</h3>
+                            </div>
+                            <div class="form-group">
+                                <label for="returnReason" class="form-label">Select Reason for Return *</label>
+                                <select id="returnReason" class="form-select" required>
+                                    <option value="">Choose a reason...</option>
+                                    <option value="001">Defective Product</option>
+                                    <option value="002">Wrong Item Delivered</option>
+                                    <option value="003">Size/Color Mismatch</option>
+                                    <option value="004">Quality Issues</option>
+                                    <option value="005">Damaged in Transit</option>
+                                    <option value="006">Not as Described</option>
+                                    <option value="007">Changed Mind</option>
+                                    <option value="008">Late Delivery</option>
+                                    <option value="009">Missing Items</option>
+                                    <option value="010">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="returnDescription" class="form-label">Additional Details</label>
+                                <textarea id="returnDescription" class="form-textarea" rows="4" placeholder="Please provide additional details about your return request..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- Return Method -->
+                        <div class="form-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-truck"></i> Return Method</h3>
+                            </div>
+                            <div class="return-method-selection">
+                                <div class="return-method-option">
+                                    <input type="radio" id="pickupReturn" name="returnMethod" value="pickup" checked>
+                                    <label for="pickupReturn" class="return-method-label">
+                                        <div class="return-method-icon">
+                                            <i class="fas fa-truck-pickup"></i>
+                                        </div>
+                                        <div class="return-method-content">
+                                            <h4>Pickup Service</h4>
+                                            <p>We'll arrange pickup from your address</p>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div class="return-method-option">
+                                    <input type="radio" id="dropReturn" name="returnMethod" value="drop">
+                                    <label for="dropReturn" class="return-method-label">
+                                        <div class="return-method-icon">
+                                            <i class="fas fa-store"></i>
+                                        </div>
+                                        <div class="return-method-content">
+                                            <h4>Drop at Store</h4>
+                                            <p>Return items to our nearest store</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Return Summary -->
+                        <div class="form-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-calculator"></i> Return Summary</h3>
+                            </div>
+                            <div class="return-summary" id="returnSummary">
+                                <!-- Summary will be populated here -->
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="return-actions">
+                            <button type="button" class="btn-secondary" onclick="window.history.back()">
+                                <i class="fas fa-arrow-left"></i>
+                                Go Back
+                            </button>
+                            <button type="button" class="btn-primary" id="submitReturnBtn">
+                                <i class="fas fa-paper-plane"></i>
+                                Submit Return Request
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Return Confirmation Modal -->
+    <div class="modal" id="returnConfirmationModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-check-circle"></i> Return Request Submitted</h3>
+                <button class="modal-close" onclick="closeReturnConfirmation()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="success-message">
+                    <div class="success-icon">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <h4>Your return request has been submitted successfully!</h4>
+                    <p>Return Request ID: <span id="returnRequestId">Loading...</span></p>
+                    <p>We'll process your request and get back to you within 24 hours.</p>
+                </div>
+                <div class="next-steps">
+                    <h5>What happens next?</h5>
+                    <ul>
+                        <li>Our team will review your return request</li>
+                        <li>You'll receive a confirmation email with pickup details</li>
+                        <li>Return pickup will be scheduled as per your preference</li>
+                        <li>Refund will be processed after item verification</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary" onclick="window.location.href='order-confirmation.html'">
+                    <i class="fas fa-eye"></i>
+                    View Order
+                </button>
+                <button class="btn-secondary" onclick="window.location.href='index.html'">
+                    <i class="fas fa-home"></i>
+                    Continue Shopping
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="modal" id="loadingModal">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </div>
+                <h4>Processing Return Request...</h4>
+                <p>Please wait while we submit your return request.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>ONDC Buyer</h3>
+                    <p>Connecting buyers with local sellers through the Open Network for Digital Commerce.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="#">How it works</a></li>
+                        <li><a href="#">Seller Directory</a></li>
+                        <li><a href="#">Support</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="#">Return Policy</a></li>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Report Issue</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 ONDC Buyer. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script src="return.js"></script>
+</body>
+</html>

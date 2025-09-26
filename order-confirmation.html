@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmation - ROZANA ONDC</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>ROZANA ONDC</span>
+                </div>
+                <nav class="nav">
+                    <a href="index.html" class="nav-link">Search</a>
+                    <a href="#" class="nav-link">Categories</a>
+                    <a href="#" class="nav-link">Orders</a>
+                    <a href="#" class="nav-link">Profile</a>
+                </nav>
+                <div class="header-actions">
+                    <button class="btn-icon" id="cartBtn">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count">0</span>
+                    </button>
+                    <button class="btn-icon" id="locationBtn">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Order Confirmation Header -->
+        <section class="order-confirmation-header">
+            <div class="container">
+                <div class="confirmation-header-content">
+                    <div class="success-animation">
+                        <div class="success-icon">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="success-rings">
+                            <div class="ring ring-1"></div>
+                            <div class="ring ring-2"></div>
+                            <div class="ring ring-3"></div>
+                        </div>
+                    </div>
+                    <h1 class="confirmation-title">Order Confirmed!</h1>
+                    <p class="confirmation-subtitle">Your order has been successfully placed and is being processed.</p>
+                    
+                    <div class="order-summary-header">
+                        <div class="summary-item">
+                            <div class="summary-label">Order ID</div>
+                            <div class="summary-value" id="orderId">Loading...</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">Total Amount</div>
+                            <div class="summary-value" id="totalValue">Loading...</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">Transaction ID</div>
+                            <div class="summary-value transaction-id" id="transactionId">Loading...</div>
+                            <button class="btn-copy" id="copyTransactionIdConfirmation" title="Copy Transaction ID">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Order Confirmation Content -->
+        <section class="order-confirmation-content">
+            <div class="container">
+                <!-- Status Timeline -->
+                <div class="status-timeline">
+                    <div class="timeline-item" data-status="order-placed">
+                        <div class="timeline-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h4>Order Placed</h4>
+                            <p>Your order has been successfully placed</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item" data-status="order-confirmed">
+                        <div class="timeline-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h4>Order Confirmed</h4>
+                            <p>Your order has been confirmed by the seller</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item" data-status="accept">
+                        <div class="timeline-icon">
+                            <i class="fas fa-handshake"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h4>Accept</h4>
+                            <p>Order has been accepted for fulfillment</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item" data-status="processing">
+                        <div class="timeline-icon">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h4>Processing</h4>
+                            <p>Your order is being prepared and processed</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item" data-status="completed">
+                        <div class="timeline-icon">
+                            <i class="fas fa-check-double"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h4>Completed</h4>
+                            <p>Order has been completed successfully</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="confirmation-layout">
+                    <!-- Order Details -->
+                    <div class="order-details-section">
+                        <div class="details-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-receipt"></i> Order Details</h3>
+                                <div class="order-status-badge" id="orderStatusBadge">
+                                    <span class="status-dot"></span>
+                                    <span id="orderStatus">Processing</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Items List -->
+                            <div class="order-items" id="itemsList">
+                                <!-- Items will be populated here -->
+                            </div>
+                            
+                            <!-- Quote Breakdown -->
+                            <div class="quote-breakdown" id="quoteBreakdown">
+                                <!-- Quote breakdown will be populated here -->
+                            </div>
+                            
+                            <!-- Total -->
+                            <div class="order-total">
+                                <div class="total-row">
+                                    <span>Total Amount</span>
+                                    <span id="totalValueDisplay">₹0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Order Information -->
+                    <div class="order-info-section">
+                        <!-- Payment Information -->
+                        <div class="info-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-credit-card"></i> Payment Information</h3>
+                            </div>
+                            <div class="payment-info">
+                                <div class="info-item">
+                                    <span class="info-label">Payment Status</span>
+                                    <span class="info-value payment-status" id="paymentStatus">Paid</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Payment Method</span>
+                                    <span class="info-value" id="paymentMethod">Loading...</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Transaction ID</span>
+                                    <span class="info-value transaction-id" id="transactionId">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Delivery Information -->
+                        <div class="info-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-truck"></i> Delivery Information</h3>
+                            </div>
+                            <div class="delivery-info" id="fulfillmentDetails">
+                                <!-- Fulfillment details will be populated here -->
+                            </div>
+                        </div>
+
+                        <!-- Provider Information -->
+                        <div class="info-card">
+                            <div class="card-header">
+                                <h3><i class="fas fa-store"></i> Seller Information</h3>
+                            </div>
+                            <div class="provider-info" id="providerDetails">
+                                <!-- Provider details will be populated here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="confirmation-actions">
+                    <div class="action-group">
+                        <button class="btn-secondary" onclick="window.location.href='index.html'">
+                            <i class="fas fa-home"></i>
+                            Back to Home
+                        </button>
+                        <button class="btn-info" id="checkStatusBtn" onclick="checkOrderStatus()">
+                            <i class="fas fa-sync-alt"></i>
+                            Refresh Status
+                        </button>
+                        <button class="btn-warning" id="trackOrderBtn" onclick="trackOrder()">
+                            <i class="fas fa-map-marker-alt"></i>
+                            Track Order
+                        </button>
+                        <button class="btn-danger" id="cancelOrderBtn" onclick="cancelOrder()" style="display: none;">
+                            <i class="fas fa-times-circle"></i>
+                            Cancel Order
+                        </button>
+                        <button class="btn-warning" id="returnOrderBtn" onclick="initiateReturn()" style="display: none;">
+                            <i class="fas fa-undo-alt"></i>
+                            Return Items
+                        </button>
+                    </div>
+                    <div class="action-group">
+                        <button class="btn-primary" onclick="window.location.href='index.html'">
+                            <i class="fas fa-shopping-bag"></i>
+                            Continue Shopping
+                        </button>
+                        <button class="btn-success" onclick="window.print()">
+                            <i class="fas fa-print"></i>
+                            Print Receipt
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>ONDC Buyer</h3>
+                    <p>Connecting buyers with local sellers through the Open Network for Digital Commerce.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="#">How it works</a></li>
+                        <li><a href="#">Seller Directory</a></li>
+                        <li><a href="#">Support</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <ul>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Report Issue</a></li>
+                        <li><a href="#">Feedback</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 ONDC Buyer. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script src="order-confirmation.js"></script>
+</body>
+</html>

@@ -1,0 +1,321 @@
+/**
+ * ONDC Select Handler Styles
+ * Styles for product selection functionality
+ */
+
+/* Product Card Enhancements */
+.product-card {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.product-card.selected {
+    border: 2px solid #10b981;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+}
+
+.product-card.selecting {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* Product Actions */
+.product-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.product-actions .btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.product-actions .btn i {
+    font-size: 12px;
+}
+
+/* Select Button States */
+.select-product-btn {
+    background: #3b82f6;
+    color: white;
+}
+
+.select-product-btn:hover {
+    background: #2563eb;
+    transform: translateY(-1px);
+}
+
+.select-product-btn:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.select-product-btn.btn-success {
+    background: #10b981;
+}
+
+.select-product-btn.btn-success:hover {
+    background: #059669;
+}
+
+/* Add to Cart Button */
+.add-to-cart-btn {
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.add-to-cart-btn:hover {
+    background: #e5e7eb;
+    border-color: #9ca3af;
+}
+
+/* Notifications */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    padding: 16px 20px;
+    min-width: 300px;
+    max-width: 400px;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.notification.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.notification-content i {
+    font-size: 18px;
+}
+
+.notification-success {
+    border-left: 4px solid #10b981;
+}
+
+.notification-success .notification-content i {
+    color: #10b981;
+}
+
+.notification-error {
+    border-left: 4px solid #ef4444;
+}
+
+.notification-error .notification-content i {
+    color: #ef4444;
+}
+
+.notification-info {
+    border-left: 4px solid #3b82f6;
+}
+
+.notification-info .notification-content i {
+    color: #3b82f6;
+}
+
+/* Selection Counter */
+.selection-counter {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    background: #3b82f6;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 9999;
+    display: none;
+}
+
+.selection-counter.show {
+    display: block;
+}
+
+/* Selected Items List */
+.selected-items-panel {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 400px;
+    height: 100vh;
+    background: white;
+    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+    z-index: 10000;
+    transition: right 0.3s ease;
+    overflow-y: auto;
+}
+
+.selected-items-panel.show {
+    right: 0;
+}
+
+.selected-items-header {
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.selected-items-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.close-panel-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 4px;
+}
+
+.close-panel-btn:hover {
+    color: #374151;
+}
+
+.selected-items-list {
+    padding: 20px;
+}
+
+.selected-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+
+.selected-item-image {
+    width: 50px;
+    height: 50px;
+    border-radius: 6px;
+    object-fit: cover;
+}
+
+.selected-item-info {
+    flex: 1;
+}
+
+.selected-item-name {
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.selected-item-price {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+/* Loading States */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    z-index: 10;
+}
+
+.loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid #e5e7eb;
+    border-top: 2px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .product-actions {
+        flex-direction: column;
+    }
+    
+    .notification {
+        right: 10px;
+        left: 10px;
+        min-width: auto;
+        max-width: none;
+    }
+    
+    .selected-items-panel {
+        width: 100%;
+        right: -100%;
+    }
+    
+    .selection-counter {
+        right: 10px;
+        top: 70px;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .notification {
+        background: #1f2937;
+        color: #f9fafb;
+    }
+    
+    .selected-items-panel {
+        background: #1f2937;
+        color: #f9fafb;
+    }
+    
+    .selected-items-header {
+        border-bottom-color: #374151;
+    }
+    
+    .selected-item {
+        border-color: #374151;
+        background: #111827;
+    }
+    
+    .close-panel-btn {
+        color: #9ca3af;
+    }
+    
+    .close-panel-btn:hover {
+        color: #f9fafb;
+    }
+}

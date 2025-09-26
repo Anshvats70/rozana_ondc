@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment - ROZANA ONDC</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <h1><i class="fas fa-shopping-cart"></i> ROZANA ONDC</h1>
+                </div>
+                <nav class="nav">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="cart.html" class="nav-link">Cart</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Payment Page Header -->
+    <section class="payment-header">
+        <div class="container">
+            <div class="payment-header-content">
+                <h1 class="payment-title">Complete Your Payment</h1>
+                <div class="payment-info">
+                    <span class="transaction-id" id="paymentTransactionId">Transaction ID: Loading...</span>
+                    <span class="total-amount" id="paymentTotalAmount">Total: Loading...</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Payment Content -->
+    <main class="payment-main">
+        <div class="container">
+            <div class="payment-content">
+                <!-- Order Summary -->
+                <div class="order-summary-card">
+                    <h3>Order Summary</h3>
+                    <div class="order-items" id="orderItems">
+                        <!-- Items will be loaded here -->
+                    </div>
+                    <div class="order-total">
+                        <div class="total-row">
+                            <span>Subtotal:</span>
+                            <span id="subtotalAmount">₹0.00</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Delivery:</span>
+                            <span id="deliveryAmount">₹0.00</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Convenience Fee:</span>
+                            <span id="convenienceAmount">₹0.00</span>
+                        </div>
+                        <div class="total-row">
+                            <span>Taxes (18% GST):</span>
+                            <span id="taxesAmount">₹0.00</span>
+                        </div>
+                        <div class="total-row total-final">
+                            <span>Total:</span>
+                            <span id="finalTotalAmount">₹0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Form -->
+                <div class="payment-form-card">
+                    <h3>Payment Details</h3>
+                    <form id="paymentForm" class="payment-form">
+                        <!-- Payment Type Selection -->
+                        <div class="payment-type-section">
+                            <h4>Payment Type</h4>
+                            <div class="payment-type-options">
+                                <label class="payment-type-option">
+                                    <input type="radio" name="paymentType" value="prepaid" checked>
+                                    <div class="payment-type-content">
+                                        <i class="fas fa-credit-card"></i>
+                                        <span>Pre-paid</span>
+                                        <small>Pay now with card, UPI, or wallet</small>
+                                    </div>
+                                </label>
+                                <label class="payment-type-option">
+                                    <input type="radio" name="paymentType" value="postpaid">
+                                    <div class="payment-type-content">
+                                        <i class="fas fa-receipt"></i>
+                                        <span>Post-paid</span>
+                                        <small>Pay after delivery (COD)</small>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Payment Method Selection -->
+                        <div class="payment-methods" id="paymentMethodsSection">
+                            <h4>Select Payment Method</h4>
+                            <div class="payment-options">
+                                <label class="payment-option">
+                                    <input type="radio" name="paymentMethod" value="card" checked>
+                                    <div class="payment-option-content">
+                                        <i class="fas fa-credit-card"></i>
+                                        <span>Credit/Debit Card</span>
+                                    </div>
+                                </label>
+                                <label class="payment-option">
+                                    <input type="radio" name="paymentMethod" value="upi">
+                                    <div class="payment-option-content">
+                                        <i class="fab fa-google-pay"></i>
+                                        <span>UPI</span>
+                                    </div>
+                                </label>
+                                <label class="payment-option">
+                                    <input type="radio" name="paymentMethod" value="netbanking">
+                                    <div class="payment-option-content">
+                                        <i class="fas fa-university"></i>
+                                        <span>Net Banking</span>
+                                    </div>
+                                </label>
+                                <label class="payment-option">
+                                    <input type="radio" name="paymentMethod" value="wallet">
+                                    <div class="payment-option-content">
+                                        <i class="fas fa-wallet"></i>
+                                        <span>Digital Wallet</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Card Payment Details -->
+                        <div class="payment-details" id="cardDetails">
+                            <div class="form-group">
+                                <label for="cardNumber">Card Number</label>
+                                <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="expiryDate">Expiry Date</label>
+                                    <input type="text" id="expiryDate" placeholder="MM/YY" maxlength="5">
+                                </div>
+                                <div class="form-group">
+                                    <label for="cvv">CVV</label>
+                                    <input type="text" id="cvv" placeholder="123" maxlength="4">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="cardName">Name on Card</label>
+                                <input type="text" id="cardName" placeholder="John Doe">
+                            </div>
+                        </div>
+
+                        <!-- UPI Payment Details -->
+                        <div class="payment-details" id="upiDetails" style="display: none;">
+                            <div class="form-group">
+                                <label for="upiId">UPI ID</label>
+                                <input type="text" id="upiId" placeholder="yourname@paytm">
+                            </div>
+                        </div>
+
+                        <!-- Net Banking Details -->
+                        <div class="payment-details" id="netbankingDetails" style="display: none;">
+                            <div class="form-group">
+                                <label for="bankName">Select Bank</label>
+                                <select id="bankName">
+                                    <option value="">Select your bank</option>
+                                    <option value="sbi">State Bank of India</option>
+                                    <option value="hdfc">HDFC Bank</option>
+                                    <option value="icici">ICICI Bank</option>
+                                    <option value="axis">Axis Bank</option>
+                                    <option value="kotak">Kotak Mahindra Bank</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Wallet Details -->
+                        <div class="payment-details" id="walletDetails" style="display: none;">
+                            <div class="form-group">
+                                <label for="walletType">Select Wallet</label>
+                                <select id="walletType">
+                                    <option value="">Select your wallet</option>
+                                    <option value="paytm">Paytm</option>
+                                    <option value="phonepe">PhonePe</option>
+                                    <option value="gpay">Google Pay</option>
+                                    <option value="amazonpay">Amazon Pay</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Post-paid Details -->
+                        <div class="payment-details" id="postpaidDetails" style="display: none;">
+                            <div class="postpaid-info">
+                                <div class="info-icon">
+                                    <i class="fas fa-info-circle"></i>
+                                </div>
+                                <div class="info-content">
+                                    <h5>Cash on Delivery (COD)</h5>
+                                    <p>You will pay the order amount in cash when the delivery person arrives at your doorstep.</p>
+                                    <div class="cod-features">
+                                        <div class="feature">
+                                            <i class="fas fa-check"></i>
+                                            <span>No advance payment required</span>
+                                        </div>
+                                        <div class="feature">
+                                            <i class="fas fa-check"></i>
+                                            <span>Pay only when you receive the order</span>
+                                        </div>
+                                        <div class="feature">
+                                            <i class="fas fa-check"></i>
+                                            <span>Cash payment accepted</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Billing Address -->
+                        <div class="billing-section">
+                            <h4>Billing Address</h4>
+                            <div class="billing-info" id="billingInfo">
+                                <!-- Billing info will be loaded here -->
+                            </div>
+                        </div>
+
+                        <!-- Terms and Conditions -->
+                        <div class="terms-section">
+                            <label class="terms-checkbox">
+                                <input type="checkbox" id="agreeTerms" required>
+                                <span class="checkmark"></span>
+                                I agree to the <a href="#" class="terms-link">Terms and Conditions</a> and <a href="#" class="terms-link">Privacy Policy</a>
+                            </label>
+                        </div>
+
+                        <!-- Payment Buttons -->
+                        <div class="payment-actions">
+                            <button type="button" class="btn-secondary" onclick="window.location.href='cart-confirmation.html'">
+                                <i class="fas fa-arrow-left"></i>
+                                Back to Order
+                            </button>
+                            <button type="submit" class="btn-primary" id="payNowBtn">
+                                <i class="fas fa-lock"></i>
+                                Pay Now
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>ONDC Buyer</h4>
+                    <p>Your trusted shopping platform</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="cart.html">Cart</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 ONDC Buyer. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Loading Modal -->
+    <div class="modal" id="loadingModal">
+        <div class="modal-content loading-modal">
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i>
+            </div>
+            <h3>Processing Payment</h3>
+            <p>Please wait while we process your payment...</p>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div class="modal" id="successModal">
+        <div class="modal-content success-modal">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h3 id="successTitle">Payment Successful!</h3>
+            <p id="successMessage">Your order has been confirmed and payment processed successfully.</p>
+            <div class="success-actions">
+                <button class="btn-primary" onclick="window.location.href='index.html'">
+                    <i class="fas fa-home"></i>
+                    Back to Home
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script src="payment.js"></script>
+</body>
+</html>
