@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders - ROZANA ONDC</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="orders.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span>ROZANA ONDC</span>
+                </div>
+                <nav class="nav">
+                    <a href="index.html" class="nav-link">Search</a>
+                    <a href="#" class="nav-link">Categories</a>
+                    <a href="orders.html" class="nav-link active">Orders</a>
+                    <a href="#" class="nav-link">Profile</a>
+                </nav>
+                <div class="header-actions">
+                    <button class="btn-icon" id="cartBtn">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count">0</span>
+                    </button>
+                    <button class="btn-icon" id="locationBtn">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Page Header -->
+        <section class="page-header">
+            <div class="container">
+                <div class="page-header-content">
+                    <h1 class="page-title">
+                        <i class="fas fa-clipboard-list"></i>
+                        My Orders
+                    </h1>
+                    <p class="page-subtitle">Track and manage your orders</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Orders Section -->
+        <section class="orders-section">
+            <div class="container">
+                <!-- Loading State -->
+                <div class="loading-container" id="loadingContainer">
+                    <div class="loading-spinner">
+                        <i class="fas fa-spinner fa-spin"></i>
+                    </div>
+                    <p>Loading your orders...</p>
+                </div>
+
+                <!-- Error State -->
+                <div class="error-container" id="errorContainer" style="display: none;">
+                    <div class="error-content">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Unable to load orders</h3>
+                        <p id="errorMessage">Something went wrong while fetching your orders.</p>
+                        <button class="btn-primary" id="retryBtn">
+                            <i class="fas fa-redo"></i>
+                            Try Again
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-container" id="emptyContainer" style="display: none;">
+                    <div class="empty-content">
+                        <i class="fas fa-shopping-bag"></i>
+                        <h3>No orders yet</h3>
+                        <p>You haven't placed any orders yet. Start shopping to see your orders here.</p>
+                        <a href="index.html" class="btn-primary">
+                            <i class="fas fa-search"></i>
+                            Start Shopping
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Orders List -->
+                <div class="orders-container" id="ordersContainer" style="display: none;">
+                    <!-- Search and Filter Controls -->
+                    <div class="orders-controls">
+                        <div class="search-controls">
+                            <div class="search-box-container">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" id="searchInput" placeholder="Search orders by ID, transaction ID, or item name..." class="search-input">
+                                <button class="search-clear" id="searchClear" style="display: none;">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="filter-controls">
+                            <div>
+                                <select id="statusFilter" class="filter-select">
+                                    <option value="">All Orders</option>
+                                    <option value="Draft">Draft</option>
+                                    <option value="Created">Created</option>
+                                    <option value="Accepted">Accepted</option>
+                                    <option value="Completed">Completed</option>
+                                    <option value="Cancelled">Cancelled</option>
+                                </select>
+                                <select id="sortBy" class="filter-select">
+                                    <option value="newest">Newest First</option>
+                                    <option value="oldest">Oldest First</option>
+                                    <option value="amount_high">Amount: High to Low</option>
+                                    <option value="amount_low">Amount: Low to High</option>
+                                </select>
+                                <select id="pageSize" class="filter-select">
+                                    <option value="5">5 per page</option>
+                                    <option value="10" selected>10 per page</option>
+                                    <option value="20">20 per page</option>
+                                    <option value="50">50 per page</option>
+                                </select>
+                            </div>
+                        <div class="orders-count">
+                            <span id="ordersCount">0 orders</span>
+                            <span id="lastRefresh" class="last-refresh"></span>
+                            <button class="refresh-btn" id="refreshBtn" onclick="window.ordersManager.refreshOrders()" title="Refresh Orders">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button class="refresh-btn debug-btn" id="debugBtn" onclick="window.ordersManager.debugRefresh()" title="Debug Refresh (Force API)" style="margin-left: 5px; background: #ef4444;">
+                                <i class="fas fa-bug"></i>
+                            </button>
+                        </div>
+                        </div>
+                    </div>
+
+                    <!-- Orders Grid -->
+                    <div class="orders-grid" id="ordersGrid">
+                        <!-- Orders will be dynamically loaded here -->
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="pagination-container" id="paginationContainer" style="display: none;">
+                        <div class="pagination">
+                            <button class="pagination-btn" id="firstBtn" disabled>
+                                <i class="fas fa-angle-double-left"></i>
+                                First
+                            </button>
+                            <button class="pagination-btn" id="prevBtn" disabled>
+                                <i class="fas fa-chevron-left"></i>
+                                Previous
+                            </button>
+                            <div class="pagination-pages" id="paginationPages">
+                                <!-- Page numbers will be dynamically generated -->
+                            </div>
+                            <button class="pagination-btn" id="nextBtn" disabled>
+                                Next
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                            <button class="pagination-btn" id="lastBtn" disabled>
+                                <i class="fas fa-angle-double-right"></i>
+                                Last
+                            </button>
+                        </div>
+                        <div class="pagination-info">
+                            <span id="paginationInfo">Page 1 of 1</span>
+                            <span class="pagination-separator">•</span>
+                            <span id="paginationRange">Showing 1-10 of 10 orders</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>ROZANA ONDC</h3>
+                    <p>Connecting buyers with local sellers through the Open Network for Digital Commerce.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="#">How it works</a></li>
+                        <li><a href="#">Seller Directory</a></li>
+                        <li><a href="#">Support</a></li>
+                        <li><a href="#">Terms of Service</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <ul>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Report Issue</a></li>
+                        <li><a href="#">Feedback</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 ROZANA ONDC. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Order Details Modal -->
+    <div class="modal" id="orderModal">
+        <div class="modal-content order-modal-content">
+            <div class="modal-header">
+                <h3 id="orderModalTitle">Order Details</h3>
+                <button class="modal-close" id="closeOrderModal">&times;</button>
+            </div>
+            <div class="modal-body" id="orderModalBody">
+                <!-- Order details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Raise Issue Modal -->
+    <div class="modal" id="issueModal">
+        <div class="modal-content issue-modal-content">
+            <div class="modal-header">
+                <h3 id="issueModalTitle">Raise Issue</h3>
+                <button class="modal-close" id="closeIssueModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="issueOrderInfo" class="issue-order-info">
+                    <!-- Order information will be loaded here -->
+                </div>
+                
+                <form id="issueForm" class="issue-form">
+                    <input type="hidden" id="issueOrderId" name="orderId">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="issueType" class="form-label">Issue Type <span class="required">*</span></label>
+                            <select id="issueType" name="issueType" class="form-input" required>
+                                <option value="">Select issue type</option>
+                                <option value="delivery_delay">Delivery Delay</option>
+                                <option value="wrong_item">Wrong Item Received</option>
+                                <option value="damaged_item">Damaged Item</option>
+                                <option value="missing_item">Missing Item</option>
+                                <option value="quality_issue">Quality Issue</option>
+                                <option value="billing_issue">Billing Issue</option>
+                                <option value="refund_request">Refund Request</option>
+                                <option value="cancellation_request">Cancellation Request</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="priority" class="form-label">Priority</label>
+                            <select id="priority" name="priority" class="form-input">
+                                <option value="low">Low</option>
+                                <option value="medium" selected>Medium</option>
+                                <option value="high">High</option>
+                                <option value="urgent">Urgent</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="subject" class="form-label">Subject <span class="required">*</span></label>
+                        <input type="text" id="subject" name="subject" class="form-input" placeholder="Brief description of the issue" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="description" class="form-label">Description <span class="required">*</span></label>
+                        <textarea id="description" name="description" class="form-input" rows="4" placeholder="Please provide detailed information about the issue..." required></textarea>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="contactEmail" class="form-label">Contact Email</label>
+                            <input type="email" id="contactEmail" name="contactEmail" class="form-input" placeholder="your.email@example.com">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="contactPhone" class="form-label">Contact Phone</label>
+                            <input type="tel" id="contactPhone" name="contactPhone" class="form-input" placeholder="+91 9876543210">
+                        </div>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" id="cancelIssueBtn" onclick="window.ordersManager.closeIssueModal()">
+                            Cancel
+                        </button>
+                        <button type="button" class="btn-primary" id="submitIssueBtn">
+                            <i class="fas fa-paper-plane"></i>
+                            Submit Issue
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="orders.js"></script>
+</body>
+</html>

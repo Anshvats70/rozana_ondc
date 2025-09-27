@@ -113,6 +113,9 @@ function displayOrderConfirmation() {
     
     console.log('Displaying order confirmation data:', orderConfirmationData);
     
+    // Set flag to refresh orders list when user navigates to orders page
+    localStorage.setItem('refreshOrdersList', 'true');
+    
     // Update order ID, transaction ID and total value
     const orderIdElement = document.getElementById('orderId');
     if (orderIdElement) {
