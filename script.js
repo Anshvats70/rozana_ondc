@@ -28,13 +28,29 @@ const cartCount = document.querySelector('.cart-count');
 const locationBtn = document.getElementById('locationBtn');
 const currentLocationSpan = document.getElementById('currentLocation');
 const changeLocationBtn = document.getElementById('changeLocationBtn');
-const locationModal = document.getElementById('locationModal');
-const closeLocationModal = document.getElementById('closeLocationModal');
-const locationSearch = document.getElementById('locationSearch');
-const searchLocationBtn = document.getElementById('searchLocationBtn');
-const recentLocationsDiv = document.getElementById('recentLocations');
+// Old location modal variables removed - using new address dropdown system
 const featuredProductsDiv = document.getElementById('featuredProducts');
 const localSellersDiv = document.getElementById('localSellers');
+
+// User Section Elements
+const userSection = document.getElementById('userSection');
+const userProfile = document.getElementById('userProfile');
+const userName = document.getElementById('userName');
+const userDropdown = document.getElementById('userDropdown');
+const loginBtn = document.getElementById('loginBtn');
+const logoutUser = document.getElementById('logoutUser');
+const myProfile = document.getElementById('myProfile');
+const orderHistory = document.getElementById('orderHistory');
+const complaints = document.getElementById('complaints');
+const support = document.getElementById('support');
+const testCatalogue = document.getElementById('testCatalogue');
+
+// Location Dropdown Elements
+const locationDropdown = document.getElementById('locationDropdown');
+const locationText = document.getElementById('locationText');
+const locationMenu = document.getElementById('locationMenu');
+const addAddressBtn = document.getElementById('addAddressBtn');
+const addressList = document.getElementById('addressList');
 
 // Sample data
 const sampleProducts = [
@@ -139,11 +155,25 @@ const searchSuggestionsData = [
 
 // Initialize the app
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('=== ONDC BUYER APP INITIALIZATION ===');
+    
+    // Debug: Check if all elements exist
+    console.log('=== ELEMENT DEBUGGING ===');
+    console.log('Location button:', document.getElementById('locationBtn'));
+    console.log('Location menu:', document.getElementById('locationMenu'));
+    console.log('User section:', document.getElementById('userSection'));
+    console.log('Login button:', document.getElementById('loginBtn'));
+    console.log('=== END ELEMENT DEBUGGING ===');
+    
+    // Initialize location display
+    initializeLocationDisplay();
+    
     initializeApp();
     setupEventListeners();
     loadFeaturedProducts();
     loadLocalSellers();
     loadRecentLocations();
+    initializeUserSection();
 });
 
 function initializeApp() {
@@ -201,28 +231,9 @@ function setupEventListeners() {
         });
     });
     
-    // Location functionality (only if elements exist)
-    if (locationBtn) {
-        locationBtn.addEventListener('click', openLocationModal);
-    }
-    if (changeLocationBtn) {
-        changeLocationBtn.addEventListener('click', openLocationModal);
-    }
-    if (closeLocationModal) {
-        closeLocationModal.addEventListener('click', closeLocationModalFunction);
-    }
-    if (searchLocationBtn) {
-        searchLocationBtn.addEventListener('click', searchLocation);
-    }
+    // Old location functionality removed - using new address dropdown instead
     
-    // Modal click outside to close (only if element exists)
-    if (locationModal) {
-        locationModal.addEventListener('click', function(e) {
-            if (e.target === locationModal) {
-                closeLocationModalFunction();
-            }
-        });
-    }
+    // Old location modal event listeners removed - using new address dropdown system
     
     // Cart button (only if element exists)
     if (cartBtn) {
@@ -320,7 +331,13 @@ async function performSearch() {
             
         } catch (error) {
             console.error('Search error:', error);
-            showNotification('Search failed. Please try again.');
+            
+            // Show mock results as fallback
+            console.log('Showing mock results as fallback...');
+            const mockResults = getMockSearchResults(query);
+            displaySearchResults(mockResults, query);
+            
+            showNotification('Search failed. Showing sample results.', 'warning');
         } finally {
             // Hide loading state
             hideLoading(searchBtn);
@@ -409,23 +426,8 @@ function createSellerCard(seller) {
 }
 
 function loadRecentLocations() {
-    if (!recentLocationsDiv) {
-        console.log('Recent locations div not found, skipping...');
-        return;
-    }
-    
-    recentLocationsDiv.innerHTML = '';
-    
-    recentLocations.forEach(location => {
-        const locationItem = document.createElement('div');
-        locationItem.className = 'location-item';
-        locationItem.textContent = location;
-        locationItem.addEventListener('click', function() {
-            setLocation(location);
-            closeLocationModalFunction();
-        });
-        recentLocationsDiv.appendChild(locationItem);
-    });
+    // Old location modal functionality removed - using new address dropdown system
+    console.log('Recent locations functionality removed - using new address dropdown system');
 }
 
 function addToCart(productId) {
@@ -475,34 +477,7 @@ function viewStore(sellerId) {
     }
 }
 
-function openLocationModal() {
-    locationModal.classList.add('show');
-    locationSearch.focus();
-}
-
-function closeLocationModalFunction() {
-    locationModal.classList.remove('show');
-}
-
-function searchLocation() {
-    const query = locationSearch.value.trim();
-    
-    if (query) {
-        // Simulate location search
-        const mockLocations = [
-            `${query}, Maharashtra`,
-            `${query}, Delhi`,
-            `${query}, Karnataka`,
-            `${query}, Tamil Nadu`
-        ];
-        
-        // For demo, just set the first result
-        setLocation(mockLocations[0]);
-        closeLocationModalFunction();
-        
-        showNotification(`Location updated to ${mockLocations[0]}`);
-    }
-}
+// Old location modal functions removed - using new address dropdown system
 
 function setLocation(location) {
     currentLocation = location;
@@ -793,51 +768,47 @@ async function fetchSearchResultsWithRetry(transactionId, maxRetries = 3, delay 
 }
 
 function displaySearchResults(results, searchTerm) {
+    console.log('🔍 DISPLAYING SEARCH RESULTS:', searchTerm, results);
+    
     // Store search results globally for cart functionality
     window.searchResults = results;
-    console.log('Stored search results globally:', window.searchResults);
     
-    // Create a results section if it doesn't exist
-    let resultsSection = document.getElementById('searchResults');
-    if (!resultsSection) {
-        resultsSection = document.createElement('section');
-        resultsSection.id = 'searchResults';
-        resultsSection.className = 'search-results-section';
-        resultsSection.innerHTML = `
-            <div class="container">
-                <h2 class="section-title">Search Results for "${searchTerm}"</h2>
-                <div class="results-grid" id="resultsGrid"></div>
-            </div>
-        `;
-        
-        // Insert after the hero section
-        const hero = document.querySelector('.hero');
-        if (hero) {
-            hero.insertAdjacentElement('afterend', resultsSection);
-        } else {
-            console.log('Hero section not found, appending to body');
-            document.body.appendChild(resultsSection);
-        }
-    } else {
-        // Update existing results
-        if (resultsSection) {
-            const titleElement = resultsSection.querySelector('.section-title');
-            if (titleElement) {
-                titleElement.textContent = `Search Results for "${searchTerm}"`;
-            }
-        }
-    }
-    
+    // Get the existing results section from HTML
+    const resultsSection = document.getElementById('searchResults');
+    const resultsTitle = document.getElementById('searchResultsTitle');
     const resultsGrid = document.getElementById('resultsGrid');
-    if (!resultsGrid) {
-        console.log('Results grid not found, skipping...');
+    
+    if (!resultsSection) {
+        console.error('❌ Search results section not found in HTML!');
         return;
     }
+    
+    if (!resultsGrid) {
+        console.error('❌ Results grid not found in HTML!');
+        return;
+    }
+    
+    console.log('✅ Found results section and grid');
+    
+    // Update the title
+    if (resultsTitle) {
+        resultsTitle.textContent = `Search Results for "${searchTerm}"`;
+    }
+    
+    // Clear previous results
     resultsGrid.innerHTML = '';
+    
+    // Show the results section
+    resultsSection.style.display = 'block';
+    resultsSection.style.visibility = 'visible';
+    resultsSection.style.opacity = '1';
+    
+    console.log('✅ Results section made visible');
     
     // Process ONDC response and display results
     console.log('Processing results for search term:', searchTerm);
     console.log('Full results object:', results);
+    console.log('Results grid element:', resultsGrid);
     
     // Check for different possible response formats
     let hasResults = false;
@@ -849,36 +820,48 @@ function displaySearchResults(results, searchTerm) {
     // Format 1: Direct products array
     if (results && results.products && Array.isArray(results.products) && results.products.length > 0) {
         console.log('Found products in results.products:', results.products);
-        results.products.forEach(product => {
+        results.products.forEach((product, index) => {
+            console.log(`Creating product card ${index + 1}:`, product);
             const productCard = createProductCardFromResultsAPI(product);
+            console.log(`Product card ${index + 1} created:`, productCard);
             resultsGrid.appendChild(productCard);
+            console.log(`Product card ${index + 1} appended to grid`);
         });
         hasResults = true;
     }
     // Format 2: Items array
     else if (results && results.items && Array.isArray(results.items) && results.items.length > 0) {
         console.log('Found items in results.items:', results.items);
-        results.items.forEach(item => {
+        results.items.forEach((item, index) => {
+            console.log(`Creating item card ${index + 1}:`, item);
             const productCard = createProductCardFromResultsAPI(item);
+            console.log(`Item card ${index + 1} created:`, productCard);
             resultsGrid.appendChild(productCard);
+            console.log(`Item card ${index + 1} appended to grid`);
         });
         hasResults = true;
     }
     // Format 3: Data array
     else if (results && results.data && Array.isArray(results.data) && results.data.length > 0) {
         console.log('Found data in results.data:', results.data);
-        results.data.forEach(item => {
+        results.data.forEach((item, index) => {
+            console.log(`Creating data card ${index + 1}:`, item);
             const productCard = createProductCardFromResultsAPI(item);
+            console.log(`Data card ${index + 1} created:`, productCard);
             resultsGrid.appendChild(productCard);
+            console.log(`Data card ${index + 1} appended to grid`);
         });
         hasResults = true;
     }
     // Format 4: Direct array response
     else if (results && Array.isArray(results) && results.length > 0) {
         console.log('Found direct array response:', results);
-        results.forEach(item => {
+        results.forEach((item, index) => {
+            console.log(`Creating direct card ${index + 1}:`, item);
             const productCard = createProductCardFromResultsAPI(item);
+            console.log(`Direct card ${index + 1} created:`, productCard);
             resultsGrid.appendChild(productCard);
+            console.log(`Direct card ${index + 1} appended to grid`);
         });
         hasResults = true;
     }
@@ -945,6 +928,11 @@ function displaySearchResults(results, searchTerm) {
             </div>
         `;
     }
+    
+    // Final check - log what's in the results grid
+    console.log('Final results grid children count:', resultsGrid.children.length);
+    console.log('Final results grid innerHTML length:', resultsGrid.innerHTML.length);
+    console.log('Has results flag:', hasResults);
     
     // Scroll to results
     resultsSection.scrollIntoView({ behavior: 'smooth' });
@@ -2039,6 +2027,780 @@ function testMixedPaymentFromMainPage() {
 
 // Make test function globally available
 window.testMixedPaymentFromMainPage = testMixedPaymentFromMainPage;
+
+// User Section Functions
+function initializeUserSection() {
+    console.log('=== INITIALIZING USER SECTION ===');
+    
+    // Check authentication status
+    checkUserAuthentication();
+    
+    // Setup user section event listeners
+    setupUserSectionEventListeners();
+}
+
+function checkUserAuthentication() {
+    console.log('=== CHECKING USER AUTHENTICATION ===');
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    const userSession = localStorage.getItem('userSession');
+    
+    console.log('Is logged in:', isLoggedIn);
+    console.log('User session:', userSession);
+    
+    if (isLoggedIn && userSession) {
+        try {
+            const session = JSON.parse(userSession);
+            console.log('Parsed session:', session);
+            showUserSection(session.userData);
+            
+            // Check if user needs to add address (new user)
+            checkAddressRequirement();
+        } catch (error) {
+            console.error('Error parsing user session:', error);
+            showLoginButton();
+        }
+    } else {
+        showLoginButton();
+    }
+}
+
+function checkAddressRequirement() {
+    const hasAddress = localStorage.getItem('hasAddress') === 'true';
+    
+    if (!hasAddress) {
+        console.log('New user detected, showing address modal');
+        // Show address modal after a short delay to ensure page is loaded
+        setTimeout(() => {
+            showAddressModal();
+        }, 1500);
+    }
+}
+
+function showUserSection(userData) {
+    console.log('=== SHOWING USER SECTION ===');
+    console.log('User data:', userData);
+    console.log('User section element:', userSection);
+    console.log('Login button element:', loginBtn);
+    
+    // Hide login button
+    if (loginBtn) {
+        console.log('Hiding login button');
+        loginBtn.style.display = 'none';
+    } else {
+        console.error('Login button not found!');
+    }
+    
+    // Show user section
+    if (userSection) {
+        console.log('Showing user section');
+        userSection.style.display = 'flex';
+    }
+    
+    // Update user name
+    if (userName && userData) {
+        userName.textContent = userData.name || userData.email || 'User';
+    }
+}
+
+function showLoginButton() {
+    console.log('Showing login button');
+    
+    // Hide user section
+    if (userSection) {
+        userSection.style.display = 'none';
+    }
+    
+    // Show login button
+    if (loginBtn) {
+        loginBtn.style.display = 'flex';
+    }
+}
+
+function setupUserSectionEventListeners() {
+    // User profile dropdown toggle
+    if (userProfile) {
+        userProfile.addEventListener('click', toggleUserDropdown);
+    }
+    
+    // Login button
+    if (loginBtn) {
+        loginBtn.addEventListener('click', redirectToLogin);
+    }
+    
+    // Logout button
+    if (logoutUser) {
+        logoutUser.addEventListener('click', handleUserLogout);
+    }
+    
+    // User menu items
+    if (myProfile) {
+        myProfile.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleUserMenuItem('profile');
+        });
+    }
+    
+    if (orderHistory) {
+        orderHistory.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleUserMenuItem('orders');
+        });
+    }
+    
+    if (complaints) {
+        complaints.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleUserMenuItem('complaints');
+        });
+    }
+    
+    if (support) {
+        support.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleUserMenuItem('support');
+        });
+    }
+    
+    if (testCatalogue) {
+        testCatalogue.addEventListener('click', (e) => {
+            e.preventDefault();
+            handleUserMenuItem('catalogue');
+        });
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (userDropdown && userProfile && !userProfile.contains(e.target) && !userDropdown.contains(e.target)) {
+            hideUserDropdown();
+        }
+        if (locationMenu && locationBtn && !locationBtn.contains(e.target) && !locationMenu.contains(e.target)) {
+            hideLocationMenu();
+        }
+    });
+    
+    // Location dropdown event listeners
+    console.log('Location button element:', locationBtn);
+    console.log('Location menu element:', locationMenu);
+    if (locationBtn) {
+        console.log('Adding click event listener to location button');
+        locationBtn.addEventListener('click', toggleLocationMenu);
+    } else {
+        console.error('Location button not found!');
+    }
+    
+    if (addAddressBtn) {
+        addAddressBtn.addEventListener('click', showAddressModal);
+    }
+}
+
+function toggleUserDropdown() {
+    if (userDropdown) {
+        if (userDropdown.classList.contains('show')) {
+            hideUserDropdown();
+        } else {
+            showUserDropdown();
+        }
+    }
+}
+
+function showUserDropdown() {
+    if (userDropdown) {
+        userDropdown.classList.add('show');
+    }
+    if (userProfile) {
+        userProfile.classList.add('active');
+    }
+}
+
+function hideUserDropdown() {
+    if (userDropdown) {
+        userDropdown.classList.remove('show');
+    }
+    if (userProfile) {
+        userProfile.classList.remove('active');
+    }
+}
+
+function redirectToLogin() {
+    console.log('Redirecting to login page');
+    window.location.href = 'login.html';
+}
+
+function handleUserLogout() {
+    console.log('=== USER LOGOUT ===');
+    
+    // Clear all authentication data
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('userId');
+    localStorage.removeItem('loginTime');
+    localStorage.removeItem('userSession');
+    localStorage.removeItem('hasAddress');
+    localStorage.removeItem('userAddress');
+    localStorage.removeItem('userCoordinates');
+    localStorage.removeItem('userAddressData');
+    
+    // Clear cart data
+    localStorage.removeItem('ondcCart');
+    cartItems = [];
+    updateCartCount();
+    
+    // Show success message
+    showNotification('Logged out successfully', 'success');
+    
+    // Redirect to login page after a short delay
+    setTimeout(() => {
+        window.location.href = 'login.html';
+    }, 1000);
+    
+    console.log('User logged out successfully');
+}
+
+function handleUserMenuItem(item) {
+    console.log('User menu item clicked:', item);
+    
+    // Hide dropdown
+    hideUserDropdown();
+    
+    switch (item) {
+        case 'profile':
+            showNotification('Profile page coming soon!', 'info');
+            break;
+        case 'orders':
+            showNotification('Order history coming soon!', 'info');
+            break;
+        case 'complaints':
+            showNotification('Complaints section coming soon!', 'info');
+            break;
+        case 'support':
+            showNotification('Support section coming soon!', 'info');
+            break;
+        case 'catalogue':
+            showNotification('Catalogue testing coming soon!', 'info');
+            break;
+        default:
+            console.log('Unknown menu item:', item);
+    }
+}
+
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    
+    // Style the notification
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#3b82f6'};
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        font-size: 0.875rem;
+        font-weight: 500;
+        max-width: 300px;
+        word-wrap: break-word;
+    `;
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 3000);
+}
+
+// Location Dropdown Functions
+function toggleLocationMenu() {
+    console.log('=== TOGGLE LOCATION MENU ===');
+    console.log('Location menu element:', locationMenu);
+    if (locationMenu) {
+        if (locationMenu.classList.contains('show')) {
+            console.log('Hiding location menu');
+            hideLocationMenu();
+        } else {
+            console.log('Showing location menu');
+            showLocationMenu();
+        }
+    } else {
+        console.error('Location menu element not found!');
+    }
+}
+
+function showLocationMenu() {
+    if (locationMenu) {
+        locationMenu.classList.add('show');
+        loadUserAddresses();
+    }
+}
+
+function hideLocationMenu() {
+    if (locationMenu) {
+        locationMenu.classList.remove('show');
+    }
+}
+
+async function loadUserAddresses() {
+    console.log('=== LOADING USER ADDRESSES ===');
+    
+    // Check if user is authenticated
+    if (!isUserAuthenticated()) {
+        console.log('User not authenticated, cannot load addresses');
+        showNoAddressesMessage('Please login to view addresses');
+        return;
+    }
+    
+    const userId = getUserId();
+    const API_BASE_URL = 'https://neo-server.rozana.in/api';
+    const ADDRESS_ENDPOINT = `${API_BASE_URL}/addresses/${userId}`;
+    
+    try {
+        console.log('Fetching addresses for user:', userId);
+        
+        // Get authentication headers
+        const headers = getAuthHeaders();
+        
+        const response = await fetch(ADDRESS_ENDPOINT, {
+            method: 'GET',
+            headers: headers
+        });
+        
+        console.log('Address API Response Status:', response.status);
+        
+        if (response.ok) {
+            const addresses = await response.json();
+            console.log('Addresses loaded:', addresses);
+            displayAddresses(addresses);
+        } else {
+            console.error('Failed to load addresses:', response.status);
+            showNoAddressesMessage('Failed to load addresses');
+        }
+        
+    } catch (error) {
+        console.error('Error loading addresses:', error);
+        showNoAddressesMessage('Error loading addresses');
+    }
+}
+
+function displayAddresses(addresses) {
+    if (!addressList) return;
+    
+    if (!addresses || addresses.length === 0) {
+        showNoAddressesMessage('No addresses found');
+        return;
+    }
+    
+    // Clear loading state
+    addressList.innerHTML = '';
+    
+    // Get current primary address
+    const currentPrimary = localStorage.getItem('primaryAddressId');
+    
+    // Display each address
+    addresses.forEach((address, index) => {
+        const addressItem = document.createElement('div');
+        addressItem.className = 'address-item';
+        addressItem.dataset.addressId = address.id;
+        
+        // Check if this is the primary address
+        const isPrimary = currentPrimary === address.id.toString();
+        if (isPrimary) {
+            addressItem.classList.add('address-primary');
+        }
+        
+        // Create radio button
+        const radioContainer = document.createElement('div');
+        radioContainer.className = 'address-radio';
+        
+        const radioInput = document.createElement('input');
+        radioInput.type = 'radio';
+        radioInput.name = 'primaryAddress';
+        radioInput.value = address.id;
+        radioInput.checked = isPrimary;
+        radioInput.addEventListener('change', async (e) => {
+            e.stopPropagation(); // Prevent address selection when clicking radio
+            await setPrimaryAddress(address.id, address);
+        });
+        
+        radioContainer.appendChild(radioInput);
+        
+        // Create address content
+        const addressContent = document.createElement('div');
+        addressContent.className = 'address-content';
+        
+        // Create address display
+        const addressName = document.createElement('div');
+        addressName.className = 'address-name';
+        addressName.textContent = address.Name || 'Unnamed Address';
+        
+        const addressDetails = document.createElement('div');
+        addressDetails.className = 'address-details';
+        addressDetails.innerHTML = `
+            ${address.Street || ''} ${address.Building || ''}<br>
+            ${address.City || ''}, ${address.State || ''} ${address.PinCode || ''}
+        `;
+        
+        const addressTag = document.createElement('div');
+        addressTag.className = 'address-tag';
+        addressTag.textContent = address.Tag || 'Home';
+        
+        // Add click handler for address selection (not radio)
+        addressContent.addEventListener('click', async (e) => {
+            if (e.target !== radioInput) {
+                await selectAddress(address, addressItem);
+            }
+        });
+        
+        // Assemble the address content
+        addressContent.appendChild(addressName);
+        addressContent.appendChild(addressDetails);
+        addressContent.appendChild(addressTag);
+        
+        // Assemble the address item
+        addressItem.appendChild(radioContainer);
+        addressItem.appendChild(addressContent);
+        
+        addressList.appendChild(addressItem);
+    });
+}
+
+async function selectAddress(address, addressElement) {
+    console.log('Address selected:', address);
+    
+    // Remove previous selection
+    const previousSelected = addressList.querySelector('.address-item.selected');
+    if (previousSelected) {
+        previousSelected.classList.remove('selected');
+    }
+    
+    // Mark as selected
+    addressElement.classList.add('selected');
+    
+    // Update location text with pincode format
+    if (locationText) {
+        const pincode = address.PinCode || '110011';
+        locationText.textContent = `Deliver to ${pincode}`;
+    }
+    
+    // Store selected address
+    localStorage.setItem('selectedAddress', JSON.stringify(address));
+    
+    // Automatically set as primary address (async)
+    await setPrimaryAddress(address.id, address);
+    
+    // Hide menu
+    hideLocationMenu();
+}
+
+async function setPrimaryAddress(addressId, address) {
+    console.log('Setting primary address:', addressId, address);
+    
+    // Check if user is authenticated
+    if (!isUserAuthenticated()) {
+        showNotification('Please login to set primary address', 'error');
+        return;
+    }
+    
+    try {
+        // Make API call to mark address as primary
+        const API_BASE_URL = 'https://neo-server.rozana.in/api';
+        const PRIMARY_ADDRESS_ENDPOINT = `${API_BASE_URL}/addresses/${addressId}/primary`;
+        
+        console.log('Making API call to:', PRIMARY_ADDRESS_ENDPOINT);
+        
+        const headers = getAuthHeaders();
+        
+        const response = await fetch(PRIMARY_ADDRESS_ENDPOINT, {
+            method: 'PATCH',
+            headers: headers
+        });
+        
+        console.log('Primary address API Response Status:', response.status);
+        
+        if (response.ok) {
+            const responseData = await response.json();
+            console.log('Primary address API Response:', responseData);
+            
+            // Store primary address ID locally
+            localStorage.setItem('primaryAddressId', addressId.toString());
+            localStorage.setItem('primaryAddress', JSON.stringify(address));
+            
+            // Update visual indicators
+            updatePrimaryAddressVisuals(addressId);
+            
+            // Update location display if this is the selected address
+            updateLocationDisplayIfNeeded(address);
+            
+            showNotification('Primary address updated successfully!', 'success');
+            
+        } else {
+            const errorData = await response.json();
+            console.error('Failed to set primary address:', errorData);
+            showNotification('Failed to set primary address. Please try again.', 'error');
+        }
+        
+    } catch (error) {
+        console.error('Error setting primary address:', error);
+        
+        // Handle different types of errors
+        if (error.name === 'TypeError' && error.message.includes('fetch')) {
+            showNotification('Network error. Please check your internet connection.', 'error');
+        } else {
+            showNotification('Failed to set primary address. Please try again.', 'error');
+        }
+    }
+}
+
+function updatePrimaryAddressVisuals(addressId) {
+    // Update visual indicators
+    const addressItems = addressList.querySelectorAll('.address-item');
+    addressItems.forEach(item => {
+        item.classList.remove('address-primary');
+        const radio = item.querySelector('input[type="radio"]');
+        if (radio) {
+            radio.checked = false;
+        }
+    });
+    
+    // Mark selected address as primary
+    const selectedItem = addressList.querySelector(`[data-address-id="${addressId}"]`);
+    if (selectedItem) {
+        selectedItem.classList.add('address-primary');
+        const radio = selectedItem.querySelector('input[type="radio"]');
+        if (radio) {
+            radio.checked = true;
+        }
+    }
+}
+
+function updateLocationDisplayIfNeeded(address) {
+    // Update location display if this is the selected address
+    const selectedAddress = localStorage.getItem('selectedAddress');
+    if (selectedAddress) {
+        try {
+            const currentSelected = JSON.parse(selectedAddress);
+            if (currentSelected.id === address.id) {
+                const pincode = address.PinCode || '110011';
+                if (locationText) {
+                    locationText.textContent = `Deliver to ${pincode}`;
+                }
+            }
+        } catch (error) {
+            console.error('Error parsing selected address:', error);
+        }
+    }
+}
+
+function showNoAddressesMessage(message) {
+    if (!addressList) return;
+    
+    addressList.innerHTML = `
+        <div class="no-addresses">
+            <i class="fas fa-map-marker-alt"></i>
+            <p>${message}</p>
+        </div>
+    `;
+}
+
+function getAuthHeaders() {
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+    const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    };
+    
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    return headers;
+}
+
+function getUserId() {
+    const userSession = localStorage.getItem('userSession');
+    if (userSession) {
+        try {
+            const session = JSON.parse(userSession);
+            return session.userId || session.userData?.id || session.userData?.user_id || '1';
+        } catch (error) {
+            console.error('Error parsing user session:', error);
+        }
+    }
+    
+    // Fallback to individual storage
+    return localStorage.getItem('userId') || '1';
+}
+
+function isUserAuthenticated() {
+    const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+    const token = localStorage.getItem('token') || localStorage.getItem('authToken');
+    const userSession = localStorage.getItem('userSession');
+    
+    if (isLoggedIn && token && userSession) {
+        try {
+            const session = JSON.parse(userSession);
+            return session.isAuthenticated && session.token;
+        } catch (error) {
+            console.error('Error parsing user session:', error);
+        }
+    }
+    
+    return false;
+}
+
+function showAddressModal() {
+    const addressModal = document.getElementById('addressModal');
+    if (addressModal) {
+        addressModal.classList.add('show');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function initializeLocationDisplay() {
+    console.log('=== INITIALIZING LOCATION DISPLAY ===');
+    
+    // Check if user has a primary address first
+    const primaryAddress = localStorage.getItem('primaryAddress');
+    if (primaryAddress) {
+        try {
+            const address = JSON.parse(primaryAddress);
+            const pincode = address.PinCode || '110011';
+            if (locationText) {
+                locationText.textContent = `Deliver to ${pincode}`;
+            }
+            console.log('Loaded primary address:', address);
+            return;
+        } catch (error) {
+            console.error('Error parsing primary address:', error);
+        }
+    }
+    
+    // Fallback to selected address
+    const selectedAddress = localStorage.getItem('selectedAddress');
+    if (selectedAddress) {
+        try {
+            const address = JSON.parse(selectedAddress);
+            const pincode = address.PinCode || '110011';
+            if (locationText) {
+                locationText.textContent = `Deliver to ${pincode}`;
+            }
+            console.log('Loaded selected address:', address);
+        } catch (error) {
+            console.error('Error parsing selected address:', error);
+        }
+    } else {
+        // Default display
+        if (locationText) {
+            locationText.textContent = 'Deliver to 110011';
+        }
+        console.log('Using default location display');
+    }
+}
+
+// Test function to manually create search results
+function testSearchResults() {
+    console.log('🧪 Testing search results display...');
+    
+    // Create a test results section
+    const testResults = {
+        products: [
+            {
+                id: 'test1',
+                name: 'Test Product 1',
+                price: '100',
+                seller: 'Test Seller',
+                category: 'Test Category',
+                rating: 4.5
+            },
+            {
+                id: 'test2', 
+                name: 'Test Product 2',
+                price: '200',
+                seller: 'Test Seller 2',
+                category: 'Test Category 2',
+                rating: 4.0
+            }
+        ]
+    };
+    
+    // Call the display function
+    displaySearchResults(testResults, 'test search');
+    
+    console.log('Test results displayed');
+}
+
+// Function to force show the existing results section with test data
+function forceShowResults() {
+    console.log('🔧 Force showing results section...');
+    
+    // Get the existing results section
+    const resultsSection = document.getElementById('searchResults');
+    const resultsTitle = document.getElementById('searchResultsTitle');
+    const resultsGrid = document.getElementById('resultsGrid');
+    
+    if (!resultsSection || !resultsGrid) {
+        console.error('❌ Results section or grid not found!');
+        return;
+    }
+    
+    // Update title
+    if (resultsTitle) {
+        resultsTitle.textContent = '🔍 TEST SEARCH RESULTS';
+    }
+    
+    // Add test products directly to the grid
+    resultsGrid.innerHTML = `
+        <div class="product-card" style="background: #3b82f6; color: white; padding: 2rem; border-radius: 8px; text-align: center;">
+            <h3>Test Product 1</h3>
+            <p>Price: ₹100</p>
+            <p>Seller: Test Seller</p>
+            <button onclick="alert('Added to cart!')" style="background: white; color: #3b82f6; border: none; padding: 0.5rem 1rem; border-radius: 4px; margin-top: 1rem;">Add to Cart</button>
+        </div>
+        <div class="product-card" style="background: #10b981; color: white; padding: 2rem; border-radius: 8px; text-align: center;">
+            <h3>Test Product 2</h3>
+            <p>Price: ₹200</p>
+            <p>Seller: Test Seller 2</p>
+            <button onclick="alert('Added to cart!')" style="background: white; color: #10b981; border: none; padding: 0.5rem 1rem; border-radius: 4px; margin-top: 1rem;">Add to Cart</button>
+        </div>
+        <div class="product-card" style="background: #f59e0b; color: white; padding: 2rem; border-radius: 8px; text-align: center;">
+            <h3>Test Product 3</h3>
+            <p>Price: ₹300</p>
+            <p>Seller: Test Seller 3</p>
+            <button onclick="alert('Added to cart!')" style="background: white; color: #f59e0b; border: none; padding: 0.5rem 1rem; border-radius: 4px; margin-top: 1rem;">Add to Cart</button>
+        </div>
+    `;
+    
+    // Show the results section with very obvious styling
+    resultsSection.style.cssText = `
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        background: #fef3c7 !important;
+        padding: 2rem 0 !important;
+        margin: 2rem 0 !important;
+        border: 5px solid #f59e0b !important;
+        border-radius: 12px !important;
+        min-height: 300px !important;
+    `;
+    
+    // Scroll to results
+    resultsSection.scrollIntoView({ behavior: 'smooth' });
+    
+    console.log('✅ Results section should now be visible with test data!');
+}
+
+// Make test functions globally available
+window.testSearchResults = testSearchResults;
+window.forceShowResults = forceShowResults;
 
 // Service Worker registration for PWA capabilities (optional)
 if ('serviceWorker' in navigator) {
