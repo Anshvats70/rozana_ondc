@@ -16,8 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// Laravel backend API endpoint for orders with issue details
-$issueApiUrl = 'http://localhost/ondc_laravel/public/api/orders';
+// External API endpoint for orders with issue details
+$issueApiUrl = 'https://neo-server.rozana.in/orders';
 
 try {
     // Initialize cURL
@@ -52,7 +52,7 @@ try {
     
     // Check HTTP status
     if ($httpCode !== 200) {
-        // If Laravel API is not available, return fallback data
+        // If external API is not available, return fallback data
         if ($httpCode === 0 || $httpCode >= 500) {
             echo json_encode([
                 'success' => true,

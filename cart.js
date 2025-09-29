@@ -686,27 +686,7 @@ async function fetchCartConfirmation() {
     }
 }
 
-async function fetchCartConfirmationWithProxy(transactionId) {
-    // Alternative method using a CORS proxy (if available)
-    const proxyUrl = `https://cors-anywhere.herokuapp.com/https://neo-server.rozana.in/cart/${transactionId}`;
-    
-    const response = await fetch(proxyUrl, {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        }
-    });
-
-    if (!response.ok) {
-        throw new Error(`Proxy HTTP error! status: ${response.status}`);
-    }
-
-    const cartConfirmation = await response.json();
-    console.log('Cart confirmation response via proxy:', cartConfirmation);
-    
-    // Store the cart confirmation data
-    localStorage.setItem('cartConfirmation', JSON.stringify(cartConfirmation));
+// CORS proxy function removed - using direct API calls only
     
     // Redirect to cart confirmation page
     window.location.href = 'cart-confirmation.html';
