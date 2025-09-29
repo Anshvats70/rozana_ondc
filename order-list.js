@@ -19,28 +19,51 @@ class OrderListManager {
     }
 
     init() {
-        console.log('🚀 OrderListManager initialized');
+        console.log('🚀 OrderListManager initialized with AGGRESSIVE CACHE-BUSTING');
         console.log('📡 API Endpoint:', this.apiUrl);
         
-        this.setupEventListeners();
-        this.loadOrders(); // Auto-load on page initialization (now includes issue data)
+        // Clear all caches on initialization
+        this.clearAllCaches();
         
-        // Set up auto-refresh every 30 seconds (optional - can be disabled)
-        this.autoRefreshInterval = setInterval(() => {
-            console.log('🔄 Auto-refreshing orders...');
-            this.refreshOrders(true); // Silent refresh
-        }, 30000); // 30 seconds
+        this.setupEventListeners();
+        this.loadOrders(true); // Force refresh on initialization
+        
+        // Start aggressive auto-refresh
+        this.startAutoRefresh();
+        
+        // Add visibility change listener to refresh when tab becomes active
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                console.log('👁️ Page became visible - triggering force refresh');
+                this.refreshOrders(true);
+            }
+        });
+        
+        // Add focus listener to refresh when window gets focus
+        window.addEventListener('focus', () => {
+            console.log('🎯 Window focused - triggering force refresh');
+            this.refreshOrders(true);
+        });
     }
 
     setupEventListeners() {
-        // Refresh button
+        // Refresh button with force refresh
         document.getElementById('refreshBtn')?.addEventListener('click', () => {
-            this.refreshOrders();
+            console.log('🔄 Manual refresh button clicked');
+            this.refreshOrders(true); // Always force refresh on manual click
         });
 
-        // Retry button
+        // Retry button with force refresh
         document.getElementById('retryBtn')?.addEventListener('click', () => {
-            this.loadOrders();
+            console.log('🔄 Retry button clicked');
+            this.refreshOrders(true); // Force refresh on retry
+        });
+
+        // Force refresh button
+        document.getElementById('forceRefreshBtn')?.addEventListener('click', () => {
+            console.log('🔴 FORCE REFRESH button clicked - nuclear cache clearing');
+            this.clearAllCaches();
+            this.refreshOrders(true);
         });
 
         // Filter controls
@@ -72,49 +95,90 @@ class OrderListManager {
         });
     }
 
-    async loadOrders() {
-        console.log('📥 Loading orders from API...');
+    async loadOrders(forceRefresh = false) {
+        console.log('📥 Loading orders from API...', forceRefresh ? '(FORCE REFRESH)' : '');
         this.showLoading();
         
+        // Clear any cached data first
+        this.orders = [];
+        this.filteredOrders = [];
+        
         try {
-            // Add cache-busting timestamp
+            // AGGRESSIVE cache-busting with multiple parameters
             const timestamp = new Date().getTime();
-            const cacheBustingParam = `?_t=${timestamp}`;
+            const randomId = Math.random().toString(36).substring(7);
+            const sessionId = Date.now().toString(36);
+            const cacheBustingParams = `?_t=${timestamp}&_r=${randomId}&_s=${sessionId}&_force=${forceRefresh ? '1' : '0'}&_v=${Math.floor(Math.random() * 10000)}`;
             
-            // Try multiple approaches to handle CORS issues
+            console.log('🚫 Cache-busting URL:', this.apiUrl + cacheBustingParams);
+            
             let response;
             let data;
+            let successMethod = null;
             
-            // Approach 1: Try PHP proxy first (most reliable)
+            // Approach 1: Direct API call with aggressive cache-busting
             try {
-                console.log('🔄 Attempting PHP proxy request...');
-                response = await fetch(this.proxyUrl + cacheBustingParam, {
+                console.log('🔄 Attempting direct API request with aggressive cache-busting...');
+                response = await fetch(this.apiUrl + cacheBustingParams, {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json',
                         'Content-Type': 'application/json',
-                        'Cache-Control': 'no-cache, no-store, must-revalidate',
+                        'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
                         'Pragma': 'no-cache',
-                        'Expires': '0'
-                    }
+                        'Expires': '0',
+                        'If-Modified-Since': 'Thu, 01 Jan 1970 00:00:00 GMT',
+                        'If-None-Match': '*'
+                    },
+                    cache: 'no-store'
                 });
                 
                 if (response.ok) {
                     data = await response.json();
-                    console.log('✅ PHP proxy request successful');
-                    console.log('🔍 PHP proxy data sample:', data.data ? data.data.slice(0, 3).map(o => ({id: o.order_id, status: o.order_status})) : 'No data');
+                    successMethod = 'Direct API';
+                    console.log('✅ Direct API request successful');
+                    console.log('🔍 Direct API data sample:', data.data ? data.data.slice(0, 3).map(o => ({id: o.order_id, status: o.order_status, issue_status: o.issue_details_status, issue_actions: o.issue_actions})) : 'No data');
                 } else {
-                    console.log('⚠️ PHP proxy response not OK:', response.status, response.statusText);
+                    console.log('⚠️ Direct API response not OK:', response.status, response.statusText);
                 }
-            } catch (proxyError) {
-                console.log('⚠️ PHP proxy request failed:', proxyError.message);
+            } catch (directError) {
+                console.log('⚠️ Direct API request failed:', directError.message);
             }
             
-            // Approach 2: Try direct CORS request if proxy failed
+            // Approach 2: Try PHP proxy with cache-busting if direct failed
             if (!data) {
                 try {
-                    console.log('🔄 Attempting direct CORS request...');
-                    response = await fetch(this.apiUrl + cacheBustingParam, {
+                    console.log('🔄 Attempting PHP proxy request...');
+                    response = await fetch(this.proxyUrl + cacheBustingParams, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+                            'Pragma': 'no-cache',
+                            'Expires': '0'
+                        },
+                        cache: 'no-store'
+                    });
+                    
+                    if (response.ok) {
+                        data = await response.json();
+                        successMethod = 'PHP Proxy';
+                        console.log('✅ PHP proxy request successful');
+                        console.log('🔍 PHP proxy data sample:', data.data ? data.data.slice(0, 3).map(o => ({id: o.order_id, status: o.order_status, issue_status: o.issue_details_status, issue_actions: o.issue_actions})) : 'No data');
+                    } else {
+                        console.log('⚠️ PHP proxy response not OK:', response.status, response.statusText);
+                    }
+                } catch (proxyError) {
+                    console.log('⚠️ PHP proxy request failed:', proxyError.message);
+                }
+            }
+            
+            // Approach 3: Try CORS request if proxy failed
+            if (!data) {
+                try {
+                    console.log('🔄 Attempting CORS request...');
+                    response = await fetch(this.apiUrl + cacheBustingParams, {
                         method: 'GET',
                         headers: {
                             'Accept': 'application/json',
@@ -123,45 +187,21 @@ class OrderListManager {
                             'Pragma': 'no-cache',
                             'Expires': '0'
                         },
-                        mode: 'cors'
+                        mode: 'cors',
+                        cache: 'no-store'
                     });
                     
                     if (response.ok) {
                         data = await response.json();
-                        console.log('✅ Direct CORS request successful');
-                        console.log('🔍 Direct CORS data sample:', data.data ? data.data.slice(0, 3).map(o => ({id: o.order_id, status: o.order_status})) : 'No data');
+                        successMethod = 'CORS';
+                        console.log('✅ CORS request successful');
+                        console.log('🔍 CORS data sample:', data.data ? data.data.slice(0, 3).map(o => ({id: o.order_id, status: o.order_status, issue_status: o.issue_details_status, issue_actions: o.issue_actions})) : 'No data');
                     } else {
-                        console.log('⚠️ Direct CORS response not OK:', response.status, response.statusText);
+                        console.log('⚠️ CORS response not OK:', response.status, response.statusText);
                     }
                 } catch (corsError) {
-                    console.log('⚠️ Direct CORS request failed:', corsError.message);
+                    console.log('⚠️ CORS request failed:', corsError.message);
                 }
-            }
-            
-            // Approach 3: Try without CORS mode if previous attempts failed
-            if (!data) {
-                try {
-                    console.log('🔄 Attempting no-cors request...');
-                    response = await fetch(this.apiUrl, {
-                        method: 'GET',
-                        headers: {
-                            'Accept': 'application/json'
-                        }
-                    });
-                    
-                    if (response.ok) {
-                        data = await response.json();
-                        console.log('✅ No-cors request successful');
-                    }
-                } catch (noCorsError) {
-                    console.log('⚠️ No-cors request failed:', noCorsError.message);
-                }
-            }
-            
-            // Approach 4: Use JSONP-like approach with script tag
-            if (!data) {
-                console.log('🔄 Attempting JSONP approach...');
-                data = await this.loadWithJSONP();
             }
             
             // If all approaches fail, show error
@@ -171,7 +211,11 @@ class OrderListManager {
                 return;
             }
 
-            console.log('📡 Final data received:', data);
+            console.log(`📡 Final data received via ${successMethod}:`, {
+                success: data.success,
+                dataCount: data.data ? data.data.length : 0,
+                timestamp: new Date().toISOString()
+            });
 
             if (data && data.success && data.data) {
                 this.orders = data.data;
@@ -406,28 +450,25 @@ class OrderListManager {
         const formattedAmount = this.formatCurrency(order.total_value, order.currency);
         
          // Get issue data for this order (now comes directly from API)
-        const issueData = order.issue_details;
-        const issueActionsArray = order.issue_actions;
+        const issueStatus = order.issue_details_status; // This is the actual field from API
+        const issueId = order.issue_id;
+        const issueActions = order.issue_actions; // This is a string, not an array
         
-        // Handle both array and single object cases for issue_actions
-        let latestAction = null;
-        if (issueActionsArray) {
-            if (Array.isArray(issueActionsArray)) {
-                // If it's an array, get the first element
-                latestAction = issueActionsArray.length > 0 ? issueActionsArray[0] : null;
-            } else {
-                // If it's a single object, use it directly
-                latestAction = issueActionsArray;
-            }
+        // Handle issue actions - it's a string in the API response
+        let latestActionStatus = null;
+        if (issueActions && typeof issueActions === 'string') {
+            latestActionStatus = issueActions; // Use the string directly
         }
-        const hasIssue = order.issue_raised === 1 || issueData;
+        
+        const hasIssue = order.issue_raised === 1;
         
         // Debug logging for issue data
         if (hasIssue) {
             console.log(`🔍 Order #${order.order_id} Issue Data:`, {
                 issue_raised: order.issue_raised,
-                issue_status: issueData?.status,
-                latest_action_status: latestAction?.action_status,
+                issue_details_status: issueStatus,
+                issue_id: issueId,
+                issue_actions: latestActionStatus,
             });
         }
 
@@ -443,7 +484,7 @@ class OrderListManager {
                     </div>
                     ${hasIssue ? 
                         `<div class="issue-badge">
-                             ${issueData && issueData.status ? issueData.status : 'ISSUE RAISED'}
+                             ${issueStatus ? issueStatus : 'ISSUE RAISED'}
                          </div>` : ''
                      }
                 </div>
@@ -474,28 +515,28 @@ class OrderListManager {
                 `<div class="issue-status-section">
                     <div class="issue-status-info">
                         <div class="issue-status-label">Issue Status:</div>
-                        <div class="issue-status-value ${(issueData && issueData.status ? issueData.status : 'OPEN').toLowerCase()}">
+                        <div class="issue-status-value ${(issueStatus ? issueStatus : 'OPEN').toLowerCase()}">
                             <i class="fas fa-circle"></i>
-                            ${issueData && issueData.status ? issueData.status : 'OPEN'}
+                            ${issueStatus ? issueStatus : 'OPEN'}
                         </div>
                     </div>
-                    ${latestAction ? `
+                    ${latestActionStatus ? `
                         <div class="action-status-info">
                             <div class="action-status-label">Latest Action:</div>
-                            <div class="action-status-value ${latestAction.action_status.toLowerCase().replace('_', '-')}">
+                            <div class="action-status-value ${latestActionStatus.toLowerCase().replace('_', '-')}">
                                 <i class="fas fa-arrow-right"></i>
-                                ${latestAction.action_status}
+                                ${latestActionStatus}
                             </div>
                         </div>
                     ` : ''}
                     <div class="issue-meta-info">
-                        <span class="issue-id">ID: ${issueData ? issueData.issue_id : `ISSUE-${order.order_id}`}</span>
-                        <span class="issue-date">Updated: ${this.formatDate(issueData ? issueData.updated_at : order.updated_at)}</span>
+                        <span class="issue-id">ID: ${issueId ? issueId : `ISSUE-${order.order_id}`}</span>
+                        <span class="issue-date">Updated: ${this.formatDate(order.updated_at)}</span>
                     </div>
-                    ${latestAction ? `
+                    ${latestActionStatus ? `
                         <div class="action-meta-info">
-                            <span class="action-by">By: ${latestAction.action_by}</span>
-                            <span class="action-date">${this.formatDate(latestAction.action_updated_at)}</span>
+                            <span class="action-by">Latest Action: ${latestActionStatus}</span>
+                            <span class="action-date">${this.formatDate(order.updated_at)}</span>
                         </div>
                     ` : ''}
                 </div>` :
@@ -509,12 +550,12 @@ class OrderListManager {
 
             <div class="order-actions">
                 ${hasIssue ? 
-                     `<button class="order-action-btn issue-details-btn" onclick="event.stopPropagation(); window.orderListManager.showOrderDetails(${JSON.stringify(order).replace(/"/g, '&quot;')})">
+                     `<button class="order-action-btn issue-details-btn" onclick="event.stopPropagation(); window.orderListManager.showDetailedIssueModal('${order.transaction_id}', '${issueId ? issueId : `ISSUE-${order.order_id}`}')">
                          <i class="fas fa-eye"></i>
                          View Issue Details
                      </button>
-                     ${latestAction && latestAction.action_status === 'INFO_REQUESTED' ? 
-                         `<button class="order-action-btn info-provide-btn" onclick="event.stopPropagation(); window.orderListManager.showInfoProvideModal('${order.order_id}', '${issueData.issue_id}')">
+                     ${latestActionStatus === 'INFO_REQUESTED' ? 
+                         `<button class="order-action-btn info-provide-btn" onclick="event.stopPropagation(); window.orderListManager.showInfoProvideModal('${order.order_id}', '${issueId}')">
                              <i class="fas fa-upload"></i>
                              Info Provide
                          </button>` : ''
@@ -649,6 +690,468 @@ class OrderListManager {
         });
     }
 
+    async showDetailedIssueModal(transactionId, issueId) {
+        console.log('🔍 Fetching detailed issue data for:', { transactionId, issueId });
+        
+        // Show loading modal first
+        this.showLoadingModal('Loading Issue Details...');
+        
+        try {
+            // Fetch detailed issue data from the API
+            const apiUrl = `https://neo-server.rozana.in/issues/${transactionId}`;
+            const response = await fetch(apiUrl, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const issueData = await response.json();
+            console.log('✅ Detailed issue data loaded:', issueData);
+
+            // Close loading modal
+            this.closeLoadingModal();
+
+            // Show the detailed issue modal
+            this.displayDetailedIssueModal(issueData, transactionId, issueId);
+
+        } catch (error) {
+            console.error('❌ Failed to fetch issue details:', error);
+            
+            // Close loading modal
+            this.closeLoadingModal();
+            
+            // Show error modal
+            this.showErrorModal('Failed to Load Issue Details', `
+                <div style="text-align: center;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #dc2626; margin-bottom: 1rem;"></i>
+                    <h3 style="color: #dc2626; margin-bottom: 1rem;">Loading Failed</h3>
+                    <p style="margin-bottom: 1rem;">Unable to fetch detailed issue information.</p>
+                    <div style="background: #fef2f2; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                        <div><strong>Transaction ID:</strong> ${transactionId}</div>
+                        <div><strong>Issue ID:</strong> ${issueId}</div>
+                        <div><strong>Error:</strong> ${error.message}</div>
+                    </div>
+                    <p style="font-size: 0.9rem; color: #6b7280;">
+                        Please try again or contact support if the issue persists.
+                    </p>
+                </div>
+            `);
+        }
+    }
+
+    showLoadingModal(message = 'Loading...') {
+        // Remove existing loading modal if any
+        this.closeLoadingModal();
+        
+        const loadingModal = document.createElement('div');
+        loadingModal.id = 'loadingModal';
+        loadingModal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        `;
+        
+        loadingModal.innerHTML = `
+            <div style="background: white; padding: 2rem; border-radius: 10px; text-align: center; min-width: 300px;">
+                <div class="loading-spinner" style="width: 40px; height: 40px; border: 4px solid #f3f4f6; border-top: 4px solid #667eea; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem;"></div>
+                <p style="margin: 0; color: #333; font-size: 1.1rem;">${message}</p>
+            </div>
+        `;
+        
+        document.body.appendChild(loadingModal);
+    }
+
+    closeLoadingModal() {
+        const loadingModal = document.getElementById('loadingModal');
+        if (loadingModal) {
+            loadingModal.remove();
+        }
+    }
+
+    displayDetailedIssueModal(issueData, transactionId, issueId) {
+        // Create modal HTML
+        const modal = document.createElement('div');
+        modal.id = 'detailedIssueModal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 1rem;
+        `;
+
+        const issueDetails = issueData.success && issueData.data && issueData.data.length > 0 ? issueData.data[0] : null;
+        
+        modal.innerHTML = `
+            <div style="background: white; border-radius: 10px; max-width: 900px; width: 100%; max-height: 90vh; overflow-y: auto;">
+                <div style="padding: 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: white; z-index: 1;">
+                    <h2 style="margin: 0; color: #333; font-size: 1.5rem;">
+                        <i class="fas fa-exclamation-circle" style="color: #dc2626; margin-right: 0.5rem;"></i>
+                        Issue Details
+                    </h2>
+                    <button onclick="this.closest('#detailedIssueModal').remove()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280; padding: 0.5rem;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div style="padding: 1.5rem;">
+                    ${issueDetails ? this.generateIssueDetailsHTML(issueDetails) : this.generateNoIssueDataHTML(transactionId, issueId)}
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Close modal when clicking outside
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+    }
+
+    generateIssueDetailsHTML(issueDetails) {
+        const actions = issueDetails.actions || [];
+        const actors = issueDetails.actors || [];
+        const refs = issueDetails.refs || [];
+        
+        return `
+            <div style="display: grid; gap: 1.5rem;">
+                <!-- Issue Overview -->
+                <div style="background: #f9fafb; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #dc2626;">
+                    <h3 style="margin: 0 0 1rem 0; color: #333; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-info-circle"></i>
+                        Issue Overview
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div>
+                            <strong>Issue ID:</strong><br>
+                            <span style="color: #dc2626; font-family: monospace;">${issueDetails.issue_id}</span>
+                        </div>
+                        <div>
+                            <strong>Status:</strong><br>
+                            <span class="status-badge" style="background: ${this.getStatusColor(issueDetails.status)}; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">${issueDetails.status}</span>
+                        </div>
+                        <div>
+                            <strong>Order ID:</strong><br>
+                            <span style="font-family: monospace;">${issueDetails.order_id}</span>
+                        </div>
+                        <div>
+                            <strong>Transaction ID:</strong><br>
+                            <span style="font-family: monospace; font-size: 0.9rem;">${issueDetails.transaction_id}</span>
+                        </div>
+                    </div>
+                    ${issueDetails.descriptor ? `
+                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+                            <strong>Description:</strong><br>
+                            <div style="margin-top: 0.5rem;">
+                                <div><strong>Code:</strong> ${issueDetails.descriptor.code}</div>
+                                <div><strong>Short Description:</strong> ${issueDetails.descriptor.short_desc}</div>
+                                ${issueDetails.descriptor.long_desc ? `<div><strong>Long Description:</strong> ${issueDetails.descriptor.long_desc}</div>` : ''}
+                            </div>
+                        </div>
+                    ` : ''}
+                </div>
+
+                <!-- Actions Timeline -->
+                <div>
+                    <h3 style="margin: 0 0 1rem 0; color: #333; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-history"></i>
+                        Actions Timeline (${actions.length} actions)
+                    </h3>
+                    <div style="position: relative;">
+                        ${actions.map((action, index) => `
+                            <div style="position: relative; padding-left: 2rem; padding-bottom: ${index === actions.length - 1 ? '0' : '1.5rem'};">
+                                ${index !== actions.length - 1 ? '<div style="position: absolute; left: 0.75rem; top: 2rem; bottom: -1.5rem; width: 2px; background: #e5e7eb;"></div>' : ''}
+                                <div style="position: absolute; left: 0.5rem; top: 0.5rem; width: 1rem; height: 1rem; background: ${this.getActionStatusColor(action.action_status)}; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 2px ${this.getActionStatusColor(action.action_status)};"></div>
+                                <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 1rem;">
+                                    <div style="display: flex; justify-content: between; align-items: start; margin-bottom: 0.5rem;">
+                                        <div>
+                                            <strong style="color: #333;">${action.descriptor?.code || action.action_status}</strong>
+                                            <span style="background: ${this.getActionStatusColor(action.action_status)}; color: white; padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.75rem; margin-left: 0.5rem;">${action.action_status}</span>
+                                        </div>
+                                        <small style="color: #6b7280;">${this.formatDate(action.action_updated_at)}</small>
+                                    </div>
+                                    ${action.descriptor?.short_desc ? `<p style="margin: 0.5rem 0; color: #6b7280;">${action.descriptor.short_desc}</p>` : ''}
+                                    <div style="display: flex; gap: 1rem; font-size: 0.9rem; color: #6b7280;">
+                                        <span><strong>By:</strong> ${action.action_by}</span>
+                                        ${action.actor_details?.name ? `<span><strong>Actor:</strong> ${action.actor_details.name}</span>` : ''}
+                                    </div>
+                                    ${action.tags && action.tags.length > 0 ? `
+                                        <div style="margin-top: 0.5rem;">
+                                            <strong style="font-size: 0.9rem;">Evidence:</strong>
+                                            ${action.tags.map(tag => `
+                                                <div style="margin-top: 0.25rem; font-size: 0.9rem;">
+                                                    <strong>${tag.descriptor.code}:</strong>
+                                                    ${tag.list ? tag.list.map(item => `
+                                                        <div style="margin-left: 1rem; color: #6b7280;">
+                                                            ${item.descriptor.code}: ${item.value}
+                                                        </div>
+                                                    `).join('') : ''}
+                                                </div>
+                                            `).join('')}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Actors Information -->
+                ${actors.length > 0 ? `
+                    <div>
+                        <h3 style="margin: 0 0 1rem 0; color: #333; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-users"></i>
+                            Involved Parties (${actors.length})
+                        </h3>
+                        <div style="display: grid; gap: 1rem;">
+                            ${actors.map(actor => `
+                                <div style="background: #f9fafb; padding: 1rem; border-radius: 8px; border-left: 3px solid #667eea;">
+                                    <div style="display: flex; justify-content: between; align-items: start; margin-bottom: 0.5rem;">
+                                        <strong style="color: #333;">${actor.info?.person?.name || actor.info?.org?.name || actor.id}</strong>
+                                        <span style="background: #667eea; color: white; padding: 0.125rem 0.5rem; border-radius: 12px; font-size: 0.75rem;">${actor.type}</span>
+                                    </div>
+                                    ${actor.info?.contact ? `
+                                        <div style="font-size: 0.9rem; color: #6b7280;">
+                                            ${actor.info.contact.email ? `<div>📧 ${actor.info.contact.email}</div>` : ''}
+                                            ${actor.info.contact.phone ? `<div>📞 ${actor.info.contact.phone}</div>` : ''}
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+
+                <!-- References -->
+                ${refs.length > 0 ? `
+                    <div>
+                        <h3 style="margin: 0 0 1rem 0; color: #333; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-link"></i>
+                            References (${refs.length})
+                        </h3>
+                        <div style="display: grid; gap: 0.5rem;">
+                            ${refs.map(ref => `
+                                <div style="background: #f3f4f6; padding: 0.75rem; border-radius: 6px; display: flex; justify-content: between; align-items: center;">
+                                    <div>
+                                        <strong>${ref.ref_type}:</strong>
+                                        <span style="font-family: monospace; margin-left: 0.5rem;">${ref.ref_id}</span>
+                                    </div>
+                                    ${ref.tags ? `<small style="color: #6b7280;">Has additional data</small>` : ''}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+
+                <!-- Timestamps -->
+                <div style="background: #f9fafb; padding: 1rem; border-radius: 8px; font-size: 0.9rem; color: #6b7280;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div><strong>Created:</strong> ${this.formatDate(issueDetails.created_at)}</div>
+                        <div><strong>Last Updated:</strong> ${this.formatDate(issueDetails.updated_at)}</div>
+                        ${issueDetails.expected_response_time ? `<div><strong>Expected Response:</strong> ${issueDetails.expected_response_time}</div>` : ''}
+                        ${issueDetails.expected_resolution_time ? `<div><strong>Expected Resolution:</strong> ${issueDetails.expected_resolution_time}</div>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    generateNoIssueDataHTML(transactionId, issueId) {
+        return `
+            <div style="text-align: center; padding: 2rem;">
+                <i class="fas fa-search" style="font-size: 3rem; color: #6b7280; margin-bottom: 1rem;"></i>
+                <h3 style="color: #6b7280; margin-bottom: 1rem;">No Detailed Issue Data Found</h3>
+                <p style="margin-bottom: 1rem; color: #6b7280;">
+                    Unable to retrieve detailed information for this issue from the API.
+                </p>
+                <div style="background: #f3f4f6; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                    <div><strong>Transaction ID:</strong> ${transactionId}</div>
+                    <div><strong>Issue ID:</strong> ${issueId}</div>
+                    <div><strong>API Endpoint:</strong> https://neo-server.rozana.in/issues/${transactionId}</div>
+                </div>
+                <p style="font-size: 0.9rem; color: #6b7280;">
+                    The issue may not exist in the system or there might be a connectivity issue.
+                </p>
+            </div>
+        `;
+    }
+
+    getStatusColor(status) {
+        const colors = {
+            'OPEN': '#dc2626',
+            'PROCESSING': '#f59e0b',
+            'RESOLVED': '#10b981',
+            'CLOSED': '#6b7280',
+            'CANCELLED': '#ef4444'
+        };
+        return colors[status] || '#6b7280';
+    }
+
+    getActionStatusColor(status) {
+        const colors = {
+            'OPEN': '#dc2626',
+            'PROCESSING': '#f59e0b',
+            'INFO_REQUESTED': '#3b82f6',
+            'INFO_PROVIDED': '#8b5cf6',
+            'RESOLUTION_PROPOSED': '#f59e0b',
+            'RESOLUTION_ACCEPTED': '#10b981',
+            'CLOSED': '#6b7280'
+        };
+        return colors[status] || '#6b7280';
+    }
+
+    // Force refresh methods for cache-busting
+    async refreshOrders(forceRefresh = true) {
+        console.log('🔄 Refreshing orders...', forceRefresh ? '(FORCE)' : '');
+        
+        // Clear all cached data
+        this.clearAllCaches();
+        
+        // Force reload with cache-busting
+        await this.loadOrders(forceRefresh);
+        
+        // Show refresh notification
+        this.showRefreshNotification('Orders refreshed successfully!');
+    }
+    
+    clearAllCaches() {
+        console.log('🗑️ Clearing all caches...');
+        
+        // Clear in-memory data
+        this.orders = [];
+        this.filteredOrders = [];
+        this.orderIssues = {};
+        
+        // Clear any browser caches for this domain
+        if ('caches' in window) {
+            caches.keys().then(names => {
+                names.forEach(name => {
+                    if (name.includes('neo-server.rozana.in') || name.includes('orders')) {
+                        caches.delete(name);
+                        console.log('🗑️ Deleted cache:', name);
+                    }
+                });
+            });
+        }
+        
+        // Clear localStorage related to orders
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && (key.includes('order') || key.includes('issue') || key.includes('cache'))) {
+                keysToRemove.push(key);
+            }
+        }
+        keysToRemove.forEach(key => {
+            localStorage.removeItem(key);
+            console.log('🗑️ Removed localStorage:', key);
+        });
+    }
+    
+    // Auto-refresh with force refresh capability
+    startAutoRefresh() {
+        console.log('⏰ Starting auto-refresh (every 15 seconds with force refresh)...');
+        
+        // Clear any existing interval
+        this.stopAutoRefresh();
+        
+        // Set up aggressive auto-refresh every 15 seconds
+        this.autoRefreshInterval = setInterval(() => {
+            console.log('⏰ Auto-refresh triggered (FORCE)');
+            this.refreshOrders(true); // Always force refresh
+        }, 15000); // 15 seconds for more frequent updates
+    }
+    
+    stopAutoRefresh() {
+        if (this.autoRefreshInterval) {
+            clearInterval(this.autoRefreshInterval);
+            this.autoRefreshInterval = null;
+            console.log('⏰ Auto-refresh stopped');
+        }
+    }
+    
+    // Method to trigger refresh after status changes
+    async triggerStatusChangeRefresh() {
+        console.log('🔄 Status change detected - triggering force refresh...');
+        
+        // Wait a moment for backend to process
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Force refresh
+        await this.refreshOrders(true);
+    }
+    
+    // Method to show refresh notifications
+    showRefreshNotification(message) {
+        console.log('📢 Refresh notification:', message);
+        
+        // Create notification
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            font-size: 0.9rem;
+            max-width: 300px;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        `;
+        
+        notification.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-sync-alt"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+            notification.style.opacity = '1';
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 300);
+        }, 3000);
+    }
+
     // Additional utility methods will be added here as needed
 }
 
@@ -656,6 +1159,29 @@ class OrderListManager {
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Page loaded - initializing OrderListManager');
     window.orderListManager = new OrderListManager();
+    
+    // Global function to trigger refresh from anywhere
+    window.forceRefreshOrders = function() {
+        console.log('🌍 Global force refresh triggered');
+        if (window.orderListManager) {
+            window.orderListManager.refreshOrders(true);
+        }
+    };
+    
+    // Global function to trigger refresh after status changes
+    window.triggerStatusChangeRefresh = function() {
+        console.log('🌍 Global status change refresh triggered');
+        if (window.orderListManager) {
+            window.orderListManager.triggerStatusChangeRefresh();
+        }
+    };
+});
+
+// Cleanup when page unloads
+window.addEventListener('beforeunload', function() {
+    if (window.orderListManager) {
+        window.orderListManager.stopAutoRefresh();
+    }
 });
 
 // End of file

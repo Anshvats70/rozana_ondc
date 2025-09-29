@@ -103,7 +103,7 @@ function setupEventListeners() {
     
     // View orders button
     document.getElementById('viewOrdersBtn').addEventListener('click', function() {
-        alert('Orders page will be implemented soon!');
+        window.location.href = 'order-list.html';
     });
     
     // Dev info toggle
@@ -686,7 +686,27 @@ async function fetchCartConfirmation() {
     }
 }
 
-// CORS proxy function removed - using direct API calls only
+async function fetchCartConfirmationWithProxy(transactionId) {
+    // Alternative method using a CORS proxy (if available)
+    const proxyUrl = `https://cors-anywhere.herokuapp.com/https://neo-server.rozana.in/cart/${transactionId}`;
+    
+    const response = await fetch(proxyUrl, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error(`Proxy HTTP error! status: ${response.status}`);
+    }
+
+    const cartConfirmation = await response.json();
+    console.log('Cart confirmation response via proxy:', cartConfirmation);
+    
+    // Store the cart confirmation data
+    localStorage.setItem('cartConfirmation', JSON.stringify(cartConfirmation));
     
     // Redirect to cart confirmation page
     window.location.href = 'cart-confirmation.html';

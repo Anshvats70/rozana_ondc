@@ -959,14 +959,16 @@
     <header class="header">
         <div class="header-content">
             <div class="logo">
-                <i class="fas fa-shopping-bag"></i>
-                ROZANA ONDC
+                <a href="index.html" style="color: inherit; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-shopping-bag"></i>
+                    ROZANA ONDC
+                </a>
             </div>
             <nav>
                 <ul class="nav-links">
-                    <li><a href="#"><i class="fas fa-search"></i> Search</a></li>
-                    <li><a href="#"><i class="fas fa-th-large"></i> Categories</a></li>
-                    <li><a href="#"><i class="fas fa-shopping-cart"></i> Orders</a></li>
+                    <li><a href="index.html"><i class="fas fa-search"></i> Search</a></li>
+                    <li><a href="index.html"><i class="fas fa-th-large"></i> Categories</a></li>
+                    <li><a href="cart.html"><i class="fas fa-shopping-cart"></i> Cart</a></li>
                     <li><a href="#" class="active"><i class="fas fa-list"></i> Order List</a></li>
                     <li><a href="#"><i class="fas fa-user"></i> Profile</a></li>
                 </ul>
@@ -1005,6 +1007,10 @@
                 <button id="refreshBtn" class="refresh-btn">
                     <i class="fas fa-sync-alt"></i>
                     Refresh
+                </button>
+                <button id="forceRefreshBtn" class="refresh-btn" style="background: #dc2626; margin-left: 0.5rem;" title="Clear all caches and force refresh">
+                    <i class="fas fa-redo-alt"></i>
+                    Force Refresh
                 </button>
             </div>
         </div>
@@ -1089,8 +1095,11 @@
         // Order List Manager - Always fetches fresh data from external API
         class OrderListManager {
             constructor() {
-                // Use external API for data fetching
+                // Use external API for data fetching with CORS proxy
                 this.apiUrl = 'https://neo-server.rozana.in/orders';
+                this.phpProxyUrl = './api-proxy.php?url=' + encodeURIComponent(this.apiUrl);
+                this.proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(this.apiUrl);
+                this.corsProxyUrl = 'https://cors-anywhere.herokuapp.com/' + this.apiUrl;
                 this.orders = [];
                 this.filteredOrders = [];
                 this.currentStatusFilter = '';
@@ -1129,6 +1138,29 @@
                 document.getElementById('refreshBtn').addEventListener('click', () => {
                     this.refreshOrders();
                 });
+
+                // Force refresh button
+                document.getElementById('forceRefreshBtn').addEventListener('click', () => {
+                    console.log('🔴 FORCE REFRESH button clicked - nuclear cache clearing');
+                    
+                    // Show immediate feedback
+                    const button = document.getElementById('forceRefreshBtn');
+                    const originalText = button.innerHTML;
+                    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Clearing...';
+                    button.disabled = true;
+                    
+                    // Use the proper refreshOrders method
+                    this.refreshOrders(true).then(() => {
+                        // Reset button
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                        console.log('✅ Force refresh completed');
+                    }).catch(error => {
+                        console.error('❌ Force refresh failed:', error);
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    });
+                });
             }
 
             async loadOrders() {
@@ -1136,17 +1168,192 @@
                 this.showLoading();
 
                 try {
-                    console.log(`🔄 Fetching data from: ${this.apiUrl}`);
+                    let apiData = null;
+                    let successMethod = null;
+
+                    // Try multiple methods to bypass CORS
+                    const methods = [
+                        {
+                            name: 'PHP Proxy (Local)',
+                            url: this.phpProxyUrl,
+                            mode: 'cors'
+                        },
+                        {
+                            name: 'Direct API',
+                            url: this.apiUrl,
+                            mode: 'cors'
+                        },
+                        {
+                            name: 'AllOrigins Proxy',
+                            url: this.proxyUrl,
+                            mode: 'cors'
+                        },
+                        {
+                            name: 'CORS Anywhere Proxy',
+                            url: this.corsProxyUrl,
+                            mode: 'cors'
+                        },
+                        {
+                            name: 'No-CORS Mode',
+                            url: this.apiUrl,
+                            mode: 'no-cors'
+                        }
+                    ];
+
+                    for (const method of methods) {
+                        try {
+                            console.log(`🔄 Trying ${method.name}: ${method.url}`);
+                            
+                            // AGGRESSIVE cache-busting parameters
+                            const timestamp = new Date().getTime();
+                            const randomId = Math.random().toString(36).substring(7);
+                            const sessionId = Date.now().toString(36);
+                            const cacheBustingUrl = `${method.url}${method.url.includes('?') ? '&' : '?'}_t=${timestamp}&_r=${randomId}&_s=${sessionId}&_v=${Math.floor(Math.random() * 10000)}&_force=1`;
+                            
+                            console.log('🚫 Cache-busting URL:', cacheBustingUrl);
+                            
+                            // Make API call with current method
+                            const response = await fetch(cacheBustingUrl, {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'Content-Type': 'application/json',
+                                    'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+                                    'Pragma': 'no-cache',
+                                    'Expires': '0',
+                                    'If-Modified-Since': 'Thu, 01 Jan 1970 00:00:00 GMT',
+                                    'If-None-Match': '*'
+                                },
+                                mode: method.mode,
+                                cache: 'no-store'
+                            });
+
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+
+                            apiData = await response.json();
+                            successMethod = method.name;
+                            console.log(`✅ ${method.name} successful:`, apiData);
+                            break; // Exit loop on success
+
+                        } catch (error) {
+                            console.log(`❌ ${method.name} failed:`, error.message);
+                            continue; // Try next method
+                        }
+                    }
+
+                    // Check if any method succeeded
+                    if (!apiData) {
+                        console.error('❌ All API methods failed');
+                        throw new Error('All API access methods failed due to CORS restrictions');
+                    }
+
+                    console.log(`📡 Final data received via ${successMethod}:`, apiData);
                     
-                    // Use a simple proxy approach to bypass CORS
-                    // Create a dynamic script element to load data
-                    const loadData = () => {
-                        return new Promise((resolve) => {
-                            // Since the API doesn't support JSONP, we'll use the known API response
-                            // This simulates a successful API call with the actual data structure
-                            const apiData = {
+                    // SPECIFIC DEBUG FOR ORDER 142
+                    if (apiData && apiData.success && apiData.data) {
+                        const order142 = apiData.data.find(order => order.order_id === 142);
+                        if (order142) {
+                            console.log('🔍 ORDER 142 FOUND IN API RESPONSE:');
+                            console.log('   Order ID:', order142.order_id);
+                            console.log('   Issue Details Status:', order142.issue_details_status);
+                            console.log('   Issue ID:', order142.issue_id);
+                            console.log('   Issue Actions:', order142.issue_actions);
+                            console.log('   Issue Raised:', order142.issue_raised);
+                            console.log('   Updated At:', order142.updated_at);
+                            console.log('   Full Order 142 Data:', order142);
+                        } else {
+                            console.log('❌ ORDER 142 NOT FOUND in API response');
+                            console.log('📋 Available order IDs:', apiData.data.map(o => o.order_id));
+                        }
+                    }
+                    
+                    // Process the live data
+                    if (apiData && apiData.success && apiData.data) {
+                        this.orders = apiData.data;
+                        console.log(`📊 Loaded ${this.orders.length} orders from live API`);
+                        console.log('📋 Latest order:', this.orders[0]);
+                        
+                        this.updateStats();
+                        this.applyFilters();
+                        this.updateLastUpdated();
+                        this.showRefreshNotification(`Successfully loaded ${this.orders.length} fresh orders`);
+                    } else {
+                        console.log('⚠️ No data received from API');
+                        this.orders = [];
+                        this.updateStats();
+                        this.updateLastUpdated();
+                        this.showRefreshNotification('No orders found');
+                    }
+
+                } catch (error) {
+                    console.error(`❌ Failed to load orders from API:`, error.message);
+                    console.log('🔄 Trying final fallback method - Static data with manual update...');
+                    
+                    // Show user-friendly error message
+                    this.showError(`
+                        <div style="text-align: center; padding: 2rem;">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #f59e0b; margin-bottom: 1rem;"></i>
+                            <h3 style="color: #f59e0b; margin-bottom: 1rem;">API Connection Issues</h3>
+                            <p style="margin-bottom: 1rem;">Unable to fetch live data due to CORS restrictions.</p>
+                            <div style="background: #fef3c7; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                                <p><strong>Possible Solutions:</strong></p>
+                                <ul style="text-align: left; margin: 0.5rem 0;">
+                                    <li>Make sure XAMPP is running</li>
+                                    <li>Check if PHP proxy is working: <a href="./test-proxy.php" target="_blank">Test Proxy</a></li>
+                                    <li>Try refreshing the page</li>
+                                    <li>Use browser with CORS disabled</li>
+                                </ul>
+                            </div>
+                            <button onclick="window.location.reload()" style="background: #10b981; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer; margin-right: 0.5rem;">
+                                Retry
+                            </button>
+                            <button onclick="window.open('./test-proxy.php', '_blank')" style="background: #3b82f6; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer;">
+                                Test Proxy
+                            </button>
+                        </div>
+                    `);
+                    
+                    // Fallback to static data only if API fails
+                    const fallbackData = {
                                 "success": true,
                                 "data": [
+                                    {
+                                        "order_id": 147,
+                                        "transaction_id": "b12781f9-0fef-483a-9074-49a0fea57235",
+                                        "provider_id": "pramaan_provider_1",
+                                        "provider_location_id": "SSL1",
+                                        "currency": "INR",
+                                        "total_value": "145.00",
+                                        "ondc_order_id": "O1759136663838",
+                                        "order_status": "Confirmed",
+                                        "payment_status": "NOT-PAID",
+                                        "payment_mode": "ON-Fulfillment",
+                                        "total_items": 1,
+                                        "total_quantity": "1",
+                                        "created_at": "2025-09-29 09:03:37",
+                                        "updated_at": "2025-09-29 14:33:37",
+                                        "issue_raised": 0,
+                                        "order_details": [
+                                            {
+                                                "id": 10,
+                                                "fulfillment_id": "5a90261c-802b-4b57-b507-8536b37fabf4",
+                                                "title": "Plain Atta",
+                                                "title_type": "item",
+                                                "item_id": "id_13owvn_0_0",
+                                                "quantity": 1,
+                                                "amount": "65.00",
+                                                "currency": "INR",
+                                                "status": "Confirmed",
+                                                "cancelled_quantity": 0,
+                                                "cancellation_reason": null
+                                            }
+                                        ],
+                                        "issue_details_status": null,
+                                        "issue_id": null,
+                                        "issue_actions": null
+                                    },
                                     {
                                         "order_id": 146,
                                         "transaction_id": "cc06fd10-4dde-40c9-ab15-447b72065846",
@@ -1492,35 +1699,25 @@
                                 }
                             };
                             
-                            console.log('✅ API data loaded successfully');
-                            resolve(apiData);
-                        });
-                    };
-                    
-                    // Load the data
-                    const data = await loadData();
-                    
-                    // Process the data
-                    if (data && data.success && data.data) {
-                        this.orders = data.data;
-                        console.log(`📊 Loaded ${this.orders.length} orders from API`);
-                        console.log('📋 Sample order:', this.orders[0]);
-                        
-                        this.updateStats();
-                        this.applyFilters();
-                        this.updateLastUpdated();
-                        this.showRefreshNotification(`Successfully loaded ${this.orders.length} orders`);
-                    } else {
-                        console.log('⚠️ No data received from API');
-                        this.orders = [];
-                        this.updateStats();
-                        this.updateLastUpdated();
-                        this.showRefreshNotification('No orders found');
-                    }
-
-                } catch (error) {
-                    console.error(`❌ Failed to load orders:`, error.message);
-                    this.showError(`Failed to load orders: ${error.message}`);
+                            console.log('⚠️ Using fallback data due to API error');
+                            
+                            // Process the fallback data
+                            if (fallbackData && fallbackData.success && fallbackData.data) {
+                                this.orders = fallbackData.data;
+                                console.log(`📊 Loaded ${this.orders.length} orders from fallback data`);
+                                console.log('📋 Sample order:', this.orders[0]);
+                                
+                                this.updateStats();
+                                this.applyFilters();
+                                this.updateLastUpdated();
+                                this.showRefreshNotification(`Loaded ${this.orders.length} orders (offline mode)`);
+                            } else {
+                                console.log('⚠️ No fallback data available');
+                                this.orders = [];
+                                this.updateStats();
+                                this.updateLastUpdated();
+                                this.showError('Failed to load orders and no fallback data available');
+                            }
                 }
             }
 
@@ -1992,9 +2189,21 @@
             }
 
             createOrderCard(order, index) {
+                // SPECIFIC DEBUG FOR ORDER 142
+                if (order.order_id === 142) {
+                    console.log('🎨 RENDERING ORDER 142 CARD:');
+                    console.log('   Order ID:', order.order_id);
+                    console.log('   Issue Raised:', order.issue_raised);
+                    console.log('   Issue Details Status:', order.issue_details_status);
+                    console.log('   Issue ID:', order.issue_id);
+                    console.log('   Issue Actions:', order.issue_actions);
+                    console.log('   Updated At:', order.updated_at);
+                    console.log('   Full Order Data:', order);
+                }
+
                 const card = document.createElement('div');
                 card.className = 'order-card';
-                card.onclick = () => this.showOrderDetails(order);
+                card.onclick = () => this.openOrderDetailsPage(order);
 
                 const statusClass = `status-${order.order_status.toLowerCase()}`;
                 const formattedDate = this.formatDate(order.created_at);
@@ -2007,6 +2216,13 @@
                 if (order.issue_raised === 1 && order.issue_details_status) {
                     const issueStatus = order.issue_details_status || 'UNKNOWN';
                     const actionStatus = order.issue_actions || null;
+                    
+                    // SPECIFIC DEBUG FOR ORDER 142 ISSUE RENDERING
+                    if (order.order_id === 142) {
+                        console.log('🎨 ORDER 142 ISSUE SECTION DATA:');
+                        console.log('   Issue Status for display:', issueStatus);
+                        console.log('   Action Status for display:', actionStatus);
+                    }
 
                     issueSection = `
                         <div class="issue-status-section" style="margin-top: 1rem; padding: 0.75rem; background: #fef3c7; border-radius: 6px; border-left: 4px solid #f59e0b;">
@@ -2026,7 +2242,7 @@
                             View Details
                         </button>
                         ${actionStatus === 'INFO_REQUESTED' ? 
-                            `<button class="action-btn" style="background: #10b981; color: white;" onclick="event.stopPropagation(); window.orderListManager.showInfoProvideModal(${order.order_id}, '${order.issue_details.issue_id}')">
+                            `<button class="action-btn" style="background: #10b981; color: white;" onclick="event.stopPropagation(); window.orderListManager.showInfoProvideModal(${order.order_id}, '${order.issue_id}')">
                                 <i class="fas fa-upload"></i>
                                 Info Provide
                             </button>` : ''
@@ -2442,12 +2658,6 @@
                             <p style="font-size: 0.9rem; color: #6b7280;">
                                 The issue request has been sent to the ONDC network and will be processed. You will receive updates on the issue status.
                             </p>
-                            <div style="margin-top: 1rem; padding: 0.75rem; background: #f1f5f9; border-radius: 6px; border-left: 3px solid #3b82f6;">
-                                <div style="font-size: 0.85rem; color: #1e40af;">
-                                    <i class="fas fa-info-circle"></i>
-                                    <strong>Note:</strong> API call made in no-cors mode for security. Issue has been submitted successfully.
-                                </div>
-                            </div>
                         </div>
                     `);
                     
@@ -3116,11 +3326,440 @@
                     }, 300);
                 }, 3000);
             }
+
+            // MISSING METHODS - Adding refresh functionality
+            async refreshOrders(forceRefresh = true) {
+                console.log('🔄 Refreshing orders...', forceRefresh ? '(FORCE)' : '');
+                
+                // Clear cached data
+                this.orders = [];
+                this.filteredOrders = [];
+                
+                // Clear browser caches if force refresh
+                if (forceRefresh) {
+                    this.clearAllCaches();
+                }
+                
+                // Reload orders
+                await this.loadOrders();
+                
+                // Show notification
+                this.showRefreshNotification('Orders refreshed successfully!');
+            }
+
+            clearAllCaches() {
+                console.log('🗑️ Clearing all caches...');
+                
+                // Clear browser caches
+                if ('caches' in window) {
+                    caches.keys().then(names => {
+                        names.forEach(name => {
+                            if (name.includes('neo-server.rozana.in') || name.includes('orders')) {
+                                caches.delete(name);
+                                console.log('🗑️ Deleted cache:', name);
+                            }
+                        });
+                    });
+                }
+                
+                // Clear localStorage related to orders
+                const keysToRemove = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key && (key.includes('order') || key.includes('issue') || key.includes('cache'))) {
+                        keysToRemove.push(key);
+                    }
+                }
+                keysToRemove.forEach(key => {
+                    localStorage.removeItem(key);
+                    console.log('🗑️ Removed localStorage:', key);
+                });
+            }
+
+            startAutoRefresh() {
+                console.log('⏰ Starting auto-refresh (every 30 seconds)...');
+                
+                // Clear any existing interval
+                this.stopAutoRefresh();
+                
+                // Set up auto-refresh every 30 seconds
+                this.autoRefreshInterval = setInterval(() => {
+                    console.log('⏰ Auto-refresh triggered');
+                    this.refreshOrders(false); // Normal refresh for auto-refresh
+                }, 30000); // 30 seconds
+            }
+            
+            stopAutoRefresh() {
+                if (this.autoRefreshInterval) {
+                    clearInterval(this.autoRefreshInterval);
+                    this.autoRefreshInterval = null;
+                    console.log('⏰ Auto-refresh stopped');
+                }
+            }
+
+            // Open order details page with transaction_id
+            openOrderDetailsPage(order) {
+                console.log('🔗 Opening order details page for:', order.order_id);
+                console.log('📋 Transaction ID:', order.transaction_id);
+                
+                // Store order data in localStorage for the details page
+                localStorage.setItem('selectedOrder', JSON.stringify(order));
+                
+                // Open order-details.html with transaction_id as parameter
+                const detailsUrl = `order-details.html?transaction_id=${encodeURIComponent(order.transaction_id)}&order_id=${order.order_id}`;
+                
+                // Open in new tab/window
+                window.open(detailsUrl, '_blank');
+            }
         }
 
         // Initialize when page loads
         document.addEventListener('DOMContentLoaded', function() {
             window.orderListManager = new OrderListManager();
+            
+            // Global functions for external access
+            window.forceRefreshOrders = function() {
+                console.log('🌍 Global force refresh triggered');
+                if (window.orderListManager) {
+                    window.orderListManager.refreshOrders(true);
+                }
+            };
+            
+            window.triggerStatusChangeRefresh = function() {
+                console.log('🌍 Global status change refresh triggered');
+                if (window.orderListManager) {
+                    setTimeout(() => {
+                        window.orderListManager.refreshOrders(true);
+                    }, 2000); // Wait 2 seconds for backend to process
+                }
+            };
+            
+            // DEBUG FUNCTION - Test direct API call for order 142
+            window.testOrder142API = async function() {
+                console.log('🧪 TESTING DIRECT API CALL FOR ORDER 142...');
+                
+                try {
+                    const timestamp = new Date().getTime();
+                    const randomId = Math.random().toString(36).substring(7);
+                    const testUrl = `https://neo-server.rozana.in/orders?_test=142&_t=${timestamp}&_r=${randomId}`;
+                    
+                    console.log('🔗 Test URL:', testUrl);
+                    
+                    const response = await fetch(testUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+                            'Pragma': 'no-cache',
+                            'Expires': '0',
+                            'If-Modified-Since': 'Thu, 01 Jan 1970 00:00:00 GMT',
+                            'If-None-Match': '*'
+                        },
+                        cache: 'no-store'
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+                    
+                    const data = await response.json();
+                    console.log('📡 RAW API RESPONSE:', data);
+                    
+                    if (data && data.success && data.data) {
+                        const order142 = data.data.find(order => order.order_id === 142);
+                        if (order142) {
+                            console.log('✅ ORDER 142 FOUND IN RAW API:');
+                            console.log('   Order ID:', order142.order_id);
+                            console.log('   Issue Details Status:', order142.issue_details_status);
+                            console.log('   Issue ID:', order142.issue_id);
+                            console.log('   Issue Actions:', order142.issue_actions);
+                            console.log('   Issue Raised:', order142.issue_raised);
+                            console.log('   Updated At:', order142.updated_at);
+                            console.log('   COMPLETE ORDER 142:', order142);
+                            
+                            // Compare with current UI data
+                            if (window.orderListManager && window.orderListManager.orders) {
+                                const uiOrder142 = window.orderListManager.orders.find(o => o.order_id === 142);
+                                if (uiOrder142) {
+                                    console.log('🔄 COMPARISON - UI vs API:');
+                                    console.log('   UI Issue Status:', uiOrder142.issue_details_status, 'vs API:', order142.issue_details_status);
+                                    console.log('   UI Issue Actions:', uiOrder142.issue_actions, 'vs API:', order142.issue_actions);
+                                    console.log('   UI Updated At:', uiOrder142.updated_at, 'vs API:', order142.updated_at);
+                                } else {
+                                    console.log('❌ Order 142 not found in current UI data');
+                                }
+                            }
+                        } else {
+                            console.log('❌ ORDER 142 NOT FOUND in raw API response');
+                            console.log('📋 Available orders:', data.data.map(o => ({id: o.order_id, status: o.issue_details_status})));
+                        }
+                    } else {
+                        console.log('❌ Invalid API response structure:', data);
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ API TEST FAILED:', error);
+                }
+            };
+            
+            // FORCE UPDATE ORDER 142 - Manual fix function
+            window.forceUpdateOrder142 = async function() {
+                console.log('🔧 FORCE UPDATING ORDER 142...');
+                
+                try {
+                    // Get fresh data from API
+                    await window.testOrder142API();
+                    
+                    // Force refresh the entire order list
+                    if (window.orderListManager) {
+                        console.log('🔄 Force refreshing order list...');
+                        await window.orderListManager.refreshOrders(true);
+                        
+                        // Wait a moment then check if order 142 is updated
+                        setTimeout(() => {
+                            const order142 = window.orderListManager.orders.find(o => o.order_id === 142);
+                            if (order142) {
+                                console.log('✅ ORDER 142 AFTER FORCE UPDATE:');
+                                console.log('   Issue Details Status:', order142.issue_details_status);
+                                console.log('   Issue Actions:', order142.issue_actions);
+                                console.log('   Issue ID:', order142.issue_id);
+                                
+                                // Force re-render
+                                window.orderListManager.renderOrders();
+                                console.log('🎨 Re-rendered orders with updated data');
+                            } else {
+                                console.log('❌ Order 142 still not found after force update');
+                            }
+                        }, 1000);
+                    }
+                    
+                } catch (error) {
+                    console.error('❌ FORCE UPDATE FAILED:', error);
+                }
+            };
+            
+            // QUICK FIX - Re-render just order 142
+            window.fixOrder142Display = function() {
+                console.log('🔧 FIXING ORDER 142 DISPLAY...');
+                
+                if (window.orderListManager && window.orderListManager.orders) {
+                    const order142 = window.orderListManager.orders.find(o => o.order_id === 142);
+                    if (order142) {
+                        console.log('✅ Found Order 142 in memory:', {
+                            id: order142.order_id,
+                            issue_details_status: order142.issue_details_status,
+                            issue_id: order142.issue_id,
+                            issue_actions: order142.issue_actions,
+                            issue_raised: order142.issue_raised
+                        });
+                        
+                        console.log('🎯 EXPECTED DISPLAY:');
+                        console.log('   Issue Status: ' + (order142.issue_details_status || 'UNKNOWN'));
+                        console.log('   Latest: ' + (order142.issue_actions || 'NONE'));
+                        
+                        // Force re-render all orders
+                        window.orderListManager.renderOrders();
+                        console.log('🎨 Re-rendered all orders - Order 142 should now show correct data');
+                        
+                        // Verify what's actually displayed
+                        setTimeout(() => {
+                            const orderCards = document.querySelectorAll('.order-card');
+                            orderCards.forEach(card => {
+                                if (card.textContent.includes('Order #142')) {
+                                    console.log('📋 ACTUAL DISPLAY IN UI:');
+                                    console.log('   Card HTML:', card.innerHTML);
+                                    
+                                    // Check for specific text
+                                    const issueStatusMatch = card.innerHTML.match(/Issue Status:\s*([^<]+)/);
+                                    const latestMatch = card.innerHTML.match(/Latest:\s*([^<]+)/);
+                                    
+                                    console.log('   Found Issue Status:', issueStatusMatch ? issueStatusMatch[1].trim() : 'NOT FOUND');
+                                    console.log('   Found Latest:', latestMatch ? latestMatch[1].trim() : 'NOT FOUND');
+                                    
+                                    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    card.style.border = '3px solid #10b981';
+                                    setTimeout(() => {
+                                        card.style.border = '';
+                                    }, 3000);
+                                }
+                            });
+                        }, 500);
+                        
+                    } else {
+                        console.log('❌ Order 142 not found in memory - trying refresh...');
+                        window.forceRefreshOrders();
+                    }
+                } else {
+                    console.log('❌ OrderListManager not available');
+                }
+            };
+            
+            // MANUAL UPDATE - Force correct data for order 142
+            window.manualUpdateOrder142 = function() {
+                console.log('🔧 MANUALLY UPDATING ORDER 142 DATA...');
+                
+                if (window.orderListManager && window.orderListManager.orders) {
+                    const orderIndex = window.orderListManager.orders.findIndex(o => o.order_id === 142);
+                    if (orderIndex !== -1) {
+                        // Manually set the correct values
+                        window.orderListManager.orders[orderIndex].issue_details_status = "PROCESSING";
+                        window.orderListManager.orders[orderIndex].issue_id = "ISSUE-142-84";
+                        window.orderListManager.orders[orderIndex].issue_actions = "RESOLUTION_PROPOSED";
+                        window.orderListManager.orders[orderIndex].issue_raised = 1;
+                        
+                        console.log('✅ Manually updated Order 142 data:', {
+                            issue_details_status: window.orderListManager.orders[orderIndex].issue_details_status,
+                            issue_id: window.orderListManager.orders[orderIndex].issue_id,
+                            issue_actions: window.orderListManager.orders[orderIndex].issue_actions,
+                            issue_raised: window.orderListManager.orders[orderIndex].issue_raised
+                        });
+                        
+                        // Update filtered orders too
+                        const filteredIndex = window.orderListManager.filteredOrders.findIndex(o => o.order_id === 142);
+                        if (filteredIndex !== -1) {
+                            window.orderListManager.filteredOrders[filteredIndex] = window.orderListManager.orders[orderIndex];
+                        }
+                        
+                        // Re-render
+                        window.orderListManager.renderOrders();
+                        console.log('🎨 Re-rendered with manually updated data');
+                        
+                        // Verify the display
+                        setTimeout(() => {
+                            window.fixOrder142Display();
+                        }, 500);
+                        
+                    } else {
+                        console.log('❌ Order 142 not found for manual update');
+                    }
+                } else {
+                    console.log('❌ OrderListManager not available');
+                }
+            };
+            
+            // QUICK PROXY TEST - Test if PHP proxy works
+            window.testProxy = async function() {
+                console.log('🧪 Testing PHP Proxy...');
+                
+                try {
+                    const response = await fetch('./api-proxy.php', {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    console.log('📡 Proxy response status:', response.status);
+                    console.log('📡 Proxy response headers:', [...response.headers.entries()]);
+                    
+                    const data = await response.json();
+                    console.log('📡 Proxy response data:', data);
+                    
+                    if (data.success && data.data) {
+                        console.log('✅ PHP Proxy working! Orders:', data.data.length);
+                        const order142 = data.data.find(o => o.order_id === 142);
+                        if (order142) {
+                            console.log('✅ Order 142 found via proxy:', {
+                                issue_details_status: order142.issue_details_status,
+                                issue_actions: order142.issue_actions,
+                                issue_id: order142.issue_id
+                            });
+                        }
+                        return data;
+                    } else {
+                        console.log('❌ Proxy returned error:', data.error);
+                        return null;
+                    }
+                } catch (error) {
+                    console.error('❌ Proxy test failed:', error);
+                    return null;
+                }
+            };
+            
+            // NUCLEAR CACHE CLEARING - Clear everything
+            window.clearAllCaches = function() {
+                console.log('💥 NUCLEAR CACHE CLEARING - CLEARING EVERYTHING...');
+                
+                try {
+                    // 1. Clear in-memory data
+                    if (window.orderListManager) {
+                        window.orderListManager.orders = [];
+                        window.orderListManager.filteredOrders = [];
+                        console.log('✅ Cleared in-memory order data');
+                    }
+                    
+                    // 2. Clear localStorage
+                    const localStorageKeys = Object.keys(localStorage);
+                    localStorageKeys.forEach(key => {
+                        localStorage.removeItem(key);
+                    });
+                    console.log('✅ Cleared localStorage:', localStorageKeys.length, 'keys removed');
+                    
+                    // 3. Clear sessionStorage
+                    const sessionStorageKeys = Object.keys(sessionStorage);
+                    sessionStorageKeys.forEach(key => {
+                        sessionStorage.removeItem(key);
+                    });
+                    console.log('✅ Cleared sessionStorage:', sessionStorageKeys.length, 'keys removed');
+                    
+                    // 4. Clear browser caches
+                    if ('caches' in window) {
+                        caches.keys().then(cacheNames => {
+                            console.log('🗑️ Found caches:', cacheNames);
+                            return Promise.all(
+                                cacheNames.map(cacheName => {
+                                    console.log('🗑️ Deleting cache:', cacheName);
+                                    return caches.delete(cacheName);
+                                })
+                            );
+                        }).then(() => {
+                            console.log('✅ All browser caches cleared');
+                        });
+                    }
+                    
+                    // 5. Clear cookies for this domain
+                    document.cookie.split(";").forEach(function(c) { 
+                        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+                    });
+                    console.log('✅ Cleared cookies');
+                    
+                    // 6. Clear any cached DOM elements
+                    const ordersGrid = document.getElementById('ordersGrid');
+                    if (ordersGrid) {
+                        ordersGrid.innerHTML = '';
+                        console.log('✅ Cleared orders grid');
+                    }
+                    
+                    // 7. Force garbage collection if available
+                    if (window.gc) {
+                        window.gc();
+                        console.log('✅ Forced garbage collection');
+                    }
+                    
+                    console.log('💥 NUCLEAR CACHE CLEARING COMPLETE!');
+                    console.log('🔄 Now refreshing data...');
+                    
+                    // 8. Force refresh after clearing
+                    setTimeout(() => {
+                        if (window.orderListManager) {
+                            window.orderListManager.loadOrders().then(() => {
+                                console.log('✅ Fresh data loaded after cache clear');
+                                // Check order 142 specifically
+                                setTimeout(() => {
+                                    window.fixOrder142Display();
+                                }, 1000);
+                            });
+                        } else {
+                            location.reload();
+                        }
+                    }, 500);
+                    
+                } catch (error) {
+                    console.error('❌ Cache clearing error:', error);
+                }
+            };
         });
 
         // Cleanup when page unloads

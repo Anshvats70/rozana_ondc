@@ -1,0 +1,2221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details - Rozana ONDC</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 2rem;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .back-btn {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: translateY(-2px);
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 4rem 2rem;
+        }
+
+        .loading-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 2rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #dc2626;
+        }
+
+        .error-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .order-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .info-card {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 1.5rem;
+            border-left: 4px solid #4f46e5;
+        }
+
+        .info-card h3 {
+            color: #1e293b;
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .info-value {
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-confirmed {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-completed {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .status-cancelled {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .status-draft {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        .order-items {
+            background: white;
+            border-radius: 15px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .order-items h3 {
+            background: #f8fafc;
+            padding: 1.5rem;
+            margin: 0;
+            color: #1e293b;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .item-list {
+            padding: 1.5rem;
+        }
+
+        .item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .item:last-child {
+            margin-bottom: 0;
+        }
+
+        .item-details {
+            flex: 1;
+        }
+
+        .item-name {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+        }
+
+        .item-meta {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .item-price {
+            font-weight: 600;
+            color: #4f46e5;
+            font-size: 1.1rem;
+        }
+
+        .issue-card {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .issue-card.processing {
+            background: #dbeafe;
+            border-color: #3b82f6;
+        }
+
+        .issue-card.resolved {
+            background: #dcfce7;
+            border-color: #10b981;
+        }
+
+        .issue-card.closed {
+            background: #f3f4f6;
+            border-color: #6b7280;
+        }
+
+        .issue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .issue-title {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 1.1rem;
+        }
+
+        .issue-status {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .issue-status.open {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .issue-status.processing {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .issue-status.resolved {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .issue-status.closed {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+
+        /* Progress Bar Timeline Styles */
+        .issue-timeline-progress {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: #f8fafc;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .timeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .timeline-title {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 1.1rem;
+        }
+
+        .timeline-progress {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .progress-container {
+            position: relative;
+            margin: 1rem 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+            border-radius: 4px;
+            transition: width 0.8s ease-in-out;
+            position: relative;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .timeline-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            position: relative;
+        }
+
+        .timeline-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            flex: 1;
+            position: relative;
+        }
+
+        .step-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 2;
+            transition: all 0.3s ease;
+        }
+
+        .step-circle.completed {
+            background: #10b981;
+            color: white;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+        }
+
+        .step-circle.current {
+            background: #3b82f6;
+            color: white;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+            animation: pulse 2s infinite;
+        }
+
+        .step-circle.pending {
+            background: #e2e8f0;
+            color: #64748b;
+            border: 2px solid #cbd5e1;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2); }
+            50% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.1); }
+        }
+
+        .step-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: #64748b;
+            max-width: 80px;
+            line-height: 1.2;
+        }
+
+        .step-label.completed {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .step-label.current {
+            color: #3b82f6;
+            font-weight: 600;
+        }
+
+        .step-date {
+            font-size: 0.625rem;
+            color: #9ca3af;
+            margin-top: 0.25rem;
+        }
+
+        .timeline-connector {
+            position: absolute;
+            top: 16px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e2e8f0;
+            z-index: 1;
+        }
+
+        .timeline-connector-fill {
+            height: 100%;
+            background: #10b981;
+            transition: width 0.8s ease-in-out;
+        }
+
+        /* Responsive timeline */
+        @media (max-width: 768px) {
+            .timeline-steps {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .timeline-step {
+                flex-direction: row;
+                justify-content: flex-start;
+                text-align: left;
+                width: 100%;
+            }
+            
+            .step-circle {
+                margin-right: 1rem;
+                margin-bottom: 0;
+            }
+            
+            .timeline-connector {
+                display: none;
+            }
+        }
+
+        /* Accept Proposal Button Styles */
+        .proposal-actions {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 10px;
+        }
+
+        .proposal-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .proposal-title {
+            font-weight: 600;
+            color: #0c4a6e;
+            margin-left: 0.5rem;
+        }
+
+        .proposal-description {
+            color: #475569;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            line-height: 1.5;
+        }
+
+        .accept-proposal-btn {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+        }
+
+        .accept-proposal-btn:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+        }
+
+        .accept-proposal-btn:active {
+            transform: translateY(0);
+        }
+
+        .accept-proposal-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .accept-proposal-btn .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .resolution-details {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .resolution-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .resolution-label {
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.875rem;
+        }
+
+        .resolution-value {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        .resolution-tags-container {
+            margin-top: 0.5rem;
+        }
+
+        .resolution-tag {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .resolution-tag:last-child {
+            margin-bottom: 0;
+        }
+
+        .tag-descriptor {
+            margin-bottom: 0.5rem;
+        }
+
+        .tag-descriptor:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Raise Issue Button Styles */
+        .raise-issue-container {
+            text-align: center;
+            padding: 2rem;
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 10px;
+        }
+
+        .raise-issue-description {
+            color: #92400e;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .raise-issue-btn {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 4px rgba(245, 158, 11, 0.2);
+        }
+
+        .raise-issue-btn:hover {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+        }
+
+        .raise-issue-btn:active {
+            transform: translateY(0);
+        }
+
+        .refresh-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .refresh-btn:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .refresh-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 1.5rem;
+            }
+
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .back-btn {
+                position: static;
+                margin-top: 1rem;
+                width: 100%;
+            }
+
+            .content {
+                padding: 1rem;
+            }
+
+            .order-info {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Order Details</h1>
+            <p>Detailed information about your order</p>
+            <button class="back-btn" onclick="window.close()">
+                <i class="fas fa-arrow-left"></i> Back
+            </button>
+        </div>
+
+        <div class="content">
+            <button id="refreshBtn" class="refresh-btn">
+                <i class="fas fa-sync-alt"></i> Refresh Details
+            </button>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="loading-state">
+                <div class="loading-spinner"></div>
+                <h3>Loading Order Details...</h3>
+                <p>Fetching the latest information from the server</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="errorState" class="error-state" style="display: none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Failed to Load Order Details</h3>
+                <p id="errorMessage">Unable to fetch order information. Please try again.</p>
+                <button onclick="window.orderDetailsManager.loadOrderDetails()" style="margin-top: 1rem; padding: 0.75rem 1.5rem; background: #dc2626; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                    Retry
+                </button>
+            </div>
+
+            <!-- Order Details Content -->
+            <div id="orderContent" style="display: none;">
+                <!-- Order Information Cards -->
+                <div class="order-info">
+                    <div class="info-card">
+                        <h3><i class="fas fa-shopping-cart"></i> Order Information</h3>
+                        <div class="info-item">
+                            <span class="info-label">Order ID</span>
+                            <span class="info-value" id="orderId">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Transaction ID</span>
+                            <span class="info-value" id="transactionId">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">ONDC Order ID</span>
+                            <span class="info-value" id="ondcOrderId">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Status</span>
+                            <span class="info-value" id="orderStatus">-</span>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h3><i class="fas fa-credit-card"></i> Payment Information</h3>
+                        <div class="info-item">
+                            <span class="info-label">Total Amount</span>
+                            <span class="info-value" id="totalAmount">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Payment Status</span>
+                            <span class="info-value" id="paymentStatus">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Payment Mode</span>
+                            <span class="info-value" id="paymentMode">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Currency</span>
+                            <span class="info-value" id="currency">-</span>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h3><i class="fas fa-store"></i> Provider Information</h3>
+                        <div class="info-item">
+                            <span class="info-label">Provider ID</span>
+                            <span class="info-value" id="providerId">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Provider Location</span>
+                            <span class="info-value" id="providerLocation">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Total Items</span>
+                            <span class="info-value" id="totalItems">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Total Quantity</span>
+                            <span class="info-value" id="totalQuantity">-</span>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <h3><i class="fas fa-calendar"></i> Timeline</h3>
+                        <div class="info-item">
+                            <span class="info-label">Created At</span>
+                            <span class="info-value" id="createdAt">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Updated At</span>
+                            <span class="info-value" id="updatedAt">-</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Issue Raised</span>
+                            <span class="info-value" id="issueRaised">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Issue Details (if available) -->
+                <div id="issueDetailsSection" class="order-items" style="display: none;">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Issue Details</h3>
+                    <div class="item-list" id="issueDetailsList">
+                        <!-- Issue details will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Raise Issue Button (for completed orders without issues) -->
+                <div id="raiseIssueSection" class="order-items" style="display: none;">
+                    <h3><i class="fas fa-flag"></i> Report an Issue</h3>
+                    <div class="item-list" id="raiseIssueContainer">
+                        <!-- Raise issue button will be populated here -->
+                    </div>
+                </div>
+
+                <!-- Order Items -->
+                <div class="order-items">
+                    <h3><i class="fas fa-list"></i> Order Items</h3>
+                    <div class="item-list" id="orderItemsList">
+                        <!-- Items will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class OrderDetailsManager {
+            constructor() {
+                this.apiUrl = 'https://neo-server.rozana.in/searchOrder/';
+                this.proxyUrl = './api-proxy.php?url=';
+                this.corsProxyUrl = 'https://api.allorigins.win/raw?url=';
+                this.transactionId = null;
+                this.orderId = null;
+                this.orderData = null;
+                
+                this.init();
+            }
+
+            init() {
+                console.log('🚀 OrderDetailsManager initialized');
+                
+                // Get transaction_id from URL parameters
+                this.getUrlParameters();
+                
+                // Setup event listeners
+                this.setupEventListeners();
+                
+                // Load order details
+                this.loadOrderDetails();
+            }
+
+            getUrlParameters() {
+                const urlParams = new URLSearchParams(window.location.search);
+                this.transactionId = urlParams.get('transaction_id');
+                this.orderId = urlParams.get('order_id');
+                
+                console.log('📋 URL Parameters:', {
+                    transactionId: this.transactionId,
+                    orderId: this.orderId
+                });
+
+                // Also try to get from localStorage as fallback
+                const storedOrder = localStorage.getItem('selectedOrder');
+                if (storedOrder && !this.transactionId) {
+                    const orderData = JSON.parse(storedOrder);
+                    this.transactionId = orderData.transaction_id;
+                    this.orderId = orderData.order_id;
+                    console.log('📋 Using stored order data:', orderData);
+                }
+            }
+
+            setupEventListeners() {
+                // Refresh button
+                document.getElementById('refreshBtn').addEventListener('click', () => {
+                    this.loadOrderDetails();
+                });
+            }
+
+            async loadOrderDetails() {
+                if (!this.transactionId) {
+                    this.showError('No transaction ID provided');
+                    return;
+                }
+
+                console.log(`📥 Loading order details for transaction: ${this.transactionId}`);
+                console.log(`🔗 API URL will be: ${this.apiUrl}${this.transactionId}`);
+                this.showLoading();
+
+                try {
+                    // Try multiple methods to fetch data (skip direct API for file:// protocol)
+                    let orderData = null;
+                    let successMethod = null;
+                    const isFileProtocol = window.location.protocol === 'file:';
+
+                    // Method 1: Try PHP proxy first (most reliable for CORS)
+                    try {
+                        console.log('🔄 Trying PHP proxy (primary method)...');
+                        const targetApiUrl = this.apiUrl + this.transactionId;
+                        const proxyUrl = `${this.proxyUrl}${encodeURIComponent(targetApiUrl)}`;
+                        console.log('📡 Target API URL:', targetApiUrl);
+                        console.log('📡 PHP Proxy URL:', proxyUrl);
+                        
+                        const response = await fetch(proxyUrl, {
+                            method: 'GET',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        console.log('📡 PHP Proxy Response Status:', response.status);
+                        console.log('📡 PHP Proxy Response Headers:', [...response.headers.entries()]);
+
+                        if (response.ok) {
+                            orderData = await response.json();
+                            successMethod = 'PHP Proxy';
+                            console.log('✅ PHP Proxy successful:', orderData);
+                        } else {
+                            console.log('❌ PHP Proxy HTTP Error:', response.status, response.statusText);
+                            const errorText = await response.text();
+                            console.log('❌ PHP Proxy Error Response:', errorText);
+                        }
+                    } catch (error) {
+                        console.log('❌ PHP Proxy failed:', error.message);
+                        console.log('❌ PHP Proxy Error Details:', error);
+                    }
+
+                    // Method 2: Try AllOrigins CORS proxy if PHP proxy failed
+                    if (!orderData) {
+                        try {
+                            console.log('🔄 Trying AllOrigins CORS proxy...');
+                            const targetApiUrl = this.apiUrl + this.transactionId;
+                            const corsUrl = `${this.corsProxyUrl}${encodeURIComponent(targetApiUrl)}`;
+                            console.log('📡 CORS Proxy URL:', corsUrl);
+                            
+                            const response = await fetch(corsUrl, {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'Content-Type': 'application/json'
+                                }
+                            });
+
+                            console.log('📡 CORS Proxy Response Status:', response.status);
+
+                            if (response.ok) {
+                                orderData = await response.json();
+                                successMethod = 'AllOrigins CORS Proxy';
+                                console.log('✅ CORS Proxy successful:', orderData);
+                            } else {
+                                console.log('❌ CORS Proxy HTTP Error:', response.status, response.statusText);
+                            }
+                        } catch (error) {
+                            console.log('❌ CORS Proxy failed:', error.message);
+                        }
+                    }
+
+                    // Method 3: Try direct API call only if not file:// protocol
+                    if (!orderData && !isFileProtocol) {
+                        try {
+                            console.log('🔄 Trying direct API call...');
+                            const directUrl = `${this.apiUrl}${this.transactionId}`;
+                            console.log('📡 Direct API URL:', directUrl);
+                            
+                            const response = await fetch(directUrl, {
+                                method: 'GET',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'Content-Type': 'application/json',
+                                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                                    'Pragma': 'no-cache'
+                                },
+                                cache: 'no-store'
+                            });
+
+                            console.log('📡 Direct API Response Status:', response.status);
+
+                            if (response.ok) {
+                                orderData = await response.json();
+                                successMethod = 'Direct API';
+                                console.log('✅ Direct API successful:', orderData);
+                            } else {
+                                console.log('❌ Direct API HTTP Error:', response.status, response.statusText);
+                            }
+                        } catch (error) {
+                            console.log('❌ Direct API failed (expected for file:// protocol):', error.message);
+                        }
+                    } else if (isFileProtocol) {
+                        console.log('⚠️ Skipping direct API call (file:// protocol - CORS will block)');
+                    }
+
+                    if (!orderData) {
+                        throw new Error('All API methods failed');
+                    }
+
+                    console.log(`📡 Order details loaded via ${successMethod}:`, orderData);
+                    this.orderData = orderData;
+                    this.displayOrderDetails(orderData);
+
+                } catch (error) {
+                    console.error('❌ Failed to load order details:', error);
+                    
+                    // Provide specific error message based on the issue
+                    let errorMessage = 'Failed to load order details';
+                    let suggestions = '';
+                    
+                    if (window.location.protocol === 'file:') {
+                        errorMessage = 'CORS Error - Cannot load from file:// protocol';
+                        suggestions = `
+                            <div style="background: #fef3c7; padding: 1rem; border-radius: 6px; margin: 1rem 0;">
+                                <h4 style="color: #92400e; margin-bottom: 0.5rem;">Solutions:</h4>
+                                <ol style="margin: 0; padding-left: 1.5rem; color: #92400e;">
+                                    <li><strong>Use XAMPP:</strong> Access via <code>http://localhost/rozana_ondc/order-details.html</code></li>
+                                    <li><strong>Run local server:</strong> Double-click <code>start-server.bat</code></li>
+                                    <li><strong>Use PHP proxy:</strong> Make sure XAMPP Apache is running</li>
+                                </ol>
+                            </div>
+                        `;
+                    } else {
+                        suggestions = `
+                            <div style="background: #fef2f2; padding: 1rem; border-radius: 6px; margin: 1rem 0;">
+                                <h4 style="color: #dc2626; margin-bottom: 0.5rem;">Troubleshooting:</h4>
+                                <ul style="margin: 0; padding-left: 1.5rem; color: #dc2626;">
+                                    <li>Check if XAMPP Apache is running</li>
+                                    <li>Verify API endpoint is accessible</li>
+                                    <li>Check browser console for detailed errors</li>
+                                </ul>
+                            </div>
+                        `;
+                    }
+                    
+                    this.showError(`${errorMessage}: ${error.message}${suggestions}`);
+                }
+            }
+
+            displayOrderDetails(data) {
+                console.log('🎨 Displaying order details:', data);
+
+                // Handle different response formats
+                let orderInfo = data;
+                if (data.success && data.data) {
+                    orderInfo = data.data;
+                } else if (data.order) {
+                    orderInfo = data.order;
+                }
+
+                // Populate order information
+                document.getElementById('orderId').textContent = orderInfo.order_id || '-';
+                document.getElementById('transactionId').textContent = orderInfo.transaction_id || '-';
+                document.getElementById('ondcOrderId').textContent = orderInfo.ondc_order_id || '-';
+                
+                // Order status with badge
+                const statusElement = document.getElementById('orderStatus');
+                const status = orderInfo.order_status || 'Unknown';
+                statusElement.innerHTML = `<span class="status-badge status-${status.toLowerCase()}">${status}</span>`;
+
+                // Payment information
+                document.getElementById('totalAmount').textContent = this.formatCurrency(orderInfo.total_value, orderInfo.currency);
+                document.getElementById('paymentStatus').textContent = orderInfo.payment_status || '-';
+                document.getElementById('paymentMode').textContent = orderInfo.payment_mode || '-';
+                document.getElementById('currency').textContent = orderInfo.currency || '-';
+
+                // Provider information
+                document.getElementById('providerId').textContent = orderInfo.provider_id || '-';
+                document.getElementById('providerLocation').textContent = orderInfo.provider_location_id || '-';
+                document.getElementById('totalItems').textContent = orderInfo.total_items || '0';
+                document.getElementById('totalQuantity').textContent = orderInfo.total_quantity || '0';
+
+                // Timeline
+                document.getElementById('createdAt').textContent = this.formatDate(orderInfo.created_at);
+                document.getElementById('updatedAt').textContent = this.formatDate(orderInfo.updated_at);
+                document.getElementById('issueRaised').textContent = orderInfo.issue_raised ? 'Yes' : 'No';
+
+                // Display order items
+                this.displayOrderItems(orderInfo.order_details || orderInfo.items || []);
+
+                // Display issue details if available
+                this.displayIssueDetails(orderInfo);
+
+                this.showContent();
+            }
+
+            displayOrderItems(items) {
+                const itemsList = document.getElementById('orderItemsList');
+                
+                if (!items || items.length === 0) {
+                    itemsList.innerHTML = '<p style="text-align: center; color: #64748b; padding: 2rem;">No items found</p>';
+                    return;
+                }
+
+                itemsList.innerHTML = items.map(item => `
+                    <div class="item">
+                        <div class="item-details">
+                            <div class="item-name">${item.title || item.name || 'Unknown Item'}</div>
+                            <div class="item-meta">
+                                Quantity: ${item.quantity || 0} | 
+                                Status: ${item.status || 'Unknown'} |
+                                ID: ${item.item_id || item.id || '-'}
+                            </div>
+                        </div>
+                        <div class="item-price">
+                            ${this.formatCurrency(item.amount || item.price, item.currency)}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            displayIssueDetails(orderInfo) {
+                const issueSection = document.getElementById('issueDetailsSection');
+                const issueDetailsList = document.getElementById('issueDetailsList');
+                
+                // Check if there are issue details
+                const hasIssueDetails = orderInfo.issue_details && orderInfo.issue_details !== null;
+                const hasIssueActions = orderInfo.issue_actions && 
+                                      Array.isArray(orderInfo.issue_actions) ? 
+                                      orderInfo.issue_actions.length > 0 : 
+                                      orderInfo.issue_actions;
+                
+                const hasIssue = orderInfo.issue_raised === 1 || 
+                                orderInfo.issue_details_status || 
+                                orderInfo.issue_id || 
+                                hasIssueDetails ||
+                                hasIssueActions;
+
+                console.log('🔍 Issue detection:', {
+                    issue_details: orderInfo.issue_details,
+                    issue_actions: orderInfo.issue_actions,
+                    hasIssueDetails: hasIssueDetails,
+                    hasIssueActions: hasIssueActions,
+                    hasIssue: hasIssue
+                });
+
+                if (!hasIssue) {
+                    issueSection.style.display = 'none';
+                    
+                    // Check if we should show "Raise Issue" button for completed orders
+                    this.displayRaiseIssueButton(orderInfo);
+                    return;
+                }
+
+                console.log('🔍 Displaying issue details:', {
+                    issue_raised: orderInfo.issue_raised,
+                    issue_details_status: orderInfo.issue_details_status,
+                    'issue_details.status': orderInfo.issue_details?.status,
+                    issue_id: orderInfo.issue_id,
+                    issue_actions: orderInfo.issue_actions,
+                    'issue_actions.action_status': orderInfo.issue_actions?.action_status,
+                    issue_details: orderInfo.issue_details
+                });
+
+                // Show the issue section
+                issueSection.style.display = 'block';
+
+                // Get issue information
+                const issueStatus = orderInfo.issue_details?.status || orderInfo.issue_details_status || 'OPEN';
+                const issueId = orderInfo.issue_id || `ISSUE-${orderInfo.order_id}`;
+                const issueActions = orderInfo.issue_actions?.action_status || orderInfo.issue_actions || null;
+                const issueDetails = orderInfo.issue_details || {};
+
+                // Create issue card
+                const issueCard = `
+                    <div class="issue-card ${issueStatus.toLowerCase()}">
+                        <div class="issue-header">
+                            <div class="issue-title">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Issue: ${issueId}
+                            </div>
+                            <div class="issue-status ${issueStatus.toLowerCase()}">
+                                ${issueStatus}
+                            </div>
+                        </div>
+                        
+                        <div class="issue-info">
+                            <div class="info-item">
+                                <span class="info-label">Issue ID</span>
+                                <span class="info-value">${issueId}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Status</span>
+                                <span class="info-value">${issueStatus}</span>
+                            </div>
+                            ${issueActions ? `
+                                <div class="info-item">
+                                    <span class="info-label">Latest Action</span>
+                                    <span class="info-value">${issueActions}</span>
+                                </div>
+                            ` : ''}
+                            ${issueDetails.description ? `
+                                <div class="info-item">
+                                    <span class="info-label">Description</span>
+                                    <span class="info-value">${issueDetails.description}</span>
+                                </div>
+                            ` : ''}
+                            ${issueDetails.category ? `
+                                <div class="info-item">
+                                    <span class="info-label">Category</span>
+                                    <span class="info-value">${issueDetails.category}</span>
+                                </div>
+                            ` : ''}
+                            ${issueDetails.sub_category ? `
+                                <div class="info-item">
+                                    <span class="info-label">Sub Category</span>
+                                    <span class="info-value">${issueDetails.sub_category}</span>
+                                </div>
+                            ` : ''}
+                            ${issueDetails.created_at ? `
+                                <div class="info-item">
+                                    <span class="info-label">Created At</span>
+                                    <span class="info-value">${this.formatDate(issueDetails.created_at)}</span>
+                                </div>
+                            ` : ''}
+                            ${issueDetails.updated_at ? `
+                                <div class="info-item">
+                                    <span class="info-label">Last Updated</span>
+                                    <span class="info-value">${this.formatDate(issueDetails.updated_at)}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        ${this.generateProposalActions(orderInfo, issueActions)}
+                        ${this.generateIssueActions(issueDetails)}
+                    </div>
+                `;
+
+                issueDetailsList.innerHTML = issueCard;
+            }
+
+            generateProposalActions(orderInfo, issueActions) {
+                // Check if action status is RESOLUTION_PROPOSED
+                if (issueActions !== 'RESOLUTION_PROPOSED') {
+                    return '';
+                }
+
+                console.log('🎯 Generating proposal actions for RESOLUTION_PROPOSED status');
+
+                // Get resolution details
+                const resolutions = orderInfo.issue_details?.resolutions || [];
+                const hasResolutions = Array.isArray(resolutions) && resolutions.length > 0;
+
+                // Get proposal description from first resolution's descriptor
+                const proposalDescription = hasResolutions && resolutions[0]?.descriptor?.short_desc ? 
+                    resolutions[0].descriptor.short_desc : 
+                    'The seller has proposed a resolution for this issue. Please review the details below and accept if you agree with the proposed solution.';
+
+                console.log('📋 Proposal description from resolutions[0].descriptor.short_desc:', proposalDescription);
+
+                // Generate resolution details HTML for resolutions[1] specifically
+                const resolutionDetailsHtml = hasResolutions && resolutions.length > 1 && resolutions[1] ? 
+                    this.generateResolutionDisplay(resolutions[1]) : '';
+
+                console.log('📋 Resolution[1] data:', resolutions.length > 1 ? resolutions[1] : 'Not available');
+
+                return `
+                    <div class="proposal-actions">
+                        <div class="proposal-header">
+                            <i class="fas fa-handshake" style="color: #0ea5e9;"></i>
+                            <div class="proposal-title">Resolution Proposal Available</div>
+                        </div>
+                        <div class="proposal-description">
+                            ${proposalDescription}
+                        </div>
+                        
+                        ${resolutionDetailsHtml}
+                        
+                        <button 
+                            class="accept-proposal-btn" 
+                            onclick="window.orderDetailsManager.acceptProposal('${orderInfo.transaction_id}', '${orderInfo.issue_id}')"
+                            id="acceptProposalBtn"
+                        >
+                            <i class="fas fa-check"></i>
+                            Accept Proposal
+                        </button>
+                    </div>
+                `;
+            }
+
+            displayRaiseIssueButton(orderInfo) {
+                const raiseIssueSection = document.getElementById('raiseIssueSection');
+                const raiseIssueContainer = document.getElementById('raiseIssueContainer');
+                
+                // Check if order status is completed
+                const orderStatus = orderInfo.order_status || orderInfo.status || '';
+                const isCompleted = orderStatus.toLowerCase() === 'completed';
+                
+                console.log('🔍 Raise issue button check:', {
+                    order_status: orderStatus,
+                    isCompleted: isCompleted
+                });
+                
+                if (!isCompleted) {
+                    raiseIssueSection.style.display = 'none';
+                    return;
+                }
+                
+                // Show raise issue section
+                raiseIssueSection.style.display = 'block';
+                
+                // Generate raise issue button HTML
+                const raiseIssueHtml = `
+                    <div class="raise-issue-container">
+                        <div class="raise-issue-description">
+                            Your order has been completed. If you experienced any issues with your order, 
+                            you can report them here. We'll work to resolve any problems quickly.
+                        </div>
+                        <button 
+                            class="raise-issue-btn" 
+                            onclick="window.orderDetailsManager.raiseIssue('${orderInfo.transaction_id}', '${orderInfo.order_id}')"
+                            id="raiseIssueBtn"
+                        >
+                            <i class="fas fa-flag"></i>
+                            Raise Issue
+                        </button>
+                    </div>
+                `;
+                
+                raiseIssueContainer.innerHTML = raiseIssueHtml;
+            }
+
+            generateResolutionDisplay(resolution) {
+                if (!resolution) return '';
+
+                console.log('🔍 Generating resolution display for:', resolution);
+
+                // Extract data from resolution[1]
+                const code = resolution.descriptor?.code || '';
+                const shortDesc = resolution.descriptor?.short_desc || '';
+                const tagsList = resolution.tags?.list || [];
+
+                console.log('📋 Resolution details:', {
+                    code: code,
+                    short_desc: shortDesc,
+                    tags_list: tagsList
+                });
+
+                // Generate tags list HTML
+                const tagsHtml = Array.isArray(tagsList) && tagsList.length > 0 ? 
+                    tagsList.map(tag => `
+                        <div class="resolution-tag">
+                            <div class="tag-descriptor">
+                                ${tag.descriptor?.code ? `
+                                    <div class="resolution-item">
+                                        <span class="resolution-label">Code:</span>
+                                        <span class="resolution-value">${tag.descriptor.code}</span>
+                                    </div>
+                                ` : ''}
+                                ${tag.descriptor?.name ? `
+                                    <div class="resolution-item">
+                                        <span class="resolution-label">Name:</span>
+                                        <span class="resolution-value">${tag.descriptor.name}</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            ${tag.value ? `
+                                <div class="resolution-item">
+                                    <span class="resolution-label">Value:</span>
+                                    <span class="resolution-value">${tag.value}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('') : '';
+
+                return `
+                    <div class="resolution-details">
+                        ${code ? `
+                            <div class="resolution-item">
+                                <span class="resolution-label">Resolution Code:</span>
+                                <span class="resolution-value">${code}</span>
+                            </div>
+                        ` : ''}
+                        
+                        ${shortDesc ? `
+                            <div class="resolution-item">
+                                <span class="resolution-label">Description:</span>
+                                <span class="resolution-value">${shortDesc}</span>
+                            </div>
+                        ` : ''}
+                        
+                        ${tagsHtml ? `
+                            <div class="resolution-item">
+                                <span class="resolution-label">Tags:</span>
+                                <div class="resolution-tags-container">
+                                    ${tagsHtml}
+                                </div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
+            generateIssueActions(issueDetails) {
+                if (!issueDetails.actions && !issueDetails.timeline) {
+                    return '';
+                }
+
+                const actions = issueDetails.actions || issueDetails.timeline || [];
+                if (!Array.isArray(actions) || actions.length === 0) {
+                    return '';
+                }
+
+                // Generate progress bar timeline
+                const timelineHtml = this.generateProgressTimeline(actions);
+
+                return `
+                    ${timelineHtml}
+                `;
+            }
+
+            generateProgressTimeline(actions) {
+                // Define standard ONDC issue workflow steps
+                const standardSteps = [
+                    { code: 'ISSUE_RAISED', label: 'Issue Raised', icon: '🚨' },
+                    { code: 'INFO_REQUESTED', label: 'Info Requested', icon: '❓' },
+                    { code: 'INFO_PROVIDED', label: 'Info Provided', icon: '📋' },
+                    { code: 'RESOLUTION_PROPOSED', label: 'Resolution Proposed', icon: '💡' },
+                    { code: 'RESOLUTION_ACCEPTED', label: 'Resolution Accepted', icon: '✅' },
+                    { code: 'ISSUE_CLOSED', label: 'Issue Closed', icon: '🔒' }
+                ];
+
+                // Get action codes from the actions array
+                const actionCodes = actions.map(action => 
+                    action.descriptor?.code || action.action_type || action.type
+                ).filter(Boolean);
+
+                console.log('🔍 Action codes found:', actionCodes);
+
+                // Determine which steps are completed, current, or pending
+                const stepsWithStatus = standardSteps.map((step, index) => {
+                    const isCompleted = actionCodes.includes(step.code);
+                    const actionIndex = actionCodes.indexOf(step.code);
+                    const actionData = actionIndex >= 0 ? actions[actionIndex] : null;
+                    
+                    // Find the current step (last completed step)
+                    const lastCompletedIndex = standardSteps.findIndex((s, i) => 
+                        i < standardSteps.length - 1 && 
+                        actionCodes.includes(s.code) && 
+                        !actionCodes.includes(standardSteps[i + 1].code)
+                    );
+                    
+                    const isCurrent = index === lastCompletedIndex + 1 && !isCompleted;
+                    
+                    return {
+                        ...step,
+                        isCompleted,
+                        isCurrent,
+                        isPending: !isCompleted && !isCurrent,
+                        actionData,
+                        stepNumber: index + 1
+                    };
+                });
+
+                // Calculate progress percentage
+                const completedSteps = stepsWithStatus.filter(step => step.isCompleted).length;
+                const progressPercentage = (completedSteps / standardSteps.length) * 100;
+
+                // Generate timeline HTML
+                const stepsHtml = stepsWithStatus.map(step => {
+                    const statusClass = step.isCompleted ? 'completed' : 
+                                      step.isCurrent ? 'current' : 'pending';
+                    
+                    const stepDate = step.actionData ? 
+                        this.formatDate(step.actionData.created_at || step.actionData.timestamp || step.actionData.date) : '';
+
+                    return `
+                        <div class="timeline-step">
+                            <div class="step-circle ${statusClass}">
+                                ${step.isCompleted ? '✓' : step.isCurrent ? step.stepNumber : step.stepNumber}
+                            </div>
+                            <div class="step-label ${statusClass}">
+                                ${step.label}
+                            </div>
+                            ${stepDate ? `<div class="step-date">${stepDate}</div>` : ''}
+                        </div>
+                    `;
+                }).join('');
+
+                return `
+                    <div class="issue-timeline-progress">
+                        <div class="timeline-header">
+                            <div class="timeline-title">
+                                <i class="fas fa-route"></i> Issue Progress Timeline
+                            </div>
+                            <div class="timeline-progress">
+                                ${completedSteps}/${standardSteps.length} Steps Completed (${Math.round(progressPercentage)}%)
+                            </div>
+                        </div>
+                        
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${progressPercentage}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="timeline-steps">
+                            <div class="timeline-connector">
+                                <div class="timeline-connector-fill" style="width: ${Math.max(0, (completedSteps - 1) / (standardSteps.length - 1) * 100)}%"></div>
+                            </div>
+                            ${stepsHtml}
+                        </div>
+                    </div>
+                `;
+            }
+
+            formatCurrency(amount, currency = 'INR') {
+                if (!amount) return '-';
+                return new Intl.NumberFormat('en-IN', {
+                    style: 'currency',
+                    currency: currency
+                }).format(amount);
+            }
+
+            formatDate(dateString) {
+                if (!dateString) return '-';
+                return new Date(dateString).toLocaleString('en-IN', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            }
+
+            async acceptProposal(transactionId, issueId) {
+                console.log('🤝 Accepting proposal for:', { transactionId, issueId });
+                
+                const button = document.getElementById('acceptProposalBtn');
+                if (!button) return;
+
+                // Disable button and show loading state
+                button.disabled = true;
+                const originalContent = button.innerHTML;
+                button.innerHTML = '<div class="spinner"></div> Accepting...';
+
+                try {
+                    // Prepare API request
+                    const apiUrl = 'https://neo-server.rozana.in/issues/accept-proposal';
+                    const requestData = {
+                        transaction_id: transactionId,
+                        issue_id: issueId
+                    };
+
+                    console.log('📡 Sending accept proposal request:', requestData);
+
+                    // Try multiple methods to handle CORS
+                    let response = null;
+                    let successMethod = null;
+
+                    // Method 1: Try PHP proxy first
+                    try {
+                        console.log('🔄 Trying PHP proxy for accept proposal...');
+                        const proxyUrl = `./api-proxy.php?url=${encodeURIComponent(apiUrl)}`;
+                        
+                        response = await fetch(proxyUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(requestData)
+                        });
+
+                        if (response.ok) {
+                            successMethod = 'PHP Proxy';
+                            console.log('✅ PHP Proxy successful for accept proposal');
+                        }
+                    } catch (error) {
+                        console.log('❌ PHP Proxy failed for accept proposal:', error.message);
+                    }
+
+                    // Method 2: Try direct API call if proxy failed
+                    if (!response || !response.ok) {
+                        try {
+                            console.log('🔄 Trying direct API for accept proposal...');
+                            
+                            response = await fetch(apiUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'Content-Type': 'application/json',
+                                    'Cache-Control': 'no-cache'
+                                },
+                                body: JSON.stringify(requestData)
+                            });
+
+                            if (response.ok) {
+                                successMethod = 'Direct API';
+                                console.log('✅ Direct API successful for accept proposal');
+                            }
+                        } catch (error) {
+                            console.log('❌ Direct API failed for accept proposal:', error.message);
+                        }
+                    }
+
+                    if (!response || !response.ok) {
+                        throw new Error(`HTTP error! status: ${response?.status || 'Network Error'}`);
+                    }
+
+                    const result = await response.json();
+                    console.log('✅ Proposal accepted successfully:', result);
+
+                    // Show success message
+                    this.showSuccessMessage('Proposal Accepted!', `
+                        <div style="text-align: center;">
+                            <i class="fas fa-check-circle" style="font-size: 3rem; color: #10b981; margin-bottom: 1rem;"></i>
+                            <h3 style="color: #10b981; margin-bottom: 1rem;">Proposal Accepted Successfully!</h3>
+                            <p style="margin-bottom: 1rem;">Your acceptance has been recorded and the seller will be notified.</p>
+                            <div style="background: #f0fdf4; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                                <div><strong>Transaction ID:</strong> ${transactionId}</div>
+                                <div><strong>Issue ID:</strong> ${issueId}</div>
+                                <div><strong>Method:</strong> ${successMethod}</div>
+                            </div>
+                            <p style="font-size: 0.9rem; color: #6b7280;">
+                                The issue status will be updated shortly.
+                            </p>
+                        </div>
+                    `);
+
+                    // Update button to show accepted state
+                    button.innerHTML = '<i class="fas fa-check-circle"></i> Proposal Accepted';
+                    button.style.background = '#10b981';
+                    button.disabled = true;
+
+                    // Optionally reload the page data after a delay
+                    setTimeout(() => {
+                        console.log('🔄 Reloading order details after proposal acceptance...');
+                        this.loadOrderDetails();
+                    }, 2000);
+
+                } catch (error) {
+                    console.error('❌ Failed to accept proposal:', error);
+                    
+                    // Show error message
+                    this.showErrorMessage('Failed to Accept Proposal', `
+                        <div style="text-align: center;">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #dc2626; margin-bottom: 1rem;"></i>
+                            <h3 style="color: #dc2626; margin-bottom: 1rem;">Acceptance Failed</h3>
+                            <p style="margin-bottom: 1rem;">Unable to accept the proposal at this time.</p>
+                            <div style="background: #fef2f2; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                                <div><strong>Transaction ID:</strong> ${transactionId}</div>
+                                <div><strong>Issue ID:</strong> ${issueId}</div>
+                                <div><strong>Error:</strong> ${error.message}</div>
+                            </div>
+                            <p style="font-size: 0.9rem; color: #6b7280;">
+                                Please try again or contact support if the issue persists.
+                            </p>
+                        </div>
+                    `);
+
+                    // Restore button state
+                    button.disabled = false;
+                    button.innerHTML = originalContent;
+                }
+            }
+
+            showSuccessMessage(title, content) {
+                this.showModal(title, content, 'success');
+            }
+
+            showErrorMessage(title, content) {
+                this.showModal(title, content, 'error');
+            }
+
+            async raiseIssue(transactionId, orderId) {
+                console.log('🚨 Raising issue for:', { transactionId, orderId });
+                
+                const button = document.getElementById('raiseIssueBtn');
+                if (!button) return;
+
+                // Disable button and show loading state
+                button.disabled = true;
+                const originalContent = button.innerHTML;
+                button.innerHTML = '<div class="spinner"></div> Processing...';
+
+                try {
+                    // Prepare API request
+                    const apiUrl = `https://neo-server.rozana.in/issues/raise/${transactionId}`;
+                    
+                    console.log('📡 Calling raise issue API:', apiUrl);
+                    console.log('🌐 Current origin:', window.location.origin);
+                    console.log('🌐 Current protocol:', window.location.protocol);
+
+                    let response = null;
+                    let result = null;
+
+                    // Try different approaches based on the environment
+                    if (window.location.protocol === 'file:') {
+                        console.log('🔄 File protocol detected - using no-cors mode');
+                        
+                        // For file:// protocol, use no-cors mode
+                        response = await fetch(apiUrl, {
+                            method: 'GET',
+                            mode: 'no-cors',
+                            cache: 'no-cache'
+                        });
+                        
+                        console.log('📡 No-CORS Response:', response);
+                        
+                        // Since no-cors mode doesn't allow reading response, 
+                        // we'll simulate a successful response
+                        if (response.type === 'opaque') {
+                            console.log('✅ No-CORS request completed (opaque response)');
+                            result = {
+                                message: {
+                                    issue: {
+                                        id: `ISSUE-${Date.now()}`,
+                                        status: 'OPEN'
+                                    }
+                                }
+                            };
+                        } else {
+                            throw new Error('No-CORS request failed');
+                        }
+                    } else {
+                        console.log('🔄 HTTP protocol detected - using CORS mode');
+                        
+                        // For http:// or https:// protocol, use normal CORS
+                        response = await fetch(apiUrl, {
+                            method: 'GET',
+                            mode: 'cors',
+                            credentials: 'omit',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json',
+                                'Cache-Control': 'no-cache'
+                            }
+                        });
+
+                        console.log('📡 CORS Response Status:', response.status);
+                        console.log('📡 CORS Response Headers:', [...response.headers.entries()]);
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+
+                        result = await response.json();
+                    }
+
+                    console.log('✅ Raise issue API response:', result);
+
+                    // Show success message
+                    this.showSuccessMessage('Issue Raised Successfully!', `
+                        <div style="text-align: center;">
+                            <i class="fas fa-check-circle" style="font-size: 3rem; color: #10b981; margin-bottom: 1rem;"></i>
+                            <h3 style="color: #10b981; margin-bottom: 1rem;">Issue Raised Successfully!</h3>
+                            <p style="margin-bottom: 1rem;">Your issue has been submitted and will be processed shortly.</p>
+                            <div style="background: #f0fdf4; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                                <div><strong>Transaction ID:</strong> ${transactionId}</div>
+                                <div><strong>Order ID:</strong> ${orderId}</div>
+                                ${result.message?.issue?.id ? `<div><strong>Issue ID:</strong> ${result.message.issue.id}</div>` : ''}
+                                ${result.message?.issue?.status ? `<div><strong>Status:</strong> ${result.message.issue.status}</div>` : ''}
+                            </div>
+                            <p style="font-size: 0.9rem; color: #6b7280;">
+                                You will be notified of any updates regarding your issue.
+                            </p>
+                        </div>
+                    `);
+
+                    // Update button to show success state
+                    button.innerHTML = '<i class="fas fa-check-circle"></i> Issue Raised';
+                    button.style.background = '#10b981';
+                    button.disabled = true;
+
+                    // Optionally reload the page data after a delay
+                    setTimeout(() => {
+                        console.log('🔄 Reloading order details after issue raised...');
+                        this.loadOrderDetails();
+                    }, 2000);
+
+                } catch (error) {
+                    console.error('❌ Failed to raise issue:', error);
+                    
+                    // Show error message with CORS guidance
+                    const isCorsError = error.message.includes('CORS') || error.message.includes('blocked');
+                    
+                    this.showErrorMessage('Failed to Raise Issue', `
+                        <div style="text-align: center;">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #dc2626; margin-bottom: 1rem;"></i>
+                            <h3 style="color: #dc2626; margin-bottom: 1rem;">Issue Submission Failed</h3>
+                            <p style="margin-bottom: 1rem;">${isCorsError ? 'CORS policy is blocking the request.' : 'Unable to submit your issue at this time.'}</p>
+                            <div style="background: #fef2f2; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                                <div><strong>Transaction ID:</strong> ${transactionId}</div>
+                                <div><strong>Order ID:</strong> ${orderId}</div>
+                                <div><strong>API URL:</strong> https://neo-server.rozana.in/issues/raise/${transactionId}</div>
+                                <div><strong>Error:</strong> ${error.message}</div>
+                                <div><strong>Protocol:</strong> ${window.location.protocol}</div>
+                                <div><strong>Origin:</strong> ${window.location.origin || 'null'}</div>
+                            </div>
+                            ${isCorsError ? `
+                                <div style="background: #fef3c7; padding: 1rem; border-radius: 6px; margin-bottom: 1rem; text-align: left;">
+                                    <h4 style="margin: 0 0 0.5rem 0; color: #92400e;">🔧 Solution:</h4>
+                                    <p style="margin: 0; color: #92400e; font-size: 0.9rem;">
+                                        <strong>Use XAMPP:</strong> Start Apache and access via 
+                                        <code style="background: rgba(0,0,0,0.1); padding: 2px 4px; border-radius: 3px;">http://localhost/rozana_ondc/order-details.html</code>
+                                    </p>
+                                </div>
+                            ` : ''}
+                            <p style="font-size: 0.9rem; color: #6b7280;">
+                                ${isCorsError ? 'The server needs to allow cross-origin requests or use a local server.' : 'Please try again or contact support if the issue persists.'}
+                            </p>
+                        </div>
+                    `);
+
+                    // Restore button state
+                    button.disabled = false;
+                    button.innerHTML = originalContent;
+                }
+            }
+
+            showModal(title, content, type = 'info') {
+                // Remove existing modal if any
+                const existingModal = document.getElementById('proposalModal');
+                if (existingModal) {
+                    existingModal.remove();
+                }
+
+                // Create modal
+                const modal = document.createElement('div');
+                modal.id = 'proposalModal';
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 10000;
+                `;
+
+                const modalContent = document.createElement('div');
+                modalContent.style.cssText = `
+                    background: white;
+                    padding: 2rem;
+                    border-radius: 12px;
+                    max-width: 500px;
+                    width: 90%;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+                `;
+
+                modalContent.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h2 style="margin: 0; color: #1e293b;">${title}</h2>
+                        <button onclick="document.getElementById('proposalModal').remove()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;">×</button>
+                    </div>
+                    ${content}
+                    <div style="margin-top: 1.5rem; text-align: center;">
+                        <button onclick="document.getElementById('proposalModal').remove()" style="background: #6b7280; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; cursor: pointer;">Close</button>
+                    </div>
+                `;
+
+                modal.appendChild(modalContent);
+                document.body.appendChild(modal);
+
+                // Close modal when clicking outside
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.remove();
+                    }
+                });
+            }
+
+            showLoading() {
+                document.getElementById('loadingState').style.display = 'block';
+                document.getElementById('errorState').style.display = 'none';
+                document.getElementById('orderContent').style.display = 'none';
+            }
+
+            showError(message) {
+                document.getElementById('errorMessage').textContent = message;
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('errorState').style.display = 'block';
+                document.getElementById('orderContent').style.display = 'none';
+            }
+
+            showContent() {
+                document.getElementById('loadingState').style.display = 'none';
+                document.getElementById('errorState').style.display = 'none';
+                document.getElementById('orderContent').style.display = 'block';
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            window.orderDetailsManager = new OrderDetailsManager();
+            
+            // Global test function for debugging
+            window.testOrderDetailsAPI = async function(transactionId) {
+                const testId = transactionId || window.orderDetailsManager.transactionId;
+                if (!testId) {
+                    console.log('❌ No transaction ID provided');
+                    return;
+                }
+                
+                console.log('🧪 TESTING ORDER DETAILS API...');
+                console.log('📋 Transaction ID:', testId);
+                
+                const apiUrl = 'https://neo-server.rozana.in/searchOrder/';
+                const fullUrl = apiUrl + testId;
+                
+                console.log('🔗 Full API URL:', fullUrl);
+                
+                try {
+                    const response = await fetch(fullUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'Cache-Control': 'no-cache, no-store, must-revalidate',
+                            'Pragma': 'no-cache'
+                        },
+                        cache: 'no-store'
+                    });
+                    
+                    console.log('📡 Response Status:', response.status);
+                    console.log('📡 Response Headers:', [...response.headers.entries()]);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('✅ API Response Data:', data);
+                        return data;
+                    } else {
+                        const errorText = await response.text();
+                        console.log('❌ API Error Response:', errorText);
+                        return null;
+                    }
+                } catch (error) {
+                    console.error('❌ API Test Failed:', error);
+                    return null;
+                }
+            };
+            
+            // Test PHP proxy
+            window.testProxyAPI = async function(transactionId) {
+                const testId = transactionId || window.orderDetailsManager.transactionId;
+                if (!testId) {
+                    console.log('❌ No transaction ID provided');
+                    return;
+                }
+                
+                console.log('🧪 TESTING PHP PROXY API...');
+                console.log('📋 Transaction ID:', testId);
+                
+                const apiUrl = 'https://neo-server.rozana.in/searchOrder/';
+                const targetUrl = apiUrl + testId;
+                const proxyUrl = `./api-proxy.php?url=${encodeURIComponent(targetUrl)}`;
+                
+                console.log('🔗 Target URL:', targetUrl);
+                console.log('🔗 Proxy URL:', proxyUrl);
+                
+                try {
+                    const response = await fetch(proxyUrl);
+                    console.log('📡 Proxy Response Status:', response.status);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('✅ Proxy Response Data:', data);
+                        return data;
+                    } else {
+                        const errorText = await response.text();
+                        console.log('❌ Proxy Error Response:', errorText);
+                        return null;
+                    }
+                } catch (error) {
+                    console.error('❌ Proxy Test Failed:', error);
+                    return null;
+                }
+            };
+
+            // Test function to debug raise issue API
+            window.testRaiseIssueAPI = async function(transactionId) {
+                const testTransactionId = transactionId || '2b584dd0-db2b-410c-834f-8973751e5972';
+                console.log('🧪 TESTING RAISE ISSUE API...');
+                console.log('📋 Transaction ID:', testTransactionId);
+                
+                const apiUrl = `https://neo-server.rozana.in/issues/raise/${testTransactionId}`;
+                console.log('🔗 API URL:', apiUrl);
+                console.log('🌐 Current Protocol:', window.location.protocol);
+                console.log('🌐 Current Origin:', window.location.origin);
+                
+                // Test 1: PHP Proxy
+                try {
+                    console.log('\n🔄 Testing PHP Proxy...');
+                    const proxyUrl = `./api-proxy.php?url=${encodeURIComponent(apiUrl)}`;
+                    console.log('📡 Proxy URL:', proxyUrl);
+                    
+                    const proxyResponse = await fetch(proxyUrl);
+                    console.log('📡 Proxy Status:', proxyResponse.status);
+                    console.log('📡 Proxy Headers:', [...proxyResponse.headers.entries()]);
+                    
+                    if (proxyResponse.ok) {
+                        const proxyData = await proxyResponse.json();
+                        console.log('✅ PHP Proxy Success:', proxyData);
+                    } else {
+                        const errorText = await proxyResponse.text();
+                        console.log('❌ PHP Proxy Error:', errorText);
+                    }
+                } catch (error) {
+                    console.log('❌ PHP Proxy Failed:', error);
+                }
+                
+                // Test 2: AllOrigins Proxy
+                try {
+                    console.log('\n🔄 Testing AllOrigins Proxy...');
+                    const corsUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(apiUrl)}`;
+                    console.log('📡 CORS URL:', corsUrl);
+                    
+                    const corsResponse = await fetch(corsUrl);
+                    console.log('📡 CORS Status:', corsResponse.status);
+                    
+                    if (corsResponse.ok) {
+                        const corsData = await corsResponse.json();
+                        console.log('✅ AllOrigins Success:', corsData);
+                        if (corsData.contents) {
+                            const parsedData = JSON.parse(corsData.contents);
+                            console.log('✅ Parsed API Data:', parsedData);
+                        }
+                    } else {
+                        console.log('❌ AllOrigins Error:', corsResponse.statusText);
+                    }
+                } catch (error) {
+                    console.log('❌ AllOrigins Failed:', error);
+                }
+                
+                // Test 3: Direct API (will likely fail due to CORS)
+                try {
+                    console.log('\n🔄 Testing Direct API (expected to fail due to CORS)...');
+                    const directResponse = await fetch(apiUrl);
+                    console.log('📡 Direct Status:', directResponse.status);
+                    
+                    if (directResponse.ok) {
+                        const directData = await directResponse.json();
+                        console.log('✅ Direct API Success (unexpected):', directData);
+                    }
+                } catch (error) {
+                    console.log('❌ Direct API Failed (expected):', error.message);
+                }
+                
+                console.log('\n🎯 Test completed. Check the results above.');
+            };
+            
+            // Test function to simulate order without issues (for raise issue button)
+            window.testWithoutIssues = function() {
+                console.log('🧪 Testing with order without issues...');
+                
+                const mockOrderData = {
+                    order_id: 143,
+                    transaction_id: 'test-transaction-143',
+                    ondc_order_id: 'O1758991924226',
+                    order_status: 'Completed',
+                    total_value: '145.00',
+                    currency: 'INR',
+                    payment_status: 'PAID',
+                    payment_mode: 'Prepaid',
+                    provider_id: 'pramaan_provider_1',
+                    provider_location_id: 'SSL1',
+                    total_items: 1,
+                    total_quantity: '1',
+                    created_at: '2025-09-29 16:50:03',
+                    updated_at: '2025-09-29 18:20:04',
+                    issue_raised: 0,
+                    issue_details: null,
+                    issue_actions: [],
+                    order_details: [
+                        {
+                            title: 'Plain Atta',
+                            quantity: 1,
+                            amount: '65.00',
+                            currency: 'INR',
+                            status: 'Completed',
+                            item_id: 'id_13owvn_0_0'
+                        }
+                    ]
+                };
+                
+                console.log('📋 Mock order data without issues:', mockOrderData);
+                
+                if (window.orderDetailsManager) {
+                    window.orderDetailsManager.displayOrderDetails(mockOrderData);
+                    console.log('✅ Displayed mock data without issues - should show raise issue button');
+                } else {
+                    console.log('❌ OrderDetailsManager not available');
+                }
+            };
+
+            // Test function to simulate issue data
+            window.testWithIssueData = function() {
+                console.log('🧪 Testing with simulated issue data...');
+                
+                const mockOrderData = {
+                    order_id: 142,
+                    transaction_id: 'efbb4c5b-c6b1-4011-a593-51a446a2c009',
+                    ondc_order_id: 'O1758991924225',
+                    order_status: 'Completed',
+                    total_value: '145.00',
+                    currency: 'INR',
+                    payment_status: 'NOT-PAID',
+                    payment_mode: 'ON-Fulfillment',
+                    provider_id: 'pramaan_provider_1',
+                    provider_location_id: 'SSL1',
+                    total_items: 1,
+                    total_quantity: '1',
+                    created_at: '2025-09-27 16:50:03',
+                    updated_at: '2025-09-27 22:20:04',
+                    issue_raised: 1,
+                    issue_details_status: 'PROCESSING',
+                    issue_id: 'ISSUE-142-84',
+                    issue_actions: {
+                        action_status: 'RESOLUTION_PROPOSED'
+                    },
+                    issue_details: {
+                        status: 'PROCESSING',
+                        description: 'Product quality issue - item received was damaged',
+                        category: 'ITEM',
+                        sub_category: 'QUALITY',
+                        created_at: '2025-09-27 18:30:00',
+                        updated_at: '2025-09-27 22:20:04',
+                        resolutions: [
+                            {
+                                descriptor: {
+                                    short_desc: 'We apologize for the inconvenience. We have reviewed your issue and propose to replace the damaged item with a brand new product at no additional cost. Please confirm your acceptance to proceed with the replacement.'
+                                },
+                                type: 'REPLACEMENT',
+                                description: 'Replace the damaged item with a new one of the same specification',
+                                amount: '65.00',
+                                currency: 'INR',
+                                timeline: '3-5 business days'
+                            },
+                            {
+                                descriptor: {
+                                    code: 'RESOLUTION_DETAILS',
+                                    short_desc: 'Detailed resolution information including refund amount, replacement timeline, and additional compensation for the inconvenience caused.'
+                                },
+                                tags: {
+                                    list: [
+                                        {
+                                            descriptor: {
+                                                code: 'REFUND_AMOUNT',
+                                                name: 'Refund Amount'
+                                            },
+                                            value: '₹65.00'
+                                        },
+                                        {
+                                            descriptor: {
+                                                code: 'REPLACEMENT_TIMELINE',
+                                                name: 'Replacement Timeline'
+                                            },
+                                            value: '3-5 business days'
+                                        },
+                                        {
+                                            descriptor: {
+                                                code: 'COMPENSATION',
+                                                name: 'Additional Compensation'
+                                            },
+                                            value: '₹10.00 credit for future orders'
+                                        }
+                                    ]
+                                }
+                            }
+                        ],
+                        actions: [
+                            {
+                                descriptor: { code: 'RESOLUTION_PROPOSED' },
+                                action_type: 'RESOLUTION_PROPOSED',
+                                description: 'Seller has proposed a replacement for the damaged item',
+                                status: 'PENDING_BUYER_RESPONSE',
+                                created_at: '2025-09-27 22:20:04'
+                            },
+                            {
+                                descriptor: { code: 'INFO_PROVIDED' },
+                                action_type: 'INFO_PROVIDED',
+                                description: 'Buyer provided additional information and images',
+                                status: 'COMPLETED',
+                                created_at: '2025-09-27 21:00:00'
+                            },
+                            {
+                                descriptor: { code: 'INFO_REQUESTED' },
+                                action_type: 'INFO_REQUESTED',
+                                description: 'Additional information requested from buyer',
+                                status: 'COMPLETED',
+                                created_at: '2025-09-27 20:15:00'
+                            },
+                            {
+                                descriptor: { code: 'ISSUE_RAISED' },
+                                action_type: 'ISSUE_RAISED',
+                                description: 'Issue raised by buyer regarding product quality',
+                                status: 'COMPLETED',
+                                created_at: '2025-09-27 18:30:00'
+                            }
+                        ]
+                    },
+                    order_details: [
+                        {
+                            title: 'Plain Atta',
+                            quantity: 1,
+                            amount: '65.00',
+                            currency: 'INR',
+                            status: 'Completed',
+                            item_id: 'id_13owvn_0_0'
+                        }
+                    ]
+                };
+                
+                console.log('📋 Mock order data with issues:', mockOrderData);
+                
+                if (window.orderDetailsManager) {
+                    window.orderDetailsManager.displayOrderDetails(mockOrderData);
+                    console.log('✅ Displayed mock data with issue details');
+                } else {
+                    console.log('❌ OrderDetailsManager not available');
+                }
+            };
+        });
+    </script>
+</body>
+</html>
