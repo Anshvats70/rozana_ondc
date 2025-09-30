@@ -137,7 +137,42 @@ function setupAddressModalEventListeners() {
 
 // Address Modal Functions
 function showAddressModal() {
+    console.log('=== ADDRESS-MODAL.JS SHOW ADDRESS MODAL CALLED ===');
+    
+    // Don't show address modal on login page
+    const currentPath = window.location.pathname || window.location.href;
+    const isLoginPage = currentPath.includes('login.html') || 
+                       currentPath.includes('/login') || 
+                       window.location.href.includes('login.html');
+    
+    if (isLoginPage) {
+        console.log('🚫 On login page, preventing address modal from showing. Path:', currentPath);
+        return;
+    }
+    
+    // Check if user already has addresses
+    const hasAddressFlag = localStorage.getItem('hasAddress') === 'true';
+    const storedAddress = localStorage.getItem('userAddress');
+    const userCoordinates = localStorage.getItem('userCoordinates');
+    
+    const hasAddress = hasAddressFlag || 
+                      (storedAddress && storedAddress !== 'null' && storedAddress !== 'undefined' && storedAddress.trim() !== '') ||
+                      (userCoordinates && userCoordinates !== 'null' && userCoordinates !== 'undefined');
+    
+    console.log('Address check in address-modal.js:', {
+        hasAddressFlag,
+        storedAddress: storedAddress ? 'EXISTS' : 'MISSING',
+        userCoordinates: userCoordinates ? 'EXISTS' : 'MISSING',
+        hasAddress
+    });
+    
+    if (hasAddress) {
+        console.log('🚫 User already has addresses, preventing modal from showing');
+        return;
+    }
+    
     if (addressModal) {
+        console.log('✅ Showing address modal from address-modal.js');
         addressModal.classList.add('show');
         document.body.style.overflow = 'hidden';
         

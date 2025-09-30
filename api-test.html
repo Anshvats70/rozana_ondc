@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .input-group {
+            margin: 10px 0;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #2563eb;
+        }
+        .result {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success { border-color: #28a745; background: #d4edda; }
+        .error { border-color: #dc3545; background: #f8d7da; }
+        .warning { border-color: #ffc107; background: #fff3cd; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🔧 API Test Page</h1>
+        <p>Use this page to test the product details API and debug issues.</p>
+        
+        <div class="test-section">
+            <h3>📋 Current Status</h3>
+            <div class="input-group">
+                <button class="btn" onclick="checkCurrentStatus()">Check Current Status</button>
+                <button class="btn" onclick="clearAllData()">Clear All Data</button>
+            </div>
+            <div id="statusResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🔑 Set Token</h3>
+            <div class="input-group">
+                <label for="tokenInput">Bearer Token (from Postman):</label>
+                <textarea id="tokenInput" rows="3" placeholder="Paste your bearer token here..."></textarea>
+            </div>
+            <button class="btn" onclick="setToken()">Set Token</button>
+            <div id="tokenResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🎯 Test Product API</h3>
+            <div class="input-group">
+                <label for="productIdInput">Product ID:</label>
+                <input type="text" id="productIdInput" value="id_ancc5_1_1" placeholder="Enter product ID">
+            </div>
+            <button class="btn" onclick="testProductApi()">Test API Call</button>
+            <button class="btn" onclick="testProductApiWithCurrentToken()">Test with Current Token</button>
+            <div id="apiResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>🌐 Test Different Product IDs</h3>
+            <button class="btn" onclick="testProduct('id_13owvn_0_0')">Test: id_13owvn_0_0</button>
+            <button class="btn" onclick="testProduct('id_ancc5_1_0')">Test: id_ancc5_1_0</button>
+            <button class="btn" onclick="testProduct('id_ancc5_1_1')">Test: id_ancc5_1_1</button>
+            <button class="btn" onclick="testProduct('id_1bai73_2_0')">Test: id_1bai73_2_0</button>
+            <div id="quickTestResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>📱 Open Product Details</h3>
+            <button class="btn" onclick="openProductDetails()">Open Product Details Page</button>
+            <div class="input-group">
+                <label for="detailsProductId">Product ID for Details Page:</label>
+                <input type="text" id="detailsProductId" value="id_ancc5_1_1" placeholder="Enter product ID">
+            </div>
+            <button class="btn" onclick="openProductDetailsWithId()">Open with Custom ID</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://neo-server.rozana.in/api';
+        const PRODUCT_DETAIL_ENDPOINT = `${API_BASE_URL}/product-detail`;
+        
+        function logResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `result ${type}`;
+        }
+        
+        function checkCurrentStatus() {
+            const token = localStorage.getItem('ondcUserToken');
+            const user = localStorage.getItem('ondcUser');
+            
+            let status = `=== CURRENT STATUS ===\n`;
+            status += `Token exists: ${token ? 'YES' : 'NO'}\n`;
+            if (token) {
+                status += `Token length: ${token.length}\n`;
+                status += `Token preview: ${token.substring(0, 30)}...\n`;
+            }
+            status += `User data exists: ${user ? 'YES' : 'NO'}\n`;
+            if (user) {
+                try {
+                    const userData = JSON.parse(user);
+                    status += `User name: ${userData.name || 'N/A'}\n`;
+                } catch (e) {
+                    status += `User data (invalid JSON): ${user}\n`;
+                }
+            }
+            status += `\nAll localStorage keys: ${Object.keys(localStorage).join(', ')}`;
+            
+            logResult('statusResult', status, token ? 'success' : 'warning');
+        }
+        
+        function setToken() {
+            const token = document.getElementById('tokenInput').value.trim();
+            if (!token) {
+                logResult('tokenResult', 'Please enter a token', 'error');
+                return;
+            }
+            
+            localStorage.setItem('ondcUserToken', token);
+            logResult('tokenResult', `Token set successfully!\nLength: ${token.length}\nPreview: ${token.substring(0, 30)}...`, 'success');
+        }
+        
+        function clearAllData() {
+            localStorage.removeItem('ondcUserToken');
+            localStorage.removeItem('ondcUser');
+            logResult('statusResult', 'All data cleared!', 'warning');
+        }
+        
+        async function testProductApi() {
+            const productId = document.getElementById('productIdInput').value.trim();
+            const token = localStorage.getItem('ondcUserToken');
+            
+            if (!productId) {
+                logResult('apiResult', 'Please enter a product ID', 'error');
+                return;
+            }
+            
+            let log = `=== API TEST ===\n`;
+            log += `Product ID: ${productId}\n`;
+            log += `Token: ${token ? 'Present' : 'Missing'}\n`;
+            log += `URL: ${PRODUCT_DETAIL_ENDPOINT}/${productId}\n\n`;
+            
+            const headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+                log += `Headers: ${JSON.stringify(headers, null, 2)}\n\n`;
+            } else {
+                log += `Headers: ${JSON.stringify(headers, null, 2)}\n\n`;
+            }
+            
+            try {
+                log += `Making request...\n`;
+                const response = await fetch(`${PRODUCT_DETAIL_ENDPOINT}/${productId}`, {
+                    method: 'GET',
+                    headers: headers
+                });
+                
+                log += `Response Status: ${response.status}\n`;
+                log += `Response Status Text: ${response.statusText}\n`;
+                log += `Response Headers: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}\n\n`;
+                
+                const responseText = await response.text();
+                log += `Response Body: ${responseText}\n\n`;
+                
+                if (response.ok) {
+                    try {
+                        const responseJson = JSON.parse(responseText);
+                        log += `Parsed JSON: ${JSON.stringify(responseJson, null, 2)}`;
+                        logResult('apiResult', log, 'success');
+                    } catch (e) {
+                        log += `Response is not valid JSON`;
+                        logResult('apiResult', log, 'warning');
+                    }
+                } else {
+                    logResult('apiResult', log, 'error');
+                }
+                
+            } catch (error) {
+                log += `Network Error: ${error.message}`;
+                logResult('apiResult', log, 'error');
+            }
+        }
+        
+        async function testProductApiWithCurrentToken() {
+            const token = localStorage.getItem('ondcUserToken');
+            if (!token) {
+                logResult('apiResult', 'No token found! Please set a token first.', 'error');
+                return;
+            }
+            testProductApi();
+        }
+        
+        async function testProduct(productId) {
+            document.getElementById('productIdInput').value = productId;
+            await testProductApi();
+        }
+        
+        function openProductDetails() {
+            window.open('product-details.html?id=id_ancc5_1_1', '_blank');
+        }
+        
+        function openProductDetailsWithId() {
+            const productId = document.getElementById('detailsProductId').value.trim();
+            if (!productId) {
+                alert('Please enter a product ID');
+                return;
+            }
+            window.open(`product-details.html?id=${encodeURIComponent(productId)}`, '_blank');
+        }
+        
+        // Auto-check status on page load
+        window.onload = function() {
+            checkCurrentStatus();
+        };
+    </script>
+</body>
+</html>

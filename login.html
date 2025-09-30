@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign In</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="stylesheet" href="address-modal.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -125,121 +124,6 @@
         </div>
     </div>
 
-    <!-- Delivery Address Modal -->
-    <div class="modal" id="addressModal">
-        <div class="modal-content address-modal">
-            <div class="modal-header">
-                <h2>Add Delivery Address</h2>
-                <button class="modal-close" id="closeAddressModal">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
-            
-            <form class="address-form" id="addressForm">
-                <div class="form-section">
-                    <h4>Personal Information</h4>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="fullName">Name*</label>
-                            <input type="text" id="fullName" name="fullName" placeholder="Enter your full name" required>
-                            <div class="error-message" id="fullNameError"></div>
-                        </div>
-                        <div class="form-group">
-                            <label for="email">Email*</label>
-                            <input type="email" id="email" name="email" placeholder="Enter your email" required>
-                            <div class="error-message" id="emailError"></div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="phoneNumber">Phone Number*</label>
-                        <input type="tel" id="phoneNumber" name="phoneNumber" placeholder="Enter your phone number" required>
-                        <div class="error-message" id="phoneNumberError"></div>
-                    </div>
-                </div>
-
-                <div class="form-section">
-                    <h4>Location</h4>
-                    <div class="location-controls">
-                        <button type="button" class="btn-location" id="getLocationBtn">
-                            <i class="fas fa-crosshairs"></i>
-                            Use My Current Location
-                        </button>
-                        <div class="location-status" id="locationStatus"></div>
-                    </div>
-                    <div class="map-container">
-                        <div class="map-placeholder" id="mapPlaceholder" style="display: none;">
-                            <i class="fas fa-map-marker-alt"></i>
-                            <p>Interactive Map</p>
-                            <small>Click "Use My Current Location" to auto-fill address</small>
-                        </div>
-                        <div class="map-display" id="mapDisplay">
-                            <iframe id="mapIframe" width="100%" height="300" frameborder="0" style="border:0; border-radius: 8px;"></iframe>
-                            <div class="map-info" id="mapInfo">
-                                <strong>🗺️ Interactive Map</strong><br>
-                                <small>Click "Use My Current Location" to auto-fill address</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-section">
-                    <h4>Address Details</h4>
-                    <div class="form-group">
-                        <label for="street">Street*</label>
-                        <input type="text" id="street" name="street" placeholder="Enter street address" required>
-                        <div class="error-message" id="streetError"></div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="building">Building*</label>
-                            <input type="text" id="building" name="building" placeholder="Building name/number" required>
-                            <div class="error-message" id="buildingError"></div>
-                        </div>
-                        <div class="form-group">
-                            <label for="city">City*</label>
-                            <input type="text" id="city" name="city" placeholder="Enter city" required>
-                            <div class="error-message" id="cityError"></div>
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="pinCode">Pin Code*</label>
-                            <input type="text" id="pinCode" name="pinCode" placeholder="Enter pin code" required>
-                            <div class="error-message" id="pinCodeError"></div>
-                        </div>
-                        <div class="form-group">
-                            <label for="state">State*</label>
-                            <input type="text" id="state" name="state" placeholder="Enter state" required>
-                            <div class="error-message" id="stateError"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-section">
-                    <h4>Tag</h4>
-                    <div class="tag-options">
-                        <label class="tag-option">
-                            <input type="radio" name="addressTag" value="home" checked>
-                            <span class="tag-label">Home</span>
-                        </label>
-                        <label class="tag-option">
-                            <input type="radio" name="addressTag" value="office">
-                            <span class="tag-label">Office</span>
-                        </label>
-                        <label class="tag-option">
-                            <input type="radio" name="addressTag" value="other">
-                            <span class="tag-label">Other</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="form-actions">
-                    <button type="button" class="btn-secondary" id="cancelAddress">Cancel</button>
-                    <button type="submit" class="btn-primary" id="addAddress">Add Address</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
     <script src="login.js"></script>
 </body>

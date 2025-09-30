@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Product Details</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 10px;
+            background: #3b82f6;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+        }
+        .test-button:hover {
+            background: #2563eb;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        h1, h2 {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Product Details Test Page</h1>
+        <p>Use these buttons to test different product IDs and see what happens:</p>
+        
+        <div class="test-section">
+            <h2>Real Product IDs (from API)</h2>
+            <button class="test-button" onclick="testProduct('id_13owvn_0_0')">Test: id_13owvn_0_0 (Plain Atta)</button>
+            <button class="test-button" onclick="testProduct('id_ancc5_1_0')">Test: id_ancc5_1_0 (2kg Atta)</button>
+            <button class="test-button" onclick="testProduct('id_1bai73_2_0')">Test: id_1bai73_2_0 (5kg Atta)</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>Mock Product IDs (from search results)</h2>
+            <button class="test-button" onclick="testProduct('mock_premium_coffee_beans')">Test: mock_premium_coffee_beans</button>
+            <button class="test-button" onclick="testProduct('mock_smartphone')">Test: mock_smartphone</button>
+            <button class="test-button" onclick="testProduct('mock_fresh_vegetables')">Test: mock_fresh_vegetables</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>Invalid/Test IDs</h2>
+            <button class="test-button" onclick="testProduct('invalid_id')">Test: invalid_id</button>
+            <button class="test-button" onclick="testProduct('test123')">Test: test123</button>
+            <button class="test-button" onclick="testProduct('')">Test: empty ID</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>Debug Information</h2>
+            <p><strong>Current URL:</strong> <span id="currentUrl"></span></p>
+            <p><strong>Last Tested:</strong> <span id="lastTested">None</span></p>
+            <button class="test-button" onclick="clearDebug()">Clear Debug</button>
+        </div>
+    </div>
+
+    <script>
+        function testProduct(productId) {
+            const url = `product-details.html?id=${encodeURIComponent(productId)}`;
+            console.log('Testing product with ID:', productId);
+            console.log('Opening URL:', url);
+            
+            // Update debug info
+            document.getElementById('lastTested').textContent = productId;
+            
+            // Open in new tab
+            window.open(url, '_blank');
+        }
+        
+        function clearDebug() {
+            document.getElementById('lastTested').textContent = 'None';
+        }
+        
+        // Show current URL
+        document.getElementById('currentUrl').textContent = window.location.href;
+        
+        console.log('Test page loaded. Use the buttons to test different product IDs.');
+    </script>
+</body>
+</html>

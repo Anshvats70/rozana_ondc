@@ -21,7 +21,6 @@ const totalPriceSpan = document.getElementById('totalPrice');
 const subtotalSpan = document.getElementById('subtotal');
 const deliveryFeeSpan = document.getElementById('deliveryFee');
 const convenienceFeeSpan = document.getElementById('convenienceFee');
-const taxesSpan = document.getElementById('taxes');
 const totalSpan = document.getElementById('total');
 const clearCartBtn = document.getElementById('clearCartBtn');
 const proceedBtn = document.getElementById('proceedBtn');
@@ -341,8 +340,7 @@ function updateCartSummary() {
     // Use consistent fees across all pages
     const deliveryFee = 40; // ₹40 delivery charges
     const convenienceFee = 40; // ₹40 convenience fee
-    const taxes = subtotal * 0.18; // 18% GST
-    const total = subtotal + deliveryFee + convenienceFee + taxes;
+    const total = subtotal + deliveryFee + convenienceFee;
     
     // Update display
     totalItemsSpan.textContent = `${totalItems} ${totalItems === 1 ? 'item' : 'items'}`;
@@ -350,7 +348,6 @@ function updateCartSummary() {
     subtotalSpan.textContent = `₹${subtotal.toFixed(2)}`;
     deliveryFeeSpan.textContent = `₹${deliveryFee}`;
     convenienceFeeSpan.textContent = `₹${convenienceFee}`;
-    taxesSpan.textContent = `₹${taxes.toFixed(2)}`;
     totalSpan.textContent = `₹${total.toFixed(2)}`;
     
     // Update delivery info
@@ -789,8 +786,7 @@ function calculateCartTotal() {
     // Use consistent fees across all pages
     const deliveryFee = 40; // ₹40 delivery charges
     const convenienceFee = 40; // ₹40 convenience fee
-    const taxes = subtotal * 0.18;
-    const total = subtotal + deliveryFee + convenienceFee + taxes;
+    const total = subtotal + deliveryFee + convenienceFee;
     
     return total.toFixed(2);
 }
@@ -841,8 +837,7 @@ function updateCheckoutOrderSummary() {
     // Use consistent fees across all pages
     const deliveryFee = 40; // ₹40 delivery charges
     const convenienceFee = 40; // ₹40 convenience fee
-    const taxes = subtotal * 0.18;
-    const total = subtotal + deliveryFee + convenienceFee + taxes;
+    const total = subtotal + deliveryFee + convenienceFee;
     
     summaryHTML += `
         <div style="border-top: 1px solid #e2e8f0; margin-top: 1rem; padding-top: 1rem;">
@@ -857,10 +852,6 @@ function updateCheckoutOrderSummary() {
             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
                 <span>Convenience Fee:</span>
                 <span>₹${convenienceFee}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                <span>Taxes:</span>
-                <span>₹${taxes.toFixed(2)}</span>
             </div>
             <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 1.1rem;">
                 <span>Total:</span>

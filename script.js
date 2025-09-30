@@ -153,9 +153,76 @@ const searchSuggestionsData = [
     'Kitchen Appliances', 'Furniture', 'Toys', 'Health Supplements'
 ];
 
+// Global debugging function - can be called from browser console
+window.debugAddressModal = function() {
+    console.log('=== ADDRESS MODAL DEBUG INFO ===');
+    console.log('Current URL:', window.location.href);
+    console.log('Current pathname:', window.location.pathname);
+    
+    const hasAddressFlag = localStorage.getItem('hasAddress');
+    const storedAddress = localStorage.getItem('userAddress');
+    const userCoordinates = localStorage.getItem('userCoordinates');
+    const userAddressData = localStorage.getItem('userAddressData');
+    
+    console.log('localStorage values:');
+    console.log('  hasAddress:', hasAddressFlag);
+    console.log('  userAddress:', storedAddress);
+    console.log('  userCoordinates:', userCoordinates);
+    console.log('  userAddressData:', userAddressData);
+    
+    const addressModal = document.getElementById('addressModal');
+    console.log('Address modal element:', addressModal);
+    console.log('Modal classes:', addressModal ? addressModal.className : 'NOT FOUND');
+    console.log('Modal style display:', addressModal ? addressModal.style.display : 'NOT FOUND');
+    
+    // Check all localStorage keys
+    console.log('All localStorage keys:');
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        console.log(`  ${key}:`, localStorage.getItem(key));
+    }
+};
+
+// Global function to manually set address flag for testing
+window.setUserHasAddress = function() {
+    localStorage.setItem('hasAddress', 'true');
+    localStorage.setItem('userAddress', JSON.stringify({
+        fullName: 'Test User',
+        email: 'test@example.com',
+        phoneNumber: '1234567890',
+        street: 'Test Street',
+        building: 'Test Building',
+        city: 'Test City',
+        pinCode: '110001',
+        state: 'Test State'
+    }));
+    localStorage.setItem('userCoordinates', JSON.stringify({ lat: 28.6139, lng: 77.2090 }));
+    console.log('✅ Address data set for testing');
+};
+
+// Global function to clear address data for testing
+window.clearUserAddress = function() {
+    localStorage.removeItem('hasAddress');
+    localStorage.removeItem('userAddress');
+    localStorage.removeItem('userCoordinates');
+    localStorage.removeItem('userAddressData');
+    console.log('✅ Address data cleared for testing');
+};
+
 // Initialize the app
 document.addEventListener('DOMContentLoaded', function() {
     console.log('=== ONDC BUYER APP INITIALIZATION ===');
+    
+    // Don't run script.js on login page
+    const currentPath = window.location.pathname || window.location.href;
+    const isLoginPage = currentPath.includes('login.html') || 
+                       currentPath.includes('/login') || 
+                       window.location.href.includes('login.html');
+    
+    if (isLoginPage) {
+        console.log('On login page, skipping ONDC app initialization. Path:', currentPath);
+        return;
+    }
     
     // Debug: Check if all elements exist
     console.log('=== ELEMENT DEBUGGING ===');
@@ -385,6 +452,28 @@ function createProductCard(product) {
         </div>
     `;
     
+    // Add click handler to open product details page in new tab
+    card.style.cursor = 'pointer';
+    card.title = 'Click to view product details (opens in new tab)';
+    card.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
+    card.addEventListener('mouseenter', function() {
+        card.style.transform = 'translateY(-2px)';
+        card.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
+    });
+    card.addEventListener('mouseleave', function() {
+        card.style.transform = 'translateY(0)';
+        card.style.boxShadow = '';
+    });
+    card.addEventListener('click', function(e) {
+        // Don't navigate if clicking on the Add to Cart button
+        if (e.target.closest('.add-to-cart')) {
+            return;
+        }
+        
+        // Open product details page in new tab
+        console.log('Opening product details in new tab for ID:', product.id);
+        window.open(`product-details.html?id=${product.id}`, '_blank');
+    });
     
     return card;
 }
@@ -969,6 +1058,28 @@ function createProductCardFromONDC(item, provider) {
         </div>
     `;
     
+    // Add click handler to open product details page in new tab
+    card.style.cursor = 'pointer';
+    card.title = 'Click to view product details (opens in new tab)';
+    card.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
+    card.addEventListener('mouseenter', function() {
+        card.style.transform = 'translateY(-2px)';
+        card.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
+    });
+    card.addEventListener('mouseleave', function() {
+        card.style.transform = 'translateY(0)';
+        card.style.boxShadow = '';
+    });
+    card.addEventListener('click', function(e) {
+        // Don't navigate if clicking on the Add to Cart button
+        if (e.target.closest('.add-to-cart')) {
+            return;
+        }
+        
+        // Open product details page in new tab
+        console.log('Opening product details in new tab for ID:', item.id);
+        window.open(`product-details.html?id=${item.id}`, '_blank');
+    });
     
     return card;
 }
@@ -1051,6 +1162,28 @@ function createProductCardFromResultsAPI(product) {
         </div>
     `;
     
+    // Add click handler to open product details page in new tab
+    card.style.cursor = 'pointer';
+    card.title = 'Click to view product details (opens in new tab)';
+    card.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
+    card.addEventListener('mouseenter', function() {
+        card.style.transform = 'translateY(-2px)';
+        card.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
+    });
+    card.addEventListener('mouseleave', function() {
+        card.style.transform = 'translateY(0)';
+        card.style.boxShadow = '';
+    });
+    card.addEventListener('click', function(e) {
+        // Don't navigate if clicking on the Add to Cart button
+        if (e.target.closest('.add-to-cart')) {
+            return;
+        }
+        
+        // Open product details page in new tab
+        console.log('Opening product details in new tab for ID:', productId);
+        window.open(`product-details.html?id=${productId}`, '_blank');
+    });
     
     return card;
 }
@@ -1148,6 +1281,28 @@ function createProductCardFromSellerItems(item, seller) {
         </div>
     `;
     
+    // Add click handler to open product details page in new tab
+    card.style.cursor = 'pointer';
+    card.title = 'Click to view product details (opens in new tab)';
+    card.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
+    card.addEventListener('mouseenter', function() {
+        card.style.transform = 'translateY(-2px)';
+        card.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
+    });
+    card.addEventListener('mouseleave', function() {
+        card.style.transform = 'translateY(0)';
+        card.style.boxShadow = '';
+    });
+    card.addEventListener('click', function(e) {
+        // Don't navigate if clicking on the Add to Cart button
+        if (e.target.closest('.add-to-cart')) {
+            return;
+        }
+        
+        // Open product details page in new tab
+        console.log('Opening product details in new tab for ID:', productId);
+        window.open(`product-details.html?id=${productId}`, '_blank');
+    });
     
     return card;
 }
@@ -1951,6 +2106,9 @@ function createMockProductCard(product) {
     const card = document.createElement('div');
     card.className = 'product-card';
     
+    // Generate a mock product ID for mock products
+    const mockProductId = `mock_${product.name.replace(/\s+/g, '_').toLowerCase()}`;
+    
     card.innerHTML = `
         <div class="product-image">
             <span style="font-size: 3rem;">${product.image}</span>
@@ -1968,6 +2126,29 @@ function createMockProductCard(product) {
             </button>
         </div>
     `;
+    
+    // Add click handler to open product details page in new tab
+    card.style.cursor = 'pointer';
+    card.title = 'Click to view product details (opens in new tab)';
+    card.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
+    card.addEventListener('mouseenter', function() {
+        card.style.transform = 'translateY(-2px)';
+        card.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
+    });
+    card.addEventListener('mouseleave', function() {
+        card.style.transform = 'translateY(0)';
+        card.style.boxShadow = '';
+    });
+    card.addEventListener('click', function(e) {
+        // Don't navigate if clicking on the Add to Cart button
+        if (e.target.closest('.add-to-cart')) {
+            return;
+        }
+        
+        // Open product details page in new tab
+        console.log('Opening product details in new tab for mock ID:', mockProductId);
+        window.open(`product-details.html?id=${mockProductId}`, '_blank');
+    });
     
     return card;
 }
@@ -2065,14 +2246,65 @@ function checkUserAuthentication() {
 }
 
 function checkAddressRequirement() {
-    const hasAddress = localStorage.getItem('hasAddress') === 'true';
+    console.log('=== CHECKING ADDRESS REQUIREMENT ===');
+    
+    // Don't show address modal on login page
+    const currentPath = window.location.pathname || window.location.href;
+    const isLoginPage = currentPath.includes('login.html') || 
+                       currentPath.includes('/login') || 
+                       window.location.href.includes('login.html');
+    
+    if (isLoginPage) {
+        console.log('On login page, skipping address modal. Path:', currentPath);
+        return;
+    }
+    
+    // Check if user has addresses in multiple ways
+    const hasAddressFlag = localStorage.getItem('hasAddress') === 'true';
+    const storedAddress = localStorage.getItem('userAddress');
+    const userAddresses = localStorage.getItem('userAddresses');
+    const userCoordinates = localStorage.getItem('userCoordinates');
+    const userAddressData = localStorage.getItem('userAddressData');
+    
+    // Debug: Log all localStorage items related to addresses
+    console.log('All localStorage address-related items:');
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.includes('address') || key.includes('Address') || key.includes('coordinate') || key.includes('Coordinate'))) {
+            console.log(`  ${key}:`, localStorage.getItem(key));
+        }
+    }
+    
+    // User has address if any of these conditions are true:
+    // 1. hasAddress flag is set to true
+    // 2. userAddress is stored and not empty/null
+    // 3. userAddresses array exists and has items
+    // 4. userCoordinates exist (indicating location was set)
+    const hasAddress = hasAddressFlag || 
+                      (storedAddress && storedAddress !== 'null' && storedAddress !== 'undefined' && storedAddress.trim() !== '') ||
+                      (userAddresses && userAddresses !== 'null' && userAddresses !== 'undefined' && userAddresses !== '[]' && userAddresses.trim() !== '') ||
+                      (userCoordinates && userCoordinates !== 'null' && userCoordinates !== 'undefined');
+    
+    console.log('Address check details:', {
+        hasAddressFlag,
+        storedAddress: storedAddress ? 'EXISTS' : 'MISSING',
+        storedAddressContent: storedAddress,
+        userAddresses: userAddresses ? 'EXISTS' : 'MISSING',
+        userAddressesContent: userAddresses,
+        userCoordinates: userCoordinates ? 'EXISTS' : 'MISSING',
+        userAddressData: userAddressData ? 'EXISTS' : 'MISSING',
+        finalResult: hasAddress
+    });
     
     if (!hasAddress) {
-        console.log('New user detected, showing address modal');
-        // Show address modal after a short delay to ensure page is loaded
-        setTimeout(() => {
-            showAddressModal();
-        }, 1500);
+        console.log('❌ No addresses found, but NOT showing address modal (temporarily disabled for debugging)');
+        // TEMPORARILY DISABLED FOR DEBUGGING
+        // setTimeout(() => {
+        //     console.log('⏰ Timer triggered, calling showAddressModal()');
+        //     showAddressModal();
+        // }, 1500);
+    } else {
+        console.log('✅ User already has addresses, skipping address modal');
     }
 }
 
@@ -2658,10 +2890,47 @@ function isUserAuthenticated() {
 }
 
 function showAddressModal() {
+    console.log('=== SHOW ADDRESS MODAL CALLED ===');
+    
+    // Don't show address modal on login page
+    const currentPath = window.location.pathname || window.location.href;
+    const isLoginPage = currentPath.includes('login.html') || 
+                       currentPath.includes('/login') || 
+                       window.location.href.includes('login.html');
+    
+    if (isLoginPage) {
+        console.log('🚫 On login page, preventing address modal from showing. Path:', currentPath);
+        return;
+    }
+    
+    // Double-check if user has addresses before showing modal
+    const hasAddressFlag = localStorage.getItem('hasAddress') === 'true';
+    const storedAddress = localStorage.getItem('userAddress');
+    const userCoordinates = localStorage.getItem('userCoordinates');
+    
+    const hasAddress = hasAddressFlag || 
+                      (storedAddress && storedAddress !== 'null' && storedAddress !== 'undefined' && storedAddress.trim() !== '') ||
+                      (userCoordinates && userCoordinates !== 'null' && userCoordinates !== 'undefined');
+    
+    console.log('Final address check in showAddressModal:', {
+        hasAddressFlag,
+        storedAddress: storedAddress ? 'EXISTS' : 'MISSING',
+        userCoordinates: userCoordinates ? 'EXISTS' : 'MISSING',
+        hasAddress
+    });
+    
+    if (hasAddress) {
+        console.log('🚫 User has addresses, preventing modal from showing');
+        return;
+    }
+    
     const addressModal = document.getElementById('addressModal');
     if (addressModal) {
+        console.log('✅ Showing address modal');
         addressModal.classList.add('show');
         document.body.style.overflow = 'hidden';
+    } else {
+        console.log('❌ Address modal element not found in DOM');
     }
 }
 
