@@ -1802,6 +1802,17 @@
                         if (index <= closedStepIndex) {
                             isCompleted = true;
                         }
+                    } else {
+                        // For non-closed issues, use sequential completion logic
+                        // Find the highest step index that has an action code
+                        const maxCompletedIndex = Math.max(...actionCodes.map(code => 
+                            standardSteps.findIndex(s => s.code === code)
+                        ).filter(idx => idx !== -1));
+                        
+                        // Mark all steps up to the highest completed step as completed
+                        if (index <= maxCompletedIndex) {
+                            isCompleted = true;
+                        }
                     }
                     
                     // Find the current step (last completed step) - but not if issue is closed
@@ -1828,6 +1839,18 @@
                 // Calculate progress percentage
                 const completedSteps = stepsWithStatus.filter(step => step.isCompleted).length;
                 const progressPercentage = (completedSteps / standardSteps.length) * 100;
+                
+                console.log('📊 Timeline progress calculation:', {
+                    totalSteps: standardSteps.length,
+                    completedSteps: completedSteps,
+                    progressPercentage: Math.round(progressPercentage),
+                    stepsWithStatus: stepsWithStatus.map(s => ({ 
+                        code: s.code, 
+                        label: s.label, 
+                        isCompleted: s.isCompleted, 
+                        isCurrent: s.isCurrent 
+                    }))
+                });
 
                 // Generate timeline HTML
                 const stepsHtml = stepsWithStatus.map(step => {
@@ -3424,6 +3447,98 @@
                 if (window.orderDetailsManager) {
                     window.orderDetailsManager.displayOrderDetails(mockOrderData);
                     console.log('✅ Displayed mock data with INFO_REQUESTED - should show upload form');
+                } else {
+                    console.log('❌ OrderDetailsManager not available');
+                }
+            };
+
+            // Test function to simulate 5 steps completed (like in screenshot)
+            window.testWith5StepsCompleted = function() {
+                console.log('🧪 Testing with 5 steps completed (Resolution Accepted)...');
+                
+                const mockOrderData = {
+                    order_id: 142,
+                    transaction_id: 'efbb4c5b-c6b1-4011-a593-51a446a2c009',
+                    ondc_order_id: 'O1758991924225',
+                    order_status: 'Completed',
+                    total_value: '145.00',
+                    currency: 'INR',
+                    payment_status: 'NOT-PAID',
+                    payment_mode: 'ON-Fulfillment',
+                    provider_id: 'pramaan_provider_1',
+                    provider_location_id: 'SSL1',
+                    total_items: 1,
+                    total_quantity: '1',
+                    created_at: '2025-09-27 16:50:03',
+                    updated_at: '2025-09-30 09:45:00',
+                    issue_raised: 1,
+                    issue_details_status: 'PROCESSING',
+                    issue_id: 'ISSUE-142-84',
+                    issue_actions: {
+                        action_status: 'RESOLUTION_ACCEPTED'
+                    },
+                    issue_details: {
+                        status: 'PROCESSING',
+                        description: 'Product quality issue - resolution accepted, awaiting closure',
+                        category: 'ITEM',
+                        sub_category: 'QUALITY',
+                        created_at: '2025-09-27 18:30:00',
+                        updated_at: '2025-09-30 09:45:00',
+                        actions: [
+                            {
+                                descriptor: { code: 'RESOLUTION_ACCEPTED' },
+                                action_type: 'RESOLUTION_ACCEPTED',
+                                description: 'Buyer accepted the proposed resolution',
+                                status: 'COMPLETED',
+                                created_at: '2025-09-30 09:45:00'
+                            },
+                            {
+                                descriptor: { code: 'RESOLUTION_PROPOSED' },
+                                action_type: 'RESOLUTION_PROPOSED',
+                                description: 'Seller proposed a replacement for the damaged item',
+                                status: 'COMPLETED',
+                                created_at: '2025-09-29 22:20:04'
+                            },
+                            {
+                                descriptor: { code: 'INFO_PROVIDED' },
+                                action_type: 'INFO_PROVIDED',
+                                description: 'Buyer provided additional information and images',
+                                status: 'COMPLETED',
+                                created_at: '2025-09-29 21:00:00'
+                            },
+                            {
+                                descriptor: { code: 'INFO_REQUESTED' },
+                                action_type: 'INFO_REQUESTED',
+                                description: 'Additional information requested from buyer',
+                                status: 'COMPLETED',
+                                created_at: '2025-09-29 20:15:00'
+                            },
+                            {
+                                descriptor: { code: 'ISSUE_RAISED' },
+                                action_type: 'ISSUE_RAISED',
+                                description: 'Issue raised by buyer regarding product quality',
+                                status: 'COMPLETED',
+                                created_at: '2025-09-27 18:30:00'
+                            }
+                        ]
+                    },
+                    order_details: [
+                        {
+                            title: 'Plain Atta',
+                            quantity: 1,
+                            amount: '65.00',
+                            currency: 'INR',
+                            status: 'Completed',
+                            item_id: 'id_13owvn_0_0'
+                        }
+                    ]
+                };
+                
+                console.log('📋 Mock order data with 5 steps completed:', mockOrderData);
+                
+                if (window.orderDetailsManager) {
+                    window.orderDetailsManager.displayOrderDetails(mockOrderData);
+                    console.log('✅ Displayed mock data with 5 steps completed - should show 5/6 Steps Completed (83%)');
                 } else {
                     console.log('❌ OrderDetailsManager not available');
                 }
