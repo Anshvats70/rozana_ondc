@@ -501,8 +501,8 @@ function createInitPayload(deliveryInfo) {
         },
         "message": {
             "order": {
-                "id": orderId,
-                "state": "Created",
+                //"id": orderId,
+                //"state": "Created",
                 "created_at": timestamp,
                 "updated_at": timestamp,
                 "provider": {

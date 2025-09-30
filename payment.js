@@ -17,7 +17,6 @@ const orderItemsDiv = document.getElementById('orderItems');
 const subtotalAmountSpan = document.getElementById('subtotalAmount');
 const deliveryAmountSpan = document.getElementById('deliveryAmount');
 const convenienceAmountSpan = document.getElementById('convenienceAmount');
-const taxesAmountSpan = document.getElementById('taxesAmount');
 const finalTotalAmountSpan = document.getElementById('finalTotalAmount');
 const billingInfoDiv = document.getElementById('billingInfo');
 const paymentForm = document.getElementById('paymentForm');
@@ -270,18 +269,16 @@ function updatePaymentTotals(cartConfirmation) {
     // Use consistent fees across all pages
     const delivery = 40; // ₹40 delivery charges
     const convenience = 40; // ₹40 convenience fee
-    const taxes = subtotal * 0.18; // 18% GST
     
     // Calculate total
-    const total = subtotal + delivery + convenience + taxes;
+    const total = subtotal + delivery + convenience;
     
-    console.log('Calculated totals:', { subtotal, delivery, convenience, taxes, total });
+    console.log('Calculated totals:', { subtotal, delivery, convenience, total });
     
     // Update display
     if (subtotalAmountSpan) subtotalAmountSpan.textContent = `₹${subtotal.toFixed(2)}`;
     if (deliveryAmountSpan) deliveryAmountSpan.textContent = `₹${delivery.toFixed(2)}`;
     if (convenienceAmountSpan) convenienceAmountSpan.textContent = `₹${convenience.toFixed(2)}`;
-    if (taxesAmountSpan) taxesAmountSpan.textContent = `₹${taxes.toFixed(2)}`;
     if (finalTotalAmountSpan) finalTotalAmountSpan.textContent = `₹${total.toFixed(2)}`;
     if (paymentTotalAmountSpan) paymentTotalAmountSpan.textContent = `Total: ₹${total.toFixed(2)}`;
 }

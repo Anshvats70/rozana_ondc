@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atta - Product Details</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="product-details.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <h1>ONDC Buyer</h1>
+                </div>
+                <div class="header-actions">
+                    <button class="location-btn" id="locationBtn">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span id="locationText">Select Location</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="user-section" id="userSection" style="display: none;">
+                        <button class="user-btn" id="userBtn">
+                            <i class="fas fa-user"></i>
+                            <span id="userName">User</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
+                    <button class="login-btn" id="loginBtn">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Login
+                    </button>
+                    <div class="cart-icon" id="cartIcon">
+                        <i class="fas fa-shopping-cart"></i>
+                        <span class="cart-count" id="cartCount">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="product-details-main">
+        <div class="container">
+            <!-- Breadcrumb Navigation -->
+            <nav class="breadcrumb">
+                <a href="index.html">Home</a>
+                <span class="separator">/</span>
+                <span class="current">Atta</span>
+            </nav>
+
+            <!-- Product Details Section -->
+            <div class="product-details-container">
+                <!-- Product Image -->
+                <div class="product-image-section">
+                    <div class="product-image-container">
+                        <img src="https://images.unsplash.com/photo-1586201375761-83865001e31c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" 
+                             alt="Atta - Whole Wheat Flour" 
+                             class="product-image">
+                    </div>
+                </div>
+
+                <!-- Product Information -->
+                <div class="product-info-section">
+                    <div class="product-info-card">
+                        <!-- Product Attributes -->
+                        <div class="product-attributes">
+                            <div class="attribute veg">
+                                <i class="fas fa-leaf"></i>
+                                <span>Veg</span>
+                            </div>
+                            <div class="attribute in-stock">
+                                <i class="fas fa-check-circle"></i>
+                                <span>In stock</span>
+                            </div>
+                        </div>
+
+                        <!-- Product Name -->
+                        <h1 class="product-name">Atta</h1>
+
+                        <!-- Pricing -->
+                        <div class="pricing">
+                            <span class="current-price">₹1000</span>
+                            <span class="original-price">₹1000</span>
+                        </div>
+
+                        <!-- Available Measure Options -->
+                        <div class="measure-options">
+                            <label class="measure-label">Available Measure Options</label>
+                            <div class="measure-buttons">
+                                <button class="measure-btn active" data-weight="1" data-price="1000">
+                                    1 Kilogram
+                                </button>
+                                <button class="measure-btn" data-weight="2" data-price="1900">
+                                    2 Kilogram
+                                </button>
+                                <button class="measure-btn" data-weight="0.5" data-price="550">
+                                    500 Gram
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="action-buttons">
+                            <button class="btn btn-primary add-to-cart-btn" id="addToCartBtn">
+                                Add to cart
+                            </button>
+                            <button class="btn btn-outline order-now-btn" id="orderNowBtn">
+                                Order now
+                            </button>
+                        </div>
+
+                        <!-- Product Description -->
+                        <div class="product-description">
+                            <h3>About this product</h3>
+                            <p>Premium quality whole wheat flour (Atta) made from finest wheat grains. Perfect for making rotis, chapatis, and other Indian breads. Rich in fiber and nutrients, this atta is stone-ground to preserve its natural goodness.</p>
+                            
+                            <h4>Key Features:</h4>
+                            <ul>
+                                <li>100% Whole Wheat</li>
+                                <li>Stone Ground</li>
+                                <li>Rich in Fiber</li>
+                                <li>No Preservatives</li>
+                                <li>Freshly Packed</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>ONDC Buyer</h3>
+                    <p>Connecting buyers with local sellers through the Open Network for Digital Commerce.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="register.html">Register</a></li>
+                        <li><a href="#">How it works</a></li>
+                        <li><a href="#">Support</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <ul>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Report Issue</a></li>
+                        <li><a href="#">Feedback</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 ONDC Buyer. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Success Modal -->
+    <div class="modal" id="successModal">
+        <div class="modal-content success-modal">
+            <div class="success-content">
+                <i class="fas fa-check-circle" style="font-size: 4rem; color: #10b981; margin-bottom: 1rem;"></i>
+                <h3>Added to Cart!</h3>
+                <p>Your item has been successfully added to your cart.</p>
+                <div class="success-actions">
+                    <button class="btn btn-secondary" id="continueShoppingBtn">Continue Shopping</button>
+                    <a href="cart.html" class="btn btn-primary">View Cart</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="product-details.js"></script>
+</body>
+</html>

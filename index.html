@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ROZANA ONDC - Discover Local Products</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="address-modal.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -24,12 +25,75 @@
                     <a href="#" class="nav-link">Profile</a>
                 </nav>
                 <div class="header-actions">
+                    <!-- Location Dropdown -->
+                    <div class="location-dropdown" id="locationDropdown">
+                        <button class="location-btn" id="locationBtn">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span class="location-text" id="locationText">Deliver to 110011</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="location-menu" id="locationMenu">
+                            <div class="location-header">
+                                <h4>Select Delivery Address</h4>
+                                <button class="add-address-btn" id="addAddressBtn">
+                                    <i class="fas fa-plus"></i>
+                                    Add New Address
+                                </button>
+                            </div>
+                            <div class="address-list" id="addressList">
+                                <div class="loading-addresses">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    Loading addresses...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <button class="btn-icon" id="cartBtn">
                         <i class="fas fa-shopping-cart"></i>
                         <span class="cart-count">0</span>
                     </button>
-                    <button class="btn-icon" id="locationBtn">
-                        <i class="fas fa-map-marker-alt"></i>
+                    
+                    <!-- User Section -->
+                    <div class="user-section" id="userSection" style="display: none;">
+                        <div class="user-profile" id="userProfile">
+                            <i class="fas fa-user"></i>
+                            <span class="user-name" id="userName">User</span>
+                            <i class="fas fa-chevron-down dropdown-arrow"></i>
+                        </div>
+                        <div class="user-dropdown" id="userDropdown">
+                            <a href="#" class="dropdown-item" id="myProfile">
+                                <i class="fas fa-user"></i>
+                                My Profile
+                            </a>
+                            <a href="#" class="dropdown-item" id="orderHistory">
+                                <i class="fas fa-history"></i>
+                                Order History
+                            </a>
+                            <a href="#" class="dropdown-item" id="complaints">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Complaints
+                            </a>
+                            <a href="#" class="dropdown-item" id="support">
+                                <i class="fas fa-headset"></i>
+                                Support
+                            </a>
+                            <a href="#" class="dropdown-item" id="testCatalogue">
+                                <i class="fas fa-test-tube"></i>
+                                Test your catalogue
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="#" class="dropdown-item logout-item" id="logoutUser">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Logout
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Login Button (shown when not logged in) -->
+                    <button class="btn-login" id="loginBtn" style="display: none;">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Login
                     </button>
                 </div>
             </div>
@@ -70,18 +134,12 @@
             </div>
         </section>
 
-        <!-- Location Section -->
-        <section class="location-section">
+        <!-- Search Results Section (Hidden by default) -->
+        <section id="searchResults" class="search-results-section" style="display: none;">
             <div class="container">
-                <div class="location-card">
-                    <div class="location-info">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <div>
-                            <span class="location-label">Delivering to</span>
-                            <span class="location-address" id="currentLocation">Mumbai, Maharashtra</span>
-                        </div>
-                    </div>
-                    <button class="btn-secondary" id="changeLocationBtn">Change</button>
+                <h2 class="section-title" id="searchResultsTitle">Search Results</h2>
+                <div class="results-grid" id="resultsGrid">
+                    <!-- Search results will be populated here -->
                 </div>
             </div>
         </section>
@@ -196,28 +254,174 @@
         </div>
     </footer>
 
-    <!-- Location Modal -->
-    <div class="modal" id="locationModal">
-        <div class="modal-content">
+    <!-- Old location modal removed - using new address dropdown system -->
+
+    <!-- Address Modal -->
+    <div class="modal" id="addressModal">
+        <div class="modal-content address-modal">
             <div class="modal-header">
-                <h3>Select Delivery Location</h3>
-                <button class="modal-close" id="closeLocationModal">&times;</button>
+                <h2>Add Delivery Address</h2>
+                <button class="modal-close" id="closeAddressModal">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
-            <div class="modal-body">
-                <div class="location-search">
-                    <input type="text" id="locationSearch" placeholder="Enter city, area, or pincode">
-                    <button class="btn-primary" id="searchLocationBtn">Search</button>
-                </div>
-                <div class="recent-locations">
-                    <h4>Recent Locations</h4>
-                    <div class="location-list" id="recentLocations">
-                        <!-- Dynamic recent locations -->
+            
+            
+            <form class="address-form" id="addressForm">
+                <div class="form-section">
+                    <h4>Personal Information</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="fullName">Name*</label>
+                            <input type="text" id="fullName" name="fullName" placeholder="Enter your full name" required>
+                            <div class="error-message" id="fullNameError"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email*</label>
+                            <input type="email" id="email" name="email" placeholder="Enter your email" required>
+                            <div class="error-message" id="emailError"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="phoneNumber">Phone Number*</label>
+                        <input type="tel" id="phoneNumber" name="phoneNumber" placeholder="Enter your phone number" required>
+                        <div class="error-message" id="phoneNumberError"></div>
                     </div>
                 </div>
-            </div>
+
+                <!-- Location Search Section -->
+                <div class="location-search-section" style="display: block;">
+                    <h3>Search Location</h3>
+                    <div class="search-location-container">
+                        <div class="search-results" id="searchResults" style="display: block;">
+                            <div class="map-container">
+                                <div class="map-wrapper">
+                                    <div id="googleMap" class="map-view"></div>
+                                    
+                                    <!-- Search Icon (Top Right) -->
+                                    <div class="map-search-icon" id="mapSearchIcon">
+                                        <i class="fas fa-search"></i>
+                                    </div>
+                                    
+                                    <!-- Search Input (Hidden by default) -->
+                                    <div class="map-search-input" id="mapSearchInput" style="display: none;">
+                                        <input type="text" id="mapPincodeSearch" placeholder="Enter pincode to search location" class="map-search-field">
+                                        <button type="button" id="mapSearchBtn" class="map-search-button">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                        <button type="button" id="closeMapSearch" class="map-search-close">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Map Controls (Right Side) -->
+                                    <div class="map-controls">
+                                        <button class="map-control-btn" id="zoomInBtn">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                        <button class="map-control-btn" id="zoomOutBtn">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <button class="map-control-btn" id="recenterBtn">
+                                            <i class="fas fa-crosshairs"></i>
+                                        </button>
+                                        <button class="map-control-btn" id="mapTypeBtn">
+                                            <i class="fas fa-layer-group"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Map Branding -->
+                                    <div class="map-branding">
+                                        <span>MapmyIndia</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="map-instructions">
+                                <p>Move the map to get desired location.</p>
+                            </div>
+                            
+                            <div class="location-actions">
+                                <button type="button" id="confirmLocationBtn" class="done-btn">
+                                    Confirm Location
+                                </button>
+                                <button type="button" id="cancelLocationBtn" class="cancel-btn">
+                                    Reset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h4>Address Details</h4>
+                    <div class="form-group">
+                        <label for="street">Street*</label>
+                        <input type="text" id="street" name="street" placeholder="Enter street address" required>
+                        <div class="error-message" id="streetError"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="building">Building*</label>
+                            <input type="text" id="building" name="building" placeholder="Building name/number" required>
+                            <div class="error-message" id="buildingError"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="city">City*</label>
+                            <input type="text" id="city" name="city" placeholder="Enter city" required>
+                            <div class="error-message" id="cityError"></div>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="pinCode">Pin Code*</label>
+                            <input type="text" id="pinCode" name="pinCode" placeholder="Enter pin code" required>
+                            <div class="error-message" id="pinCodeError"></div>
+                        </div>
+                        <div class="form-group">
+                            <label for="state">State*</label>
+                            <input type="text" id="state" name="state" placeholder="Enter state" required>
+                            <div class="error-message" id="stateError"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h4>Tag</h4>
+                    <div class="tag-options">
+                        <label class="tag-option">
+                            <input type="radio" name="addressTag" value="home" checked>
+                            <span class="tag-label">Home</span>
+                        </label>
+                        <label class="tag-option">
+                            <input type="radio" name="addressTag" value="office">
+                            <span class="tag-label">Office</span>
+                        </label>
+                        <label class="tag-option">
+                            <input type="radio" name="addressTag" value="other">
+                            <span class="tag-label">Other</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" id="cancelAddress">Cancel</button>
+                    <button type="submit" class="btn-primary" id="addAddress">Add Address</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <script src="script.js"></script>
+    <script src="address-modal.js"></script>
+    <!-- Google Maps API - Replace YOUR_API_KEY with your actual Google Maps API key -->
+    <!-- To get a Google Maps API key: -->
+    <!-- 1. Go to https://console.cloud.google.com/ -->
+    <!-- 2. Create a new project or select existing one -->
+    <!-- 3. Enable Maps JavaScript API and Geocoding API -->
+    <!-- 4. Create credentials (API Key) -->
+    <!-- 5. Replace YOUR_API_KEY below with your actual key -->
+    <!-- Note: The app will work without Google Maps using OpenStreetMap as fallback -->
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCE8CGM8DC8w4LD_3VvOGNqwTlkEl7mNiA&libraries=places&callback=initGoogleMaps" onerror="handleGoogleMapsError()"></script>
 </body>
 </html>
