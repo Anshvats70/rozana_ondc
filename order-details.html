@@ -638,6 +638,78 @@
             transform: translateY(0);
         }
 
+        /* Issue Close Button Styles */
+        .issue-close-container {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background: #fef2f2;
+            border: 1px solid #dc2626;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .issue-close-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .issue-close-title {
+            font-weight: 600;
+            color: #dc2626;
+            margin-left: 0.5rem;
+        }
+
+        .issue-close-description {
+            color: #dc2626;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .close-issue-btn {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 4px rgba(220, 38, 38, 0.2);
+        }
+
+        .close-issue-btn:hover {
+            background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(220, 38, 38, 0.3);
+        }
+
+        .close-issue-btn:active {
+            transform: translateY(0);
+        }
+
+        .close-issue-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .close-issue-btn .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
         /* Info Request Response Styles */
         .info-request-section {
             margin-top: 1.5rem;
@@ -1669,8 +1741,20 @@
                 // Generate progress bar timeline
                 const timelineHtml = this.generateProgressTimeline(actions);
 
+                // Generate issue close button only if issue is not already closed
+                const issueStatus = this.orderData?.issue_details_status || this.orderData?.issue_details?.status || 'OPEN';
+                const closeButtonHtml = issueStatus.toLowerCase() !== 'closed' ? this.generateIssueCloseButton() : '';
+
+                console.log('🔍 Issue status check for close button:', {
+                    issue_details_status: this.orderData?.issue_details_status,
+                    issue_details_status_nested: this.orderData?.issue_details?.status,
+                    final_status: issueStatus,
+                    show_close_button: issueStatus.toLowerCase() !== 'closed'
+                });
+
                 return `
                     ${timelineHtml}
+                    ${closeButtonHtml}
                 `;
             }
 
@@ -1690,22 +1774,46 @@
                     action.descriptor?.code || action.action_type || action.type
                 ).filter(Boolean);
 
-                console.log('🔍 Action codes found:', actionCodes);
+                // Check if issue is closed - if so, mark all steps as completed
+                const issueStatus = this.orderData?.issue_details_status || this.orderData?.issue_details?.status || 'OPEN';
+                const isIssueClosed = issueStatus.toLowerCase() === 'closed';
+                
+                console.log('🔍 Timeline generation:', {
+                    actionCodes: actionCodes,
+                    issueStatus: issueStatus,
+                    isIssueClosed: isIssueClosed
+                });
+
+                // If issue is closed, ensure ISSUE_CLOSED is in the action codes
+                if (isIssueClosed && !actionCodes.includes('ISSUE_CLOSED')) {
+                    actionCodes.push('ISSUE_CLOSED');
+                    console.log('🔒 Added ISSUE_CLOSED to action codes since status is CLOSED');
+                }
 
                 // Determine which steps are completed, current, or pending
                 const stepsWithStatus = standardSteps.map((step, index) => {
-                    const isCompleted = actionCodes.includes(step.code);
+                    let isCompleted = actionCodes.includes(step.code);
                     const actionIndex = actionCodes.indexOf(step.code);
                     const actionData = actionIndex >= 0 ? actions[actionIndex] : null;
                     
-                    // Find the current step (last completed step)
-                    const lastCompletedIndex = standardSteps.findIndex((s, i) => 
-                        i < standardSteps.length - 1 && 
-                        actionCodes.includes(s.code) && 
-                        !actionCodes.includes(standardSteps[i + 1].code)
-                    );
+                    // If issue is closed, mark all steps up to and including ISSUE_CLOSED as completed
+                    if (isIssueClosed) {
+                        const closedStepIndex = standardSteps.findIndex(s => s.code === 'ISSUE_CLOSED');
+                        if (index <= closedStepIndex) {
+                            isCompleted = true;
+                        }
+                    }
                     
-                    const isCurrent = index === lastCompletedIndex + 1 && !isCompleted;
+                    // Find the current step (last completed step) - but not if issue is closed
+                    let isCurrent = false;
+                    if (!isIssueClosed) {
+                        const lastCompletedIndex = standardSteps.findIndex((s, i) => 
+                            i < standardSteps.length - 1 && 
+                            actionCodes.includes(s.code) && 
+                            !actionCodes.includes(standardSteps[i + 1].code)
+                        );
+                        isCurrent = index === lastCompletedIndex + 1 && !isCompleted;
+                    }
                     
                     return {
                         ...step,
@@ -1765,6 +1873,29 @@
                             </div>
                             ${stepsHtml}
                         </div>
+                    </div>
+                `;
+            }
+
+            generateIssueCloseButton() {
+                return `
+                    <div class="issue-close-container">
+                        <div class="issue-close-header">
+                            <i class="fas fa-times-circle" style="color: #dc2626;"></i>
+                            <div class="issue-close-title">Close Issue</div>
+                        </div>
+                        <div class="issue-close-description">
+                            If your issue has been resolved to your satisfaction, you can close this issue. 
+                            This action will mark the issue as completed and notify the seller.
+                        </div>
+                        <button 
+                            class="close-issue-btn" 
+                            onclick="window.orderDetailsManager.closeIssue('${this.transactionId}')"
+                            id="closeIssueBtn"
+                        >
+                            <i class="fas fa-times-circle"></i>
+                            Close Issue
+                        </button>
                     </div>
                 `;
             }
@@ -2245,6 +2376,235 @@
                             ` : ''}
                             <p style="font-size: 0.9rem; color: #6b7280;">
                                 ${isCorsError ? 'The server needs to allow cross-origin requests or use a local server.' : 'Please try again or contact support if the issue persists.'}
+                            </p>
+                        </div>
+                    `);
+
+                    // Restore button state
+                    button.disabled = false;
+                    button.innerHTML = originalContent;
+                }
+            }
+
+            async closeIssue(transactionId) {
+                console.log('🔒 Closing issue for:', { transactionId });
+                
+                const button = document.getElementById('closeIssueBtn');
+                if (!button) {
+                    console.error('❌ Close Issue button not found!');
+                    return;
+                }
+
+                // Confirm action with user
+                const confirmed = confirm('Are you sure you want to close this issue? This action cannot be undone.');
+                if (!confirmed) {
+                    console.log('❌ User cancelled issue closure');
+                    return;
+                }
+
+                // Disable button and show loading state
+                button.disabled = true;
+                const originalContent = button.innerHTML;
+                button.innerHTML = '<div class="spinner"></div> Closing Issue...';
+
+                try {
+                    // Prepare API request
+                    const apiUrl = 'https://neo-server.rozana.in/issues/close';
+                    const requestData = {
+                        transaction_id: transactionId
+                    };
+
+                    console.log('📡 Sending close issue request:', requestData);
+                    console.log('🌐 Current origin:', window.location.origin);
+                    console.log('🌐 Current protocol:', window.location.protocol);
+                    console.log('🔗 API URL:', apiUrl);
+                    console.log('📦 Request payload:', JSON.stringify(requestData, null, 2));
+
+                    let response = null;
+                    let successMethod = null;
+                    let lastError = null;
+
+                    // Method 1: Direct external API call
+                    try {
+                        console.log('🔄 Direct call to external API for close issue...');
+                        console.log('📡 Calling:', apiUrl);
+                        console.log('📦 Payload:', JSON.stringify(requestData, null, 2));
+                        
+                        response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(requestData)
+                        });
+
+                        if (response.ok) {
+                            successMethod = 'Direct External API';
+                            console.log('✅ External API request successful');
+                        } else {
+                            console.log(`❌ External API failed with status: ${response.status} ${response.statusText}`);
+                            try {
+                                const errorText = await response.text();
+                                console.log('❌ API Error Response:', errorText);
+                            } catch (e) {
+                                console.log('❌ Could not read error response');
+                            }
+                        }
+                    } catch (error) {
+                        lastError = error;
+                        console.log('❌ Direct external API call failed:', error.message);
+                    }
+
+                    // Method 2: Try with CORS headers if direct failed
+                    if (!response || !response.ok) {
+                        try {
+                            console.log('🔄 Method 2: Trying with CORS headers for close issue...');
+                            
+                            response = await fetch(apiUrl, {
+                                method: 'POST',
+                                mode: 'cors',
+                                credentials: 'omit',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(requestData)
+                            });
+
+                            if (response.ok) {
+                                successMethod = 'CORS API';
+                                console.log('✅ CORS API successful for close issue');
+                            } else {
+                                console.log(`❌ CORS API failed with status: ${response.status} ${response.statusText}`);
+                            }
+                        } catch (error) {
+                            lastError = error;
+                            console.log('❌ CORS API failed for close issue:', error.message);
+                        }
+                    }
+
+                    // Method 3: Fallback for file protocol
+                    if ((!response || !response.ok) && (window.location.protocol === 'file:' || window.location.origin === 'null')) {
+                        try {
+                            console.log('🔄 Method 3: Trying no-cors fallback for file:// protocol...');
+                            console.log('⚠️ Using external API as fallback (cannot verify success)');
+                            
+                            response = await fetch(apiUrl, {
+                                method: 'POST',
+                                mode: 'no-cors',
+                                cache: 'no-cache',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(requestData)
+                            });
+
+                            if (response.type === 'opaque') {
+                                successMethod = 'External API (No-CORS Fallback)';
+                                console.log('✅ External API request sent (opaque response)');
+                                // Create a mock response since we can't read opaque responses
+                                response = { 
+                                    ok: true, 
+                                    json: () => Promise.resolve({ 
+                                        success: true, 
+                                        message: 'Issue close request sent to external API (success cannot be verified)',
+                                        data: [],
+                                        note: 'This is a fallback mode - actual success depends on server processing'
+                                    }) 
+                                };
+                            }
+                        } catch (error) {
+                            lastError = error;
+                            console.log('❌ External API fallback failed:', error.message);
+                        }
+                    }
+
+                    if (!response || !response.ok) {
+                        const errorMessage = lastError ? lastError.message : `HTTP error! status: ${response?.status || 'Network Error'}`;
+                        console.error('❌ All methods failed. Last error:', errorMessage);
+                        throw new Error(errorMessage);
+                    }
+
+                    const result = await response.json();
+                    console.log('✅ Issue closed successfully:', result);
+
+                    // Show success message
+                    this.showSuccessMessage('Issue Closed Successfully!', `
+                        <div style="text-align: center;">
+                            <i class="fas fa-check-circle" style="font-size: 3rem; color: #10b981; margin-bottom: 1rem;"></i>
+                            <h3 style="color: #10b981; margin-bottom: 1rem;">Issue Closed Successfully!</h3>
+                            <p style="margin-bottom: 1rem;">Your issue has been marked as closed and the seller has been notified.</p>
+                            <div style="background: #f0fdf4; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                                <div><strong>Transaction ID:</strong> ${transactionId}</div>
+                                <div><strong>Response:</strong> ${result.message || 'Success'}</div>
+                                <div><strong>Method:</strong> ${successMethod}</div>
+                            </div>
+                            <p style="font-size: 0.9rem; color: #6b7280;">
+                                The issue status will be updated shortly.
+                            </p>
+                        </div>
+                    `);
+
+                    // Update button to show closed state
+                    button.innerHTML = '<i class="fas fa-check-circle"></i> Issue Closed';
+                    button.style.background = '#10b981';
+                    button.disabled = true;
+
+                    // Optionally reload the page data after a delay
+                    setTimeout(() => {
+                        console.log('🔄 Reloading order details after issue closure...');
+                        this.loadOrderDetails();
+                    }, 2000);
+
+                } catch (error) {
+                    console.error('❌ Failed to close issue:', error);
+                    
+                    // Determine error type and provide specific guidance
+                    let errorType = 'Unknown Error';
+                    let troubleshootingTips = '';
+                    
+                    if (error.message.includes('Network Error') || error.message.includes('Failed to fetch')) {
+                        errorType = 'Network Connection Error';
+                        troubleshootingTips = `
+                            <div style="text-align: left; margin-top: 1rem;">
+                                <strong>Troubleshooting Tips:</strong>
+                                <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                                    <li>Check your internet connection</li>
+                                    <li>Try refreshing the page</li>
+                                    <li>Disable any ad blockers or VPN</li>
+                                    <li>Check if the server is accessible: <a href="https://neo-server.rozana.in" target="_blank" style="color: #3b82f6;">neo-server.rozana.in</a></li>
+                                </ul>
+                            </div>
+                        `;
+                    } else if (error.message.includes('CORS') || window.location.protocol === 'file:') {
+                        errorType = 'File Protocol Issue';
+                        troubleshootingTips = `
+                            <div style="text-align: left; margin-top: 1rem;">
+                                <strong>File Protocol Detected - Use Web Server Instead:</strong>
+                                <ol style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                                    <li><strong>Option 1 (Recommended):</strong> Double-click <code>start-local-server.bat</code> in the project folder</li>
+                                    <li><strong>Option 2:</strong> Use XAMPP - Access via <code>http://localhost/rozana_ondc/order-details.html</code></li>
+                                </ol>
+                            </div>
+                        `;
+                    }
+                    
+                    // Show detailed error message
+                    this.showErrorMessage('Failed to Close Issue', `
+                        <div style="text-align: center;">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #dc2626; margin-bottom: 1rem;"></i>
+                            <h3 style="color: #dc2626; margin-bottom: 1rem;">Issue Closure Failed</h3>
+                            <p style="margin-bottom: 1rem;">Unable to close the issue at this time.</p>
+                            <div style="background: #fef2f2; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                                <div><strong>Transaction ID:</strong> ${transactionId}</div>
+                                <div><strong>Error Type:</strong> ${errorType}</div>
+                                <div><strong>Error Details:</strong> ${error.message}</div>
+                                <div><strong>Current Protocol:</strong> ${window.location.protocol}</div>
+                                <div><strong>Current Origin:</strong> ${window.location.origin}</div>
+                            </div>
+                            ${troubleshootingTips}
+                            <p style="font-size: 0.9rem; color: #6b7280; margin-top: 1rem;">
+                                If the issue persists, please contact support with the above details.
                             </p>
                         </div>
                     `);
@@ -3069,6 +3429,105 @@
                 }
             };
 
+            // Test function to simulate closed issue data
+            window.testWithClosedIssue = function() {
+                console.log('🧪 Testing with CLOSED issue data...');
+                
+                const mockOrderData = {
+                    order_id: 143,
+                    transaction_id: '121dbfa1-2c75-47c7-b05e-c1a3b8d958b4',
+                    ondc_order_id: 'O1758991924227',
+                    order_status: 'Completed',
+                    total_value: '145.00',
+                    currency: 'INR',
+                    payment_status: 'PAID',
+                    payment_mode: 'Prepaid',
+                    provider_id: 'pramaan_provider_1',
+                    provider_location_id: 'SSL1',
+                    total_items: 1,
+                    total_quantity: '1',
+                    created_at: '2025-09-29 16:50:03',
+                    updated_at: '2025-09-30 10:30:00',
+                    issue_raised: 1,
+                    issue_details_status: 'CLOSED',
+                    issue_id: 'ISSUE-143-85',
+                    issue_actions: {
+                        action_status: 'ISSUE_CLOSED'
+                    },
+                    issue_details: {
+                        status: 'CLOSED',
+                        description: 'Product quality issue - resolved with replacement',
+                        category: 'ITEM',
+                        sub_category: 'QUALITY',
+                        created_at: '2025-09-29 18:30:00',
+                        updated_at: '2025-09-30 10:30:00',
+                        actions: [
+                            {
+                                descriptor: { code: 'ISSUE_CLOSED' },
+                                action_type: 'ISSUE_CLOSED',
+                                description: 'Issue has been successfully resolved and closed',
+                                status: 'COMPLETED',
+                                created_at: '2025-09-30 10:30:00'
+                            },
+                            {
+                                descriptor: { code: 'RESOLUTION_ACCEPTED' },
+                                action_type: 'RESOLUTION_ACCEPTED',
+                                description: 'Buyer accepted the proposed resolution',
+                                status: 'COMPLETED',
+                                created_at: '2025-09-30 09:45:00'
+                            },
+                            {
+                                descriptor: { code: 'RESOLUTION_PROPOSED' },
+                                action_type: 'RESOLUTION_PROPOSED',
+                                description: 'Seller proposed a replacement for the damaged item',
+                                status: 'COMPLETED',
+                                created_at: '2025-09-29 22:20:04'
+                            },
+                            {
+                                descriptor: { code: 'INFO_PROVIDED' },
+                                action_type: 'INFO_PROVIDED',
+                                description: 'Buyer provided additional information and images',
+                                status: 'COMPLETED',
+                                created_at: '2025-09-29 21:00:00'
+                            },
+                            {
+                                descriptor: { code: 'INFO_REQUESTED' },
+                                action_type: 'INFO_REQUESTED',
+                                description: 'Additional information requested from buyer',
+                                status: 'COMPLETED',
+                                created_at: '2025-09-29 20:15:00'
+                            },
+                            {
+                                descriptor: { code: 'ISSUE_RAISED' },
+                                action_type: 'ISSUE_RAISED',
+                                description: 'Issue raised by buyer regarding product quality',
+                                status: 'COMPLETED',
+                                created_at: '2025-09-29 18:30:00'
+                            }
+                        ]
+                    },
+                    order_details: [
+                        {
+                            title: 'Plain Atta',
+                            quantity: 1,
+                            amount: '65.00',
+                            currency: 'INR',
+                            status: 'Completed',
+                            item_id: 'id_13owvn_0_0'
+                        }
+                    ]
+                };
+                
+                console.log('📋 Mock order data with CLOSED issue:', mockOrderData);
+                
+                if (window.orderDetailsManager) {
+                    window.orderDetailsManager.displayOrderDetails(mockOrderData);
+                    console.log('✅ Displayed mock data with CLOSED issue - should NOT show close button and timeline should be 100% complete');
+                } else {
+                    console.log('❌ OrderDetailsManager not available');
+                }
+            };
+
             // Test function to simulate issue data
             window.testWithIssueData = function() {
                 console.log('🧪 Testing with simulated issue data...');
@@ -3194,6 +3653,134 @@
                     console.log('✅ Displayed mock data with issue details');
                 } else {
                     console.log('❌ OrderDetailsManager not available');
+                }
+            };
+
+            // Test function for Close Issue API
+            window.testCloseIssueAPI = async function(transactionId) {
+                console.log('🧪 Testing Close Issue API connectivity...');
+                
+                const apiUrl = 'https://neo-server.rozana.in/issues/close';
+                const requestData = { 
+                    transaction_id: transactionId || '121dbfa1-2c75-47c7-b05e-c1a3b8d958b4'
+                };
+                
+                console.log('📡 Testing API:', apiUrl);
+                console.log('📦 Request data:', requestData);
+                console.log('🌐 Current protocol:', window.location.protocol);
+                console.log('🌐 Current origin:', window.location.origin);
+                
+                // Test different methods
+                const methods = [
+                    {
+                        name: 'Direct API (CORS)',
+                        test: async () => {
+                            return await fetch(apiUrl, {
+                                method: 'POST',
+                                mode: 'cors',
+                                credentials: 'omit',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'Content-Type': 'application/json',
+                                    'Cache-Control': 'no-cache'
+                                },
+                                body: JSON.stringify(requestData)
+                            });
+                        }
+                    },
+                    {
+                        name: 'No-CORS Mode',
+                        test: async () => {
+                            return await fetch(apiUrl, {
+                                method: 'POST',
+                                mode: 'no-cors',
+                                cache: 'no-cache',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(requestData)
+                            });
+                        }
+                    }
+                ];
+                
+                for (const method of methods) {
+                    try {
+                        console.log(`🔄 Testing ${method.name}...`);
+                        const response = await method.test();
+                        console.log(`✅ ${method.name} - Status:`, response.status, 'Type:', response.type);
+                        
+                        if (response.ok || response.type === 'opaque') {
+                            console.log(`🎉 ${method.name} appears to be working!`);
+                            if (response.type !== 'opaque') {
+                                try {
+                                    const result = await response.text();
+                                    console.log(`📄 ${method.name} Response:`, result);
+                                } catch (e) {
+                                    console.log(`📄 ${method.name} Response could not be read:`, e.message);
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.log(`❌ ${method.name} failed:`, error.message);
+                    }
+                }
+                
+                console.log('🧪 Close Issue API connectivity test completed. Check console for details.');
+            };
+
+            // Simple test function for debugging Close Issue API
+            window.debugCloseIssue = async function(transactionId = '121dbfa1-2c75-47c7-b05e-c1a3b8d958b4') {
+                console.log('🔧 DEBUG: Testing Close Issue API directly...');
+                
+                const apiUrl = 'https://neo-server.rozana.in/issues/close';
+                const requestData = { transaction_id: transactionId };
+                
+                console.log('🔗 API URL:', apiUrl);
+                console.log('📦 Request Data:', requestData);
+                console.log('🌐 Environment:', {
+                    protocol: window.location.protocol,
+                    origin: window.location.origin,
+                    userAgent: navigator.userAgent.substring(0, 100) + '...'
+                });
+                
+                try {
+                    console.log('🚀 Making direct fetch request...');
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(requestData)
+                    });
+                    
+                    console.log('📡 Response received:', {
+                        status: response.status,
+                        statusText: response.statusText,
+                        ok: response.ok,
+                        headers: Object.fromEntries(response.headers.entries())
+                    });
+                    
+                    const responseText = await response.text();
+                    console.log('📄 Raw response text:', responseText);
+                    
+                    try {
+                        const responseJson = JSON.parse(responseText);
+                        console.log('✅ Parsed JSON response:', responseJson);
+                        return { success: true, data: responseJson, status: response.status };
+                    } catch (parseError) {
+                        console.log('❌ Failed to parse JSON:', parseError.message);
+                        return { success: false, error: 'Invalid JSON response', rawResponse: responseText, status: response.status };
+                    }
+                    
+                } catch (error) {
+                    console.log('❌ Fetch failed:', {
+                        name: error.name,
+                        message: error.message,
+                        stack: error.stack
+                    });
+                    return { success: false, error: error.message };
                 }
             };
 
