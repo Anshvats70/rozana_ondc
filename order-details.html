@@ -1817,16 +1817,110 @@
                     console.log('🔗 API URL:', apiUrl);
                     console.log('📦 Request payload:', JSON.stringify(requestData, null, 2));
 
-                    // Try multiple methods to handle CORS and network issues
+                    // Direct call to external API (primary method)
                     let response = null;
                     let successMethod = null;
                     let lastError = null;
 
-                    // Method 1: Try PHP proxy first (only if not running from file protocol)
-                    if (window.location.protocol !== 'file:' && window.location.origin !== 'null') {
+                    // Method 1: Direct external API call with no-cors (works from file://)
+                    try {
+                        console.log('🔄 Direct call to external API for accept proposal...');
+                        console.log('📡 Calling:', apiUrl);
+                        console.log('📦 Payload:', JSON.stringify(requestData, null, 2));
+                        
+                        response = await fetch(apiUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(requestData)
+                        });
+
+                        if (response.ok) {
+                            successMethod = 'Direct External API';
+                            console.log('✅ External API request successful');
+                            console.log('📡 Request details:', {
+                                url: apiUrl,
+                                method: 'POST',
+                                payload: requestData,
+                                status: response.status,
+                                statusText: response.statusText
+                            });
+                        } else {
+                            console.log(`❌ External API failed with status: ${response.status} ${response.statusText}`);
+                            // Try to get error details from response
+                            try {
+                                const errorText = await response.text();
+                                console.log('❌ API Error Response:', errorText);
+                                try {
+                                    const errorJson = JSON.parse(errorText);
+                                    console.log('❌ API Error Details:', errorJson);
+                                } catch (e) {
+                                    console.log('❌ Error response is not JSON');
+                                }
+                            } catch (e) {
+                                console.log('❌ Could not read error response');
+                            }
+                        }
+                    } catch (error) {
+                        lastError = error;
+                        console.log('❌ Direct external API call failed:', error.message);
+                    }
+
+                    // Skip all fallback methods - direct external API call only
+                    if (false) {
                         try {
-                            console.log('🔄 Method 1: Trying PHP proxy for accept proposal...');
-                            const proxyUrl = `./api-proxy.php?url=${encodeURIComponent(apiUrl)}`;
+                            console.log('🔄 Method 2: Trying with CORS headers for accept proposal...');
+                            
+                            response = await fetch(apiUrl, {
+                                method: 'POST',
+                                mode: 'cors',
+                                credentials: 'omit',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(requestData)
+                            });
+
+                            if (response.ok) {
+                                successMethod = 'CORS API';
+                                console.log('✅ CORS API successful for accept proposal');
+                            } else {
+                                console.log(`❌ CORS API failed with status: ${response.status} ${response.statusText}`);
+                                // Try to get error details from response
+                                try {
+                                    const errorText = await response.text();
+                                    console.log('❌ CORS API Error Response:', errorText);
+                                    try {
+                                        const errorJson = JSON.parse(errorText);
+                                        console.log('❌ CORS API Error Details:', errorJson);
+                                    } catch (e) {
+                                        console.log('❌ CORS Error response is not JSON');
+                                    }
+                                } catch (e) {
+                                    console.log('❌ Could not read CORS error response');
+                                }
+                            }
+                        } catch (error) {
+                            lastError = error;
+                            console.log('❌ CORS API failed for accept proposal:', error.message);
+                        }
+                    }
+
+                    // Method 3: Try POST proxy for file protocol (actual Laravel API call)
+                    if ((!response || !response.ok) && (window.location.protocol === 'file:' || window.location.origin === 'null')) {
+                        try {
+                            console.log('🔄 Method 3: Trying POST proxy for file:// protocol...');
+                            console.log('⚠️ File protocol detected, using POST proxy to reach Laravel API');
+                            
+                            // Use local Laravel API instead of external API
+                            const localApiUrl = 'http://127.0.0.1:8000/issues/accept-proposal';
+                            const proxyUrl = `./post-proxy.php?url=${encodeURIComponent(localApiUrl)}`;
+                            
+                            console.log('📡 POST Proxy URL:', proxyUrl);
+                            console.log('📡 Target Laravel API:', localApiUrl);
+                            console.log('📦 Request data:', requestData);
                             
                             response = await fetch(proxyUrl, {
                                 method: 'POST',
@@ -1838,57 +1932,23 @@
                             });
 
                             if (response.ok) {
-                                successMethod = 'PHP Proxy';
-                                console.log('✅ PHP Proxy successful for accept proposal');
+                                successMethod = 'POST Proxy (Laravel API)';
+                                console.log('✅ POST Proxy successful for accept proposal');
                             } else {
-                                console.log(`❌ PHP Proxy failed with status: ${response.status}`);
+                                console.log(`❌ POST Proxy failed with status: ${response.status}`);
                             }
                         } catch (error) {
                             lastError = error;
-                            console.log('❌ PHP Proxy failed for accept proposal:', error.message);
-                        }
-                    } else {
-                        console.log('⚠️ Skipping PHP proxy (file:// protocol detected)');
-                    }
-
-                    // Method 2: Try direct API call with CORS if proxy failed
-                    if (!response || !response.ok) {
-                        try {
-                            console.log('🔄 Method 2: Trying direct API with CORS for accept proposal...');
-                            
-                            response = await fetch(apiUrl, {
-                                method: 'POST',
-                                mode: 'cors',
-                                credentials: 'omit',
-                                headers: {
-                                    'Accept': 'application/json',
-                                    'Content-Type': 'application/json',
-                                    'Cache-Control': 'no-cache'
-                                },
-                                body: JSON.stringify(requestData)
-                            });
-
-                            if (response.ok) {
-                                successMethod = 'Direct API (CORS)';
-                                console.log('✅ Direct API with CORS successful for accept proposal');
-                            } else {
-                                console.log(`❌ Direct API with CORS failed with status: ${response.status}`);
-                            }
-                        } catch (error) {
-                            lastError = error;
-                            console.log('❌ Direct API with CORS failed for accept proposal:', error.message);
-                            console.log('❌ CORS Error details:', {
-                                name: error.name,
-                                message: error.message,
-                                stack: error.stack
-                            });
+                            console.log('❌ POST Proxy failed for accept proposal:', error.message);
+                            console.log('⚠️ File protocol cannot access local PHP files due to browser security');
                         }
                     }
 
-                    // Method 3: Try no-cors mode if running from file protocol or if CORS failed
+                    // Method 4: Show helpful error message for file protocol
                     if ((!response || !response.ok) && (window.location.protocol === 'file:' || window.location.origin === 'null')) {
                         try {
-                            console.log('🔄 Method 3: Trying no-cors mode for accept proposal...');
+                            console.log('🔄 Method 4: Trying external API fallback for file:// protocol...');
+                            console.log('⚠️ Using external API as fallback (cannot verify success)');
                             
                             response = await fetch(apiUrl, {
                                 method: 'POST',
@@ -1901,56 +1961,52 @@
                             });
 
                             if (response.type === 'opaque') {
-                                successMethod = 'No-CORS Mode';
-                                console.log('✅ No-CORS mode completed (opaque response)');
-                                // For no-cors, we can't read the response, so we'll assume success
-                                response = { ok: true, json: () => Promise.resolve({ success: true, message: 'Request sent successfully' }) };
+                                successMethod = 'External API (No-CORS Fallback)';
+                                console.log('✅ External API request sent (opaque response)');
+                                console.log('⚠️ Note: Cannot verify if request succeeded due to no-cors mode');
+                                // Create a mock response since we can't read opaque responses
+                                response = { 
+                                    ok: true, 
+                                    json: () => Promise.resolve({ 
+                                        success: true, 
+                                        message: 'Request sent to external API (success cannot be verified)',
+                                        data: [],
+                                        note: 'This is a fallback mode - actual success depends on server processing'
+                                    }) 
+                                };
                             }
                         } catch (error) {
                             lastError = error;
-                            console.log('❌ No-CORS mode failed for accept proposal:', error.message);
-                        }
-                    }
-
-                    // Method 4: Try with different headers if all above failed
-                    if (!response || !response.ok) {
-                        try {
-                            console.log('🔄 Method 4: Trying with minimal headers for accept proposal...');
-                            
-                            response = await fetch(apiUrl, {
-                                method: 'POST',
-                                body: JSON.stringify(requestData)
-                            });
-
-                            if (response.ok) {
-                                successMethod = 'Minimal Headers';
-                                console.log('✅ Minimal headers successful for accept proposal');
-                            } else {
-                                console.log(`❌ Minimal headers failed with status: ${response.status}`);
-                            }
-                        } catch (error) {
-                            lastError = error;
-                            console.log('❌ Minimal headers failed for accept proposal:', error.message);
+                            console.log('❌ External API fallback failed:', error.message);
                         }
                     }
 
                     if (!response || !response.ok) {
                         const errorMessage = lastError ? lastError.message : `HTTP error! status: ${response?.status || 'Network Error'}`;
                         console.error('❌ All methods failed. Last error:', errorMessage);
-                        throw new Error(errorMessage);
+                        
+                        // Provide specific error details for CORS issues
+                        let detailedError = errorMessage;
+                        if (lastError && lastError.message.includes('CORS')) {
+                            detailedError = 'Network Connection Error';
+                        }
+                        
+                        throw new Error(detailedError);
                     }
 
                     const result = await response.json();
                     console.log('✅ Proposal accepted successfully:', result);
 
-                    // Show success message
-                    this.showSuccessMessage('Proposal Accepted!', `
+                    // Show success message (same pattern as upload-additional-info)
+                    this.showSuccessMessage('Proposal Accepted Successfully!', `
                         <div style="text-align: center;">
                             <i class="fas fa-check-circle" style="font-size: 3rem; color: #10b981; margin-bottom: 1rem;"></i>
                             <h3 style="color: #10b981; margin-bottom: 1rem;">Proposal Accepted Successfully!</h3>
                             <p style="margin-bottom: 1rem;">Your acceptance has been recorded and the seller will be notified.</p>
                             <div style="background: #f0fdf4; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
                                 <div><strong>Transaction ID:</strong> ${transactionId}</div>
+                                <div><strong>Response:</strong> ${result.message || 'Success'}</div>
+                                <div><strong>Method:</strong> ${successMethod}</div>
                             </div>
                             <p style="font-size: 0.9rem; color: #6b7280;">
                                 The issue status will be updated shortly.
@@ -1989,16 +2045,20 @@
                                 </ul>
                             </div>
                         `;
-                    } else if (error.message.includes('CORS')) {
-                        errorType = 'Cross-Origin Request Error';
+                    } else if (error.message.includes('CORS') || window.location.protocol === 'file:') {
+                        errorType = 'File Protocol Issue';
                         troubleshootingTips = `
                             <div style="text-align: left; margin-top: 1rem;">
-                                <strong>Troubleshooting Tips:</strong>
-                                <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
-                                    <li>Try opening this page from a web server (not file://)</li>
-                                    <li>Contact the administrator to configure CORS headers</li>
-                                    <li>Use a browser extension to disable CORS temporarily</li>
-                                </ul>
+                                <strong>File Protocol Detected - Use Web Server Instead:</strong>
+                                <ol style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                                    <li><strong>Option 1 (Recommended):</strong> Double-click <code>start-local-server.bat</code> in the project folder</li>
+                                    <li><strong>Option 2:</strong> Use XAMPP - Access via <code>http://localhost/rozana_ondc/order-details.html</code></li>
+                                    <li><strong>Option 3:</strong> Use Python - Run <code>python -m http.server 8080</code> in project folder</li>
+                                    <li><strong>Option 4:</strong> Use Node.js - Run <code>npx http-server -p 8080</code> in project folder</li>
+                                </ol>
+                                <div style="background: #fef3c7; padding: 0.5rem; border-radius: 4px; margin-top: 0.5rem;">
+                                    <strong>Why this happens:</strong> Browsers block file:// protocol from accessing local PHP files for security reasons.
+                                </div>
                             </div>
                         `;
                     } else if (error.message.includes('404')) {

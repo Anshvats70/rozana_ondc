@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Protocol Issue - Solutions</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            max-width: 800px; 
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        .alert { 
+            background: #fee2e2; 
+            border-left: 4px solid #dc2626; 
+            padding: 15px; 
+            margin: 20px 0; 
+            border-radius: 4px;
+        }
+        .solution { 
+            background: #d1fae5; 
+            border-left: 4px solid #10b981; 
+            padding: 15px; 
+            margin: 20px 0; 
+            border-radius: 4px;
+        }
+        .info { 
+            background: #dbeafe; 
+            border-left: 4px solid #3b82f6; 
+            padding: 15px; 
+            margin: 20px 0; 
+            border-radius: 4px;
+        }
+        code { 
+            background: #f3f4f6; 
+            padding: 2px 6px; 
+            border-radius: 3px; 
+            font-family: 'Courier New', monospace;
+        }
+        .step { 
+            margin: 10px 0; 
+            padding: 10px; 
+            background: #f9fafb; 
+            border-radius: 4px;
+        }
+        .btn {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 5px;
+        }
+        .btn:hover {
+            background: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚫 File Protocol Issue Detected</h1>
+    
+    <div class="alert">
+        <h3>❌ Problem:</h3>
+        <p>You're accessing the HTML file using <code>file://</code> protocol, which prevents the "Accept Proposal" functionality from working due to browser security restrictions.</p>
+        <p><strong>Current URL:</strong> <code id="currentUrl"></code></p>
+    </div>
+
+    <h2>✅ Solutions (Choose One):</h2>
+
+    <div class="solution">
+        <h3>🎯 Option 1: Use the Provided Server Script (Recommended)</h3>
+        <div class="step">
+            <strong>Step 1:</strong> Double-click <code>start-local-server.bat</code> in the project folder
+        </div>
+        <div class="step">
+            <strong>Step 2:</strong> Open your browser and go to: <br>
+            <code>http://localhost:8080/order-details.html?transaction_id=e4c8de8c-a59c-480f-80e2-99d8316c10f8</code>
+        </div>
+        <a href="#" class="btn" onclick="openLocalServer()">🚀 Try to Open Local Server</a>
+    </div>
+
+    <div class="solution">
+        <h3>🌐 Option 2: Use XAMPP</h3>
+        <div class="step">
+            <strong>Step 1:</strong> Make sure XAMPP is running (Apache service)
+        </div>
+        <div class="step">
+            <strong>Step 2:</strong> Open your browser and go to: <br>
+            <code>http://localhost/rozana_ondc/order-details.html?transaction_id=e4c8de8c-a59c-480f-80e2-99d8316c10f8</code>
+        </div>
+        <a href="http://localhost/rozana_ondc/order-details.html?transaction_id=e4c8de8c-a59c-480f-80e2-99d8316c10f8" class="btn">🌐 Open via XAMPP</a>
+    </div>
+
+    <div class="solution">
+        <h3>🐍 Option 3: Use Python HTTP Server</h3>
+        <div class="step">
+            <strong>Step 1:</strong> Open Command Prompt in the project folder
+        </div>
+        <div class="step">
+            <strong>Step 2:</strong> Run: <code>python -m http.server 8080</code>
+        </div>
+        <div class="step">
+            <strong>Step 3:</strong> Open: <code>http://localhost:8080/order-details.html?transaction_id=e4c8de8c-a59c-480f-80e2-99d8316c10f8</code>
+        </div>
+    </div>
+
+    <div class="solution">
+        <h3>📦 Option 4: Use Node.js HTTP Server</h3>
+        <div class="step">
+            <strong>Step 1:</strong> Open Command Prompt in the project folder
+        </div>
+        <div class="step">
+            <strong>Step 2:</strong> Run: <code>npx http-server -p 8080</code>
+        </div>
+        <div class="step">
+            <strong>Step 3:</strong> Open: <code>http://localhost:8080/order-details.html?transaction_id=e4c8de8c-a59c-480f-80e2-99d8316c10f8</code>
+        </div>
+    </div>
+
+    <div class="info">
+        <h3>🔍 Why This Happens:</h3>
+        <p>Modern browsers block <code>file://</code> protocol from making requests to local files (like PHP scripts) for security reasons. This is called the "Same-Origin Policy" and prevents malicious websites from accessing your local files.</p>
+        
+        <p><strong>What doesn't work with file:// protocol:</strong></p>
+        <ul>
+            <li>❌ Calling PHP proxy files</li>
+            <li>❌ Making CORS requests</li>
+            <li>❌ Accessing local APIs</li>
+        </ul>
+        
+        <p><strong>What works with http:// protocol:</strong></p>
+        <ul>
+            <li>✅ PHP proxy files work</li>
+            <li>✅ CORS requests work</li>
+            <li>✅ Local API calls work</li>
+            <li>✅ All functionality works as expected</li>
+        </ul>
+    </div>
+
+    <div class="info">
+        <h3>🎯 Quick Test:</h3>
+        <p>Click the button below to test if you're using the correct protocol:</p>
+        <button class="btn" onclick="testProtocol()">🧪 Test Current Protocol</button>
+        <div id="testResult" style="margin-top: 10px;"></div>
+    </div>
+
+    <script>
+        // Display current URL
+        document.getElementById('currentUrl').textContent = window.location.href;
+
+        function openLocalServer() {
+            const url = 'http://localhost:8080/order-details.html?transaction_id=e4c8de8c-a59c-480f-80e2-99d8316c10f8';
+            window.open(url, '_blank');
+        }
+
+        function testProtocol() {
+            const resultDiv = document.getElementById('testResult');
+            const protocol = window.location.protocol;
+            const origin = window.location.origin;
+            
+            if (protocol === 'file:') {
+                resultDiv.innerHTML = `
+                    <div style="background: #fee2e2; padding: 10px; border-radius: 4px; border-left: 4px solid #dc2626;">
+                        <strong>❌ File Protocol Detected</strong><br>
+                        Protocol: ${protocol}<br>
+                        Origin: ${origin}<br>
+                        <em>You need to use one of the solutions above.</em>
+                    </div>
+                `;
+            } else if (protocol === 'http:' || protocol === 'https:') {
+                resultDiv.innerHTML = `
+                    <div style="background: #d1fae5; padding: 10px; border-radius: 4px; border-left: 4px solid #10b981;">
+                        <strong>✅ Web Server Protocol Detected</strong><br>
+                        Protocol: ${protocol}<br>
+                        Origin: ${origin}<br>
+                        <em>Great! The Accept Proposal functionality should work.</em>
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <div style="background: #fef3c7; padding: 10px; border-radius: 4px; border-left: 4px solid #f59e0b;">
+                        <strong>⚠️ Unknown Protocol</strong><br>
+                        Protocol: ${protocol}<br>
+                        Origin: ${origin}<br>
+                        <em>This might not work as expected.</em>
+                    </div>
+                `;
+            }
+        }
+
+        // Auto-test on page load
+        window.addEventListener('load', testProtocol);
+    </script>
+</body>
+</html>
