@@ -13,6 +13,10 @@ const loginBtn = document.getElementById('loginBtn');
 const emailInput = document.getElementById('email');
 const passwordInput = document.getElementById('password');
 
+// Password toggle elements
+const passwordToggle = document.getElementById('passwordToggle');
+const passwordToggleIcon = document.getElementById('passwordToggleIcon');
+
 // Social login buttons
 const facebookBtn = document.getElementById('facebookBtn');
 const googleBtn = document.getElementById('googleBtn');
@@ -142,6 +146,10 @@ function setupEventListeners() {
         passwordInput.addEventListener('input', clearError);
     }
     
+    // Password toggle button
+    if (passwordToggle) {
+        passwordToggle.addEventListener('click', togglePasswordVisibility);
+    }
     
     // Logout button
     if (logoutBtn) {
@@ -210,6 +218,26 @@ function clearFieldError(errorElementId) {
     if (errorElement) {
         errorElement.textContent = '';
         errorElement.style.display = 'none';
+    }
+}
+
+function togglePasswordVisibility() {
+    console.log('Password toggle clicked');
+    
+    if (passwordInput && passwordToggleIcon) {
+        // Toggle input type between password and text
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            passwordToggleIcon.className = 'fas fa-eye-slash';
+            passwordToggle.setAttribute('aria-label', 'Hide password');
+        } else {
+            passwordInput.type = 'password';
+            passwordToggleIcon.className = 'fas fa-eye';
+            passwordToggle.setAttribute('aria-label', 'Show password');
+        }
+        
+        // Keep focus on the input after toggling
+        passwordInput.focus();
     }
 }
 

@@ -1317,7 +1317,6 @@ body {
     border-radius: 16px;
     padding: 2rem;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    position: sticky;
     top: 2rem;
 }
 
@@ -2237,6 +2236,21 @@ body {
         padding: 0.75rem 1rem;
         font-size: 0.9rem;
     }
+    
+    /* Password toggle responsive adjustments */
+    .password-toggle {
+        right: 0.5rem;
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+    
+    .password-toggle i {
+        font-size: 0.75rem;
+    }
+    
+    .password-input-container input {
+        padding-right: 2.5rem;
+    }
 }
 
 .form-section {
@@ -2668,6 +2682,13 @@ body {
 
 .transaction-info {
     display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.transaction-details {
+    display: flex;
     flex-direction: column;
     gap: 0.5rem;
     text-align: right;
@@ -2898,6 +2919,12 @@ body {
     }
     
     .transaction-info {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+    }
+    
+    .transaction-details {
         text-align: center;
     }
     
@@ -5760,6 +5787,53 @@ body {
 
 .login-form .form-group input::placeholder {
     color: #9ca3af;
+}
+
+/* Password Input Container */
+.password-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-container input {
+    padding-right: 3rem;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem;
+    color: #6b7280;
+    transition: color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 4px;
+}
+
+.password-toggle:hover {
+    color: #374151;
+    background: #f3f4f6;
+    transform: translateY(-50%);
+}
+
+.password-toggle:focus {
+    outline: none;
+    color: #3b82f6;
+    background: #eff6ff;
+    transform: translateY(-50%);
+}
+
+.password-toggle i {
+    font-size: 0.875rem;
 }
 
 .login-form .error-message {

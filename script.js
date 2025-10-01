@@ -275,6 +275,13 @@ function setupEventListeners() {
             showSearchSuggestions(searchSuggestionsData.slice(0, 6));
         });
         searchInput.addEventListener('blur', hideSearchSuggestions);
+        // Add Enter key functionality to trigger search
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); // Prevent form submission if any
+                performSearch();
+            }
+        });
     }
     if (searchBtn) {
         searchBtn.addEventListener('click', performSearch);
@@ -454,7 +461,7 @@ function createProductCard(product) {
     
     // Add click handler to open product details page in new tab
     card.style.cursor = 'pointer';
-    card.title = 'Click to view product details (opens in new tab)';
+    card.title = 'Click to view product details';
     card.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
     card.addEventListener('mouseenter', function() {
         card.style.transform = 'translateY(-2px)';
@@ -470,9 +477,9 @@ function createProductCard(product) {
             return;
         }
         
-        // Open product details page in new tab
-        console.log('Opening product details in new tab for ID:', product.id);
-        window.open(`product-details.html?id=${product.id}`, '_blank');
+        // Navigate to product details page in same tab
+        console.log('Navigating to product details page for ID:', product.id);
+        window.location.href = `product-details.html?id=${product.id}`;
     });
     
     return card;
@@ -1060,7 +1067,7 @@ function createProductCardFromONDC(item, provider) {
     
     // Add click handler to open product details page in new tab
     card.style.cursor = 'pointer';
-    card.title = 'Click to view product details (opens in new tab)';
+    card.title = 'Click to view product details';
     card.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
     card.addEventListener('mouseenter', function() {
         card.style.transform = 'translateY(-2px)';
@@ -1076,9 +1083,9 @@ function createProductCardFromONDC(item, provider) {
             return;
         }
         
-        // Open product details page in new tab
-        console.log('Opening product details in new tab for ID:', item.id);
-        window.open(`product-details.html?id=${item.id}`, '_blank');
+        // Navigate to product details page in same tab
+        console.log('Navigating to product details page for ID:', item.id);
+        window.location.href = `product-details.html?id=${item.id}`;
     });
     
     return card;
@@ -1087,9 +1094,10 @@ function createProductCardFromONDC(item, provider) {
 function createProductCardFromResultsAPI(product) {
     const card = document.createElement('div');
     card.className = 'product-card';
-    
     // Extract product information from Results API response
     const productName = product.name || product.title || product.product_name || 'Product';
+    const variation_value = product.variation_value? " - " + product.variation_value: '';
+
     const productPrice = product.price || product.cost || product.amount || 'Price not available';
     const productImage = product.image || product.image_url || product.thumbnail || '📦';
     const sellerName = product.seller || product.vendor || product.provider || 'Seller';
@@ -1134,7 +1142,7 @@ function createProductCardFromResultsAPI(product) {
             <span style="font-size: 3rem;">${productImage}</span>
         </div>
         <div class="product-info">
-            <h3 class="product-name">${productName}</h3>
+            <h3 class="product-name">${productName}${variation_value}</h3>
             <div class="product-price">₹${productPrice}</div>
             <div class="product-seller">by ${sellerName}</div>
             <div class="product-rating">
@@ -1164,7 +1172,7 @@ function createProductCardFromResultsAPI(product) {
     
     // Add click handler to open product details page in new tab
     card.style.cursor = 'pointer';
-    card.title = 'Click to view product details (opens in new tab)';
+    card.title = 'Click to view product details';
     card.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
     card.addEventListener('mouseenter', function() {
         card.style.transform = 'translateY(-2px)';
@@ -1180,9 +1188,9 @@ function createProductCardFromResultsAPI(product) {
             return;
         }
         
-        // Open product details page in new tab
-        console.log('Opening product details in new tab for ID:', productId);
-        window.open(`product-details.html?id=${productId}`, '_blank');
+        // Navigate to product details page in same tab
+        console.log('Navigating to product details page for ID:', productId);
+        window.location.href = `product-details.html?id=${productId}`;
     });
     
     return card;
@@ -1194,6 +1202,7 @@ function createProductCardFromSellerItems(item, seller) {
     
     // Extract product information from the seller/items response format
     const productName = item.name || 'Product';
+    const variation_value = item.variation_value? " - " + item.variation_value: '';
     const productPrice = item.price || 'Price not available';
     const productDescription = item.description || '';
     const productCategory = item.category || '';
@@ -1251,7 +1260,7 @@ function createProductCardFromSellerItems(item, seller) {
             <span style="font-size: 3rem;">${productImage}</span>
         </div>
         <div class="product-info">
-            <h3 class="product-name">${productName}</h3>
+            <h3 class="product-name">${productName}${variation_value}</h3>
             <div class="product-price">₹${productPrice}</div>
             <div class="product-seller">by ${sellerName} (${sellerLocation})</div>
             ${productCategory ? `<div class="product-category" style="font-size: 0.8rem; color: #64748b; margin: 0.25rem 0;">${productCategory}</div>` : ''}
@@ -1274,7 +1283,7 @@ function createProductCardFromSellerItems(item, seller) {
                 </div>` : ''}
             </div>
             <div class="product-actions">
-                <button class="btn btn-secondary add-to-cart" onclick="addToCartFromSellerItems('${productId}', '${productName}', '${productPrice}', '${sellerName}')">
+                <button class="btn btn-secondary add-to-cart" onclick="addToCartFromSellerItems('${productId}', '${productName}', '${productPrice}', '${sellerName}','${variation_value}')">
                     <i class="fas fa-shopping-cart"></i> Add to Cart
                 </button>
             </div>
@@ -1283,7 +1292,7 @@ function createProductCardFromSellerItems(item, seller) {
     
     // Add click handler to open product details page in new tab
     card.style.cursor = 'pointer';
-    card.title = 'Click to view product details (opens in new tab)';
+    card.title = 'Click to view product details';
     card.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
     card.addEventListener('mouseenter', function() {
         card.style.transform = 'translateY(-2px)';
@@ -1299,9 +1308,9 @@ function createProductCardFromSellerItems(item, seller) {
             return;
         }
         
-        // Open product details page in new tab
-        console.log('Opening product details in new tab for ID:', productId);
-        window.open(`product-details.html?id=${productId}`, '_blank');
+        // Navigate to product details page in same tab
+        console.log('Navigating to product details page for ID:', productId);
+        window.location.href = `product-details.html?id=${productId}`;
     });
     
     return card;
@@ -1424,8 +1433,8 @@ function addToCartFromResultsAPI(productId, productName, productPrice, sellerNam
     showNotification(`${productName} added to cart!`);
 }
 
-function addToCartFromSellerItems(productId, productName, productPrice, sellerName) {
-    console.log('Adding to cart from seller items:', { productId, productName, productPrice, sellerName });
+function addToCartFromSellerItems(productId, productName, productPrice, sellerName, variation_value) {
+    console.log('Adding to cart from seller items:', { productId, productName, productPrice, sellerName, variation_value });
     
     // Find the original product data to get real COD availability
     let originalProduct = null;
@@ -1463,7 +1472,8 @@ function addToCartFromSellerItems(productId, productName, productPrice, sellerNa
                 id: p.id,
                 product_id: p.product_id,
                 item_id: p.item_id,
-                productId: p.productId
+                productId: p.productId,
+                measure : p.variation_value
             });
             return (p.id === productId || 
                    p.product_id === productId || 
@@ -1477,6 +1487,7 @@ function addToCartFromSellerItems(productId, productName, productPrice, sellerNa
     const product = {
         id: productId, // This should be the original item_id from search results
         name: productName,
+        measure : variation_value,
         price: `₹${productPrice}`,
         seller: sellerName,
         rating: 4.0,
@@ -2129,7 +2140,7 @@ function createMockProductCard(product) {
     
     // Add click handler to open product details page in new tab
     card.style.cursor = 'pointer';
-    card.title = 'Click to view product details (opens in new tab)';
+    card.title = 'Click to view product details';
     card.style.transition = 'transform 0.2s ease, box-shadow 0.2s ease';
     card.addEventListener('mouseenter', function() {
         card.style.transform = 'translateY(-2px)';
@@ -2145,9 +2156,9 @@ function createMockProductCard(product) {
             return;
         }
         
-        // Open product details page in new tab
-        console.log('Opening product details in new tab for mock ID:', mockProductId);
-        window.open(`product-details.html?id=${mockProductId}`, '_blank');
+        // Navigate to product details page in same tab
+        console.log('Navigating to product details page for mock ID:', mockProductId);
+        window.location.href = `product-details.html?id=${mockProductId}`;
     });
     
     return card;
