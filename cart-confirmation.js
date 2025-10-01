@@ -97,6 +97,7 @@ function updateTransactionIdDisplay() {
 }
 
 async function loadCartConfirmationData() {
+    alert();
     // First try to get from API using transaction ID
     const transactionId = localStorage.getItem('currentTransactionId');
     
@@ -116,7 +117,7 @@ async function loadCartConfirmationData() {
     
     // Fallback to localStorage data
     const savedConfirmation = localStorage.getItem('cartConfirmation');
-    
+    console.log("Saved confirmation:", savedConfirmation);
     if (savedConfirmation) {
         try {
             cartConfirmationData = JSON.parse(savedConfirmation);
@@ -207,13 +208,14 @@ function displayItems() {
         console.log(`Looking for item ${item.item_id}, found:`, originalCartItem);
         
         const itemName = originalCartItem ? originalCartItem.name : (item.name || `Item ${index + 1}`);
+        const measure = originalCartItem ? originalCartItem.measure : (' - ' + item.measure || ``);
         const itemPrice = originalCartItem ? originalCartItem.price : (item.price ? `₹${item.price}` : 'Price not available');
         
         const itemDiv = document.createElement('div');
         itemDiv.className = 'item-row';
         itemDiv.innerHTML = `
             <div class="item-info">
-                <div class="item-name">${itemName}</div>
+                <div class="item-name">${itemName} ${measure ? '(' + measure + ')' : ''}</div>
                 <div class="item-details">
                     <span class="item-id">ID: ${item.item_id}</span>
                     <span class="item-quantity">Qty: ${item.quantity}</span>
@@ -231,7 +233,7 @@ function displayQuoteBreakdown() {
     if (!quoteBreakdownDiv || !cartConfirmationData.quote_breakup) return;
     
     quoteBreakdownDiv.innerHTML = '';
-    
+    console.log("", cartConfirmationData.quote_breakup);
     cartConfirmationData.quote_breakup.forEach(item => {
         const breakdownDiv = document.createElement('div');
         breakdownDiv.className = 'breakdown-row';

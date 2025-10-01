@@ -533,14 +533,16 @@ body {
 }
 
 .suggestion-item {
+    text-align: left;
     padding: 1rem;
     cursor: pointer;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid #a292eb;
     transition: background-color 0.3s ease;
+    color: #000000;
 }
 
 .suggestion-item:hover {
-    background-color: #f8fafc;
+    background-color: #a292eb;
 }
 
 .suggestion-item:last-child {

@@ -1096,7 +1096,7 @@ function createProductCardFromResultsAPI(product) {
     card.className = 'product-card';
     // Extract product information from Results API response
     const productName = product.name || product.title || product.product_name || 'Product';
-    const variation_value = product.variation_value? " - " + product.variation_value: '';
+    const variation_value = product.variation_value? product.variation_value: '';
 
     const productPrice = product.price || product.cost || product.amount || 'Price not available';
     const productImage = product.image || product.image_url || product.thumbnail || '📦';
@@ -1202,7 +1202,7 @@ function createProductCardFromSellerItems(item, seller) {
     
     // Extract product information from the seller/items response format
     const productName = item.name || 'Product';
-    const variation_value = item.variation_value? " - " + item.variation_value: '';
+    const variation_value = item.variation_value || '';
     const productPrice = item.price || 'Price not available';
     const productDescription = item.description || '';
     const productCategory = item.category || '';
