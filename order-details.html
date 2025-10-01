@@ -1741,15 +1741,15 @@
                 // Generate progress bar timeline
                 const timelineHtml = this.generateProgressTimeline(actions);
 
-                // Generate issue close button only if issue is not already closed
+                // Generate issue close button only if issue status is RESOLVED
                 const issueStatus = this.orderData?.issue_details_status || this.orderData?.issue_details?.status || 'OPEN';
-                const closeButtonHtml = issueStatus.toLowerCase() !== 'closed' ? this.generateIssueCloseButton() : '';
+                const closeButtonHtml = issueStatus.toUpperCase() === 'RESOLVED' ? this.generateIssueCloseButton() : '';
 
                 console.log('🔍 Issue status check for close button:', {
                     issue_details_status: this.orderData?.issue_details_status,
                     issue_details_status_nested: this.orderData?.issue_details?.status,
                     final_status: issueStatus,
-                    show_close_button: issueStatus.toLowerCase() !== 'closed'
+                    show_close_button: issueStatus.toUpperCase() === 'RESOLVED'
                 });
 
                 return `
