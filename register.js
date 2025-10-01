@@ -14,9 +14,11 @@ const passwordInput = document.getElementById('password');
 const confirmPasswordInput = document.getElementById('password_confirmation');
 const agreeTermsCheckbox = document.getElementById('agreeTerms');
 
-// Password toggle buttons
-const passwordToggle = document.getElementById('passwordToggle');
-const confirmPasswordToggle = document.getElementById('confirmPasswordToggle');
+// Password toggle buttons (will be initialized in DOMContentLoaded)
+let passwordToggle;
+let passwordToggleIcon;
+let confirmPasswordToggle;
+let confirmPasswordToggleIcon;
 
 // Error message elements
 const nameError = document.getElementById('nameError');
@@ -29,7 +31,36 @@ const termsError = document.getElementById('termsError');
 document.addEventListener('DOMContentLoaded', function() {
     console.log('=== REGISTRATION PAGE INITIALIZATION ===');
     
+    // Initialize password toggle elements
+    passwordToggle = document.getElementById('passwordToggle');
+    passwordToggleIcon = document.getElementById('passwordToggleIcon');
+    confirmPasswordToggle = document.getElementById('confirmPasswordToggle');
+    confirmPasswordToggleIcon = document.getElementById('confirmPasswordToggleIcon');
+    
+    // Debug: Check if password toggle elements exist
+    console.log('Password toggle:', passwordToggle);
+    console.log('Password toggle icon:', passwordToggleIcon);
+    console.log('Confirm password toggle:', confirmPasswordToggle);
+    console.log('Confirm password toggle icon:', confirmPasswordToggleIcon);
+    
     setupEventListeners();
+    
+    // Fallback: Use event delegation for password toggles
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.closest('.password-toggle')) {
+            const toggleBtn = e.target.closest('.password-toggle');
+            const inputContainer = toggleBtn.closest('.password-input-container');
+            const input = inputContainer.querySelector('input[type="password"], input[type="text"]');
+            const icon = toggleBtn.querySelector('i');
+            
+            if (input && icon) {
+                e.preventDefault();
+                e.stopPropagation();
+                console.log('Password toggle clicked via delegation');
+                togglePasswordVisibility(input, icon, toggleBtn);
+            }
+        }
+    });
     
     console.log('=== REGISTRATION PAGE INITIALIZATION COMPLETE ===');
 });
@@ -42,15 +73,27 @@ function setupEventListeners() {
     
     // Password toggle buttons
     if (passwordToggle) {
-        passwordToggle.addEventListener('click', function() {
-            togglePasswordVisibility(passwordInput, passwordToggle);
+        console.log('Adding event listener to password toggle');
+        passwordToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Password toggle clicked');
+            togglePasswordVisibility(passwordInput, passwordToggleIcon, passwordToggle);
         });
+    } else {
+        console.log('Password toggle button not found');
     }
     
     if (confirmPasswordToggle) {
-        confirmPasswordToggle.addEventListener('click', function() {
-            togglePasswordVisibility(confirmPasswordInput, confirmPasswordToggle);
+        console.log('Adding event listener to confirm password toggle');
+        confirmPasswordToggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log('Confirm password toggle clicked');
+            togglePasswordVisibility(confirmPasswordInput, confirmPasswordToggleIcon, confirmPasswordToggle);
         });
+    } else {
+        console.log('Confirm password toggle button not found');
     }
     
     // Real-time validation
@@ -79,12 +122,24 @@ function setupEventListeners() {
     }
 }
 
-function togglePasswordVisibility(input, toggleBtn) {
-    const isPassword = input.type === 'password';
-    input.type = isPassword ? 'text' : 'password';
+function togglePasswordVisibility(input, icon, toggleBtn) {
+    console.log('Password toggle clicked');
     
-    const icon = toggleBtn.querySelector('i');
-    icon.className = isPassword ? 'fas fa-eye-slash' : 'fas fa-eye';
+    if (input && icon && toggleBtn) {
+        // Toggle input type between password and text
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.className = 'fas fa-eye-slash';
+            toggleBtn.setAttribute('aria-label', 'Hide password');
+        } else {
+            input.type = 'password';
+            icon.className = 'fas fa-eye';
+            toggleBtn.setAttribute('aria-label', 'Show password');
+        }
+        
+        // Keep focus on the input after toggling
+        input.focus();
+    }
 }
 
 function clearError(event) {
