@@ -97,7 +97,6 @@ function updateTransactionIdDisplay() {
 }
 
 async function loadCartConfirmationData() {
-    alert();
     // First try to get from API using transaction ID
     const transactionId = localStorage.getItem('currentTransactionId');
     
@@ -125,7 +124,7 @@ async function loadCartConfirmationData() {
         } catch (error) {
             console.error('Error parsing cart confirmation data:', error);
             showErrorState();
-        }
+        } 
     } else {
         console.log('No cart confirmation data found');
         showErrorState();

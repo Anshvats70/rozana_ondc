@@ -1142,7 +1142,7 @@ function createProductCardFromResultsAPI(product) {
             <span style="font-size: 3rem;">${productImage}</span>
         </div>
         <div class="product-info">
-            <h3 class="product-name">${productName}${variation_value}</h3>
+            <h3 class="product-name">${productName} ${variation_value}</h3>
             <div class="product-price">₹${productPrice}</div>
             <div class="product-seller">by ${sellerName}</div>
             <div class="product-rating">
@@ -1260,7 +1260,7 @@ function createProductCardFromSellerItems(item, seller) {
             <span style="font-size: 3rem;">${productImage}</span>
         </div>
         <div class="product-info">
-            <h3 class="product-name">${productName}${variation_value}</h3>
+            <h3 class="product-name">${productName} ${variation_value ? '(' + variation_value + ')' : ''}</h3>
             <div class="product-price">₹${productPrice}</div>
             <div class="product-seller">by ${sellerName} (${sellerLocation})</div>
             ${productCategory ? `<div class="product-category" style="font-size: 0.8rem; color: #64748b; margin: 0.25rem 0;">${productCategory}</div>` : ''}
