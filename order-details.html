@@ -1352,7 +1352,7 @@
                 itemsList.innerHTML = items.map(item => `
                     <div class="item">
                         <div class="item-details">
-                            <div class="item-name">${item.title || item.name || 'Unknown Item'} ${item.measure ? '(' + item.measure + ')' : ''}</div>
+                            <div class="item-name">${item.title || item.name || 'Unknown Item'}</div>
                             <div class="item-meta">
                                 Quantity: ${item.quantity || 0} | 
                                 Status: ${item.status || 'Unknown'} |
@@ -1446,6 +1446,12 @@
                                     <span class="info-value">${issueActions}</span>
                                 </div>
                             ` : ''}
+                            ${this.getRefundAmountFromOrderInfo(orderInfo) ? `
+                                <div class="info-item">
+                                    <span class="info-label">Refund Amount</span>
+                                    <span class="info-value" style="color: #10b981; font-weight: 600;">₹${this.getRefundAmountFromOrderInfo(orderInfo)}</span>
+                                </div>
+                            ` : ''}
                             ${issueDetails.description ? `
                                 <div class="info-item">
                                     <span class="info-label">Description</span>
@@ -1512,12 +1518,92 @@
                 const resolutions = orderInfo.issue_details?.resolutions || [];
                 const hasResolutions = Array.isArray(resolutions) && resolutions.length > 0;
 
+                console.log('🔍 All resolutions data:', resolutions);
+
                 // Get proposal description from first resolution's descriptor
                 const proposalDescription = hasResolutions && resolutions[0]?.descriptor?.short_desc ? 
                     resolutions[0].descriptor.short_desc : 
                     'The seller has proposed a resolution for this issue. Please review the details below and accept if you agree with the proposed solution.';
 
                 console.log('📋 Proposal description from resolutions[0].descriptor.short_desc:', proposalDescription);
+
+                // Extract refund amount from all resolutions
+                let refundAmount = '';
+                
+                // Check all resolutions for refund amount
+                for (let i = 0; i < resolutions.length; i++) {
+                    const resolution = resolutions[i];
+                    console.log(`🔍 Checking resolution[${i}]:`, resolution);
+                    
+                    // Check if resolution has tags array (not tags.list)
+                    if (resolution.tags && Array.isArray(resolution.tags)) {
+                        console.log(`📋 Tags array for resolution[${i}]:`, resolution.tags);
+                        
+                        // Look through each tag in the tags array
+                        for (let j = 0; j < resolution.tags.length; j++) {
+                            const tag = resolution.tags[j];
+                            console.log(`📋 Tag[${j}] in resolution[${i}]:`, tag);
+                            
+                            // Check if this tag has a list
+                            if (tag.list && Array.isArray(tag.list)) {
+                                console.log(`📋 Tag[${j}] list in resolution[${i}]:`, tag.list);
+                                
+                                // Look for REFUND_AMOUNT in the list
+                                const refundItem = tag.list.find(item => 
+                                    item.descriptor?.code === 'REFUND_AMOUNT'
+                                );
+                                
+                                if (refundItem && refundItem.value) {
+                                    refundAmount = refundItem.value;
+                                    console.log(`💰 Found refund amount in resolution[${i}].tags[${j}].list:`, refundAmount);
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (refundAmount) break;
+                    }
+                    
+                    // Legacy check for tags.list (in case structure is different)
+                    if (resolution.tags?.list) {
+                        const tagsList = resolution.tags.list;
+                        console.log(`📋 Tags list for resolution[${i}]:`, tagsList);
+                        
+                        const refundTag = tagsList.find(tag => 
+                            tag.descriptor?.code === 'REFUND_AMOUNT'
+                        );
+                        
+                        if (refundTag && refundTag.value) {
+                            refundAmount = refundTag.value;
+                            console.log(`💰 Found refund amount in resolution[${i}]:`, refundAmount);
+                            break;
+                        }
+                    }
+                    
+                    // Also check if the resolution itself has a refund amount
+                    if (resolution.amount && !refundAmount) {
+                        refundAmount = resolution.amount;
+                        console.log(`💰 Found refund amount in resolution[${i}.amount]:`, refundAmount);
+                    }
+                }
+
+                // If no refund amount found in tags, try to extract from description
+                if (!refundAmount && hasResolutions) {
+                    for (let i = 0; i < resolutions.length; i++) {
+                        const resolution = resolutions[i];
+                        const description = resolution.descriptor?.short_desc || resolution.description || '';
+                        
+                        // Look for currency patterns in description
+                        const currencyMatch = description.match(/₹[\d,]+\.?\d*|INR[\s]*[\d,]+\.?\d*|\$\d+\.?\d*|\d+\.?\d*\s*(?:₹|INR|USD)/i);
+                        if (currencyMatch && !refundAmount) {
+                            refundAmount = currencyMatch[0];
+                            console.log(`💰 Found refund amount in description:`, refundAmount);
+                            break;
+                        }
+                    }
+                }
+
+                console.log('💰 Final refund amount found:', refundAmount);
 
                 // Generate resolution details HTML for resolutions[1] specifically
                 const resolutionDetailsHtml = hasResolutions && resolutions.length > 1 && resolutions[1] ? 
@@ -1534,6 +1620,16 @@
                         <div class="proposal-description">
                             ${proposalDescription}
                         </div>
+                        
+                        ${refundAmount ? `
+                            <div style="background: #f0fdf4; border: 1px solid #10b981; border-radius: 8px; padding: 1rem; margin: 1rem 0; text-align: center;">
+                                <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                                    <i class="fas fa-money-bill-wave" style="color: #10b981; font-size: 1.2rem;"></i>
+                                    <span style="font-weight: 600; color: #166534;">Refund Amount</span>
+                                </div>
+                                <div style="font-size: 1.5rem; font-weight: 700; color: #10b981;">₹${refundAmount}</div>
+                            </div>
+                        ` : ''}
                         
                         ${resolutionDetailsHtml}
                         
@@ -1673,17 +1769,6 @@
                     tags_list: tagsList
                 });
 
-                // Find refund amount from tags list
-                const refundAmountTag = tagsList.find(tag => 
-                    tag.descriptor?.code === 'REFUND_AMOUNT'
-                );
-                const refundAmount = refundAmountTag?.value || '';
-
-                console.log('💰 Refund amount found:', {
-                    refundAmount: refundAmount,
-                    refundTag: refundAmountTag
-                });
-
                 // Generate tags list HTML
                 const tagsHtml = Array.isArray(tagsList) && tagsList.length > 0 ? 
                     tagsList.map(tag => `
@@ -1711,6 +1796,29 @@
                         </div>
                     `).join('') : '';
 
+                // Extract refund amount specifically for REFUND_AMOUNT code
+                let refundAmount = '';
+                
+                // Check if tags is an array (new structure)
+                if (Array.isArray(resolution.tags)) {
+                    for (const tag of resolution.tags) {
+                        if (tag.list && Array.isArray(tag.list)) {
+                            const refundItem = tag.list.find(item => 
+                                item.descriptor?.code === 'REFUND_AMOUNT'
+                            );
+                            if (refundItem && refundItem.value) {
+                                refundAmount = refundItem.value;
+                                break;
+                            }
+                        }
+                    }
+                } else if (resolution.tags?.list) {
+                    // Legacy structure
+                    refundAmount = tagsList.find(tag => 
+                        tag.descriptor?.code === 'REFUND_AMOUNT'
+                    )?.value;
+                }
+
                 return `
                     <div class="resolution-details">
                         ${code ? `
@@ -1728,14 +1836,9 @@
                         ` : ''}
                         
                         ${refundAmount ? `
-                            <div class="resolution-item" style="background: #f0fdf4; padding: 1rem; border-radius: 8px; border-left: 4px solid #10b981; margin: 1rem 0;">
-                                <span class="resolution-label" style="font-weight: 600; color: #166534; font-size: 1rem;">
-                                    <i class="fas fa-money-bill-wave" style="margin-right: 0.5rem;"></i>
-                                    Refund Amount:
-                                </span>
-                                <span class="resolution-value" style="font-weight: 700; color: #166534; font-size: 1.1rem;">
-                                    ${refundAmount}
-                                </span>
+                            <div class="resolution-item">
+                                <span class="resolution-label">Refund Amount:</span>
+                                <span class="resolution-value" style="color: #10b981; font-weight: 600;">${refundAmount}</span>
                             </div>
                         ` : ''}
                         
@@ -1963,6 +2066,41 @@
                     hour: '2-digit',
                     minute: '2-digit'
                 });
+            }
+
+            getRefundAmountFromOrderInfo(orderInfo) {
+                // Extract refund amount from resolutions
+                const resolutions = orderInfo.issue_details?.resolutions || [];
+                
+                for (let i = 0; i < resolutions.length; i++) {
+                    const resolution = resolutions[i];
+                    
+                    // Check if resolution has tags array
+                    if (resolution.tags && Array.isArray(resolution.tags)) {
+                        for (const tag of resolution.tags) {
+                            if (tag.list && Array.isArray(tag.list)) {
+                                const refundItem = tag.list.find(item => 
+                                    item.descriptor?.code === 'REFUND_AMOUNT'
+                                );
+                                if (refundItem && refundItem.value) {
+                                    return refundItem.value;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Legacy check for tags.list
+                    if (resolution.tags?.list) {
+                        const refundTag = resolution.tags.list.find(tag => 
+                            tag.descriptor?.code === 'REFUND_AMOUNT'
+                        );
+                        if (refundTag && refundTag.value) {
+                            return refundTag.value;
+                        }
+                    }
+                }
+                
+                return null;
             }
 
             async acceptProposal(transactionId, issueId) {
@@ -3919,6 +4057,53 @@
                         stack: error.stack
                     });
                     return { success: false, error: error.message };
+                }
+            };
+
+            // Test function to debug the specific transaction from the screenshot
+            window.debugTransactionData = async function(transactionId = '8ce8b7da-732d-4398-b609-1caa8b7a69c7') {
+                console.log('🔧 DEBUG: Fetching data for transaction:', transactionId);
+                
+                try {
+                    const apiUrl = 'https://neo-server.rozana.in/searchOrder/';
+                    const fullUrl = apiUrl + transactionId;
+                    
+                    console.log('🔗 API URL:', fullUrl);
+                    
+                    const response = await fetch(fullUrl, {
+                        method: 'GET',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('✅ Full API Response:', data);
+                        
+                        // Specifically look for resolutions and refund data
+                        if (data.issue_details?.resolutions) {
+                            console.log('🔍 Resolutions found:', data.issue_details.resolutions);
+                            
+                            data.issue_details.resolutions.forEach((resolution, index) => {
+                                console.log(`📋 Resolution[${index}]:`, resolution);
+                                if (resolution.tags?.list) {
+                                    console.log(`📋 Resolution[${index}] tags:`, resolution.tags.list);
+                                }
+                            });
+                        } else {
+                            console.log('❌ No resolutions found in issue_details');
+                        }
+                        
+                        return data;
+                    } else {
+                        console.log('❌ API Error:', response.status, response.statusText);
+                        return null;
+                    }
+                } catch (error) {
+                    console.log('❌ Fetch failed:', error.message);
+                    return null;
                 }
             };
 
