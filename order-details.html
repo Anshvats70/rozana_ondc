@@ -1352,7 +1352,7 @@
                 itemsList.innerHTML = items.map(item => `
                     <div class="item">
                         <div class="item-details">
-                            <div class="item-name">${item.title || item.name || 'Unknown Item'}</div>
+                            <div class="item-name">${item.title || item.name || 'Unknown Item'} ${item.measure ? '(' + item.measure + ')' : ''}</div>
                             <div class="item-meta">
                                 Quantity: ${item.quantity || 0} | 
                                 Status: ${item.status || 'Unknown'} |

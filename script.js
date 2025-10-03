@@ -1096,7 +1096,7 @@ function createProductCardFromResultsAPI(product) {
     card.className = 'product-card';
     // Extract product information from Results API response
     const productName = product.name || product.title || product.product_name || 'Product';
-    const variation_value = product.variation_value? " - " + product.variation_value: '';
+    const variation_value = product.variation_value? product.variation_value: '';
 
     const productPrice = product.price || product.cost || product.amount || 'Price not available';
     const productImage = product.image || product.image_url || product.thumbnail || '📦';
@@ -1142,7 +1142,7 @@ function createProductCardFromResultsAPI(product) {
             <span style="font-size: 3rem;">${productImage}</span>
         </div>
         <div class="product-info">
-            <h3 class="product-name">${productName}${variation_value}</h3>
+            <h3 class="product-name">${productName} ${variation_value}</h3>
             <div class="product-price">₹${productPrice}</div>
             <div class="product-seller">by ${sellerName}</div>
             <div class="product-rating">
@@ -1202,7 +1202,7 @@ function createProductCardFromSellerItems(item, seller) {
     
     // Extract product information from the seller/items response format
     const productName = item.name || 'Product';
-    const variation_value = item.variation_value? " - " + item.variation_value: '';
+    const variation_value = item.variation_value || '';
     const productPrice = item.price || 'Price not available';
     const productDescription = item.description || '';
     const productCategory = item.category || '';
@@ -1260,7 +1260,7 @@ function createProductCardFromSellerItems(item, seller) {
             <span style="font-size: 3rem;">${productImage}</span>
         </div>
         <div class="product-info">
-            <h3 class="product-name">${productName}${variation_value}</h3>
+            <h3 class="product-name">${productName} ${variation_value ? '(' + variation_value + ')' : ''}</h3>
             <div class="product-price">₹${productPrice}</div>
             <div class="product-seller">by ${sellerName} (${sellerLocation})</div>
             ${productCategory ? `<div class="product-category" style="font-size: 0.8rem; color: #64748b; margin: 0.25rem 0;">${productCategory}</div>` : ''}

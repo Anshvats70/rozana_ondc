@@ -211,10 +211,10 @@ function createCartItemElement(item, index) {
     cartItemDiv.className = 'cart-item';
     cartItemDiv.innerHTML = `
         <div class="cart-item-image">
-            <span>${item.image || '📦'}</span>
+            <span><img src="${item.image}" alt="" width="50" height="50" /></span>
         </div>
         <div class="cart-item-details">
-            <div class="cart-item-name">${item.name}</div>
+            <div class="cart-item-name">${item.name} ${item.measure ?  '(' + item.measure + ')' : ''}</div>
             <div class="cart-item-seller">by ${item.seller}</div>
             <div class="cart-item-price">${item.price}</div>
         </div>
@@ -723,6 +723,7 @@ function createMockCartConfirmation(transactionId) {
             order_id: index + 1,
             item_id: item.id,
             name: item.name, // Include the product name
+            measure: item.measure,
             quantity: item.quantity,
             fulfillment_id: "mock-fulfillment-" + Date.now(),
             price: parseFloat(item.price.replace('₹', '').replace(',', '')), // Include the actual price

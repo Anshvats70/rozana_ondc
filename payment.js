@@ -218,7 +218,7 @@ function displayOrderItems(cartConfirmation) {
         itemDiv.className = 'order-item';
         itemDiv.innerHTML = `
             <div class="item-info">
-                <div class="item-name">${item.name}</div>
+                <div class="item-name">${item.name} ${item.measure ? '(' + item.measure + ')' : ''}</div>
                 <div class="item-quantity">Qty: ${item.quantity}</div>
             </div>
             <div class="item-price">${item.price}</div>
