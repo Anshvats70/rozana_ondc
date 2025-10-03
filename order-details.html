@@ -710,6 +710,49 @@
             animation: spin 1s linear infinite;
         }
 
+        /* Issue Status Button Styles */
+        .issue-status-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+        }
+
+        .issue-status-btn:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.3);
+        }
+
+        .issue-status-btn:active {
+            transform: translateY(0);
+        }
+
+        .issue-status-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .issue-status-btn .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
         /* Info Request Response Styles */
         .info-request-section {
             margin-top: 1.5rem;
@@ -1304,6 +1347,9 @@
                 } else if (data.order) {
                     orderInfo = data.order;
                 }
+                
+                // Store current order data for fallback use
+                this.currentOrderData = orderInfo;
 
                 // Populate order information
                 document.getElementById('orderId').textContent = orderInfo.order_id || '-';
@@ -1486,6 +1532,17 @@
 
                         ${this.generateProposalActions(orderInfo, issueActions)}
                         ${this.generateIssueActions(issueDetails)}
+                        
+                        <div style="margin-top: 1rem; text-align: center;">
+                            <button 
+                                class="issue-status-btn" 
+                                onclick="window.orderDetailsManager.showIssueStatus('${orderInfo.transaction_id}')"
+                                id="issueStatusBtn"
+                            >
+                                <i class="fas fa-info-circle"></i>
+                                Issue Status
+                            </button>
+                        </div>
                     </div>
                 `;
 
@@ -2101,6 +2158,334 @@
                 }
                 
                 return null;
+            }
+
+            async showIssueStatus(transactionId) {
+                console.log('📊 Showing issue status for transaction:', transactionId);
+                
+                const button = document.getElementById('issueStatusBtn');
+                if (!button) {
+                    console.error('❌ Issue Status button not found!');
+                    return;
+                }
+
+                // Disable button and show loading state
+                button.disabled = true;
+                const originalContent = button.innerHTML;
+                button.innerHTML = '<div class="spinner"></div> Loading...';
+
+                try {
+                    // Prepare API request
+                    const apiUrl = 'http://127.0.0.1:8000/issues/issue_status';
+                    const requestData = {
+                        transaction_id: transactionId
+                    };
+
+                    console.log('📡 Calling issue status API:', apiUrl);
+                    console.log('📦 Request data:', requestData);
+
+                    let response = null;
+                    let successMethod = null;
+                    let lastError = null;
+
+                    // Method 1: Direct API call
+                    try {
+                        console.log('🔄 Method 1: Trying direct API call...');
+                        console.log('📡 API URL:', apiUrl);
+                        console.log('📦 Request Data:', requestData);
+                        console.log('🌐 Current origin:', window.location.origin);
+                        console.log('🌐 Current protocol:', window.location.protocol);
+                        
+                        response = await fetch(apiUrl, {
+                            method: 'POST',
+                            mode: 'cors',
+                            credentials: 'omit',
+                            headers: {
+                                'Accept': 'application/json',
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(requestData)
+                        });
+
+                        console.log('📡 Response status:', response.status);
+                        console.log('📡 Response ok:', response.ok);
+                        console.log('📡 Response headers:', [...response.headers.entries()]);
+
+                        if (response.ok) {
+                            successMethod = 'Direct API';
+                            console.log('✅ Direct API successful for issue status');
+                        } else {
+                            console.log(`❌ Direct API failed with status: ${response.status}`);
+                            const errorText = await response.text();
+                            console.log('❌ Error response:', errorText);
+                        }
+                    } catch (error) {
+                        lastError = error;
+                        console.log('❌ Direct API failed for issue status:', error.message);
+                        console.log('❌ Error details:', error);
+                    }
+
+                    // Method 2: Try with CORS headers if direct failed
+                    if (!response || !response.ok) {
+                        try {
+                            console.log('🔄 Method 2: Trying with CORS headers...');
+                            
+                            response = await fetch(apiUrl, {
+                                method: 'POST',
+                                mode: 'cors',
+                                credentials: 'omit',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify(requestData)
+                            });
+
+                            if (response.ok) {
+                                successMethod = 'CORS API';
+                                console.log('✅ CORS API successful for issue status');
+                            } else {
+                                console.log(`❌ CORS API failed with status: ${response.status}`);
+                            }
+                        } catch (error) {
+                            lastError = error;
+                            console.log('❌ CORS API failed for issue status:', error.message);
+                        }
+                    }
+
+                    // Method 3: Try with different headers if previous methods failed
+                    if (!response || !response.ok) {
+                        try {
+                            console.log('🔄 Method 3: Trying with different headers...');
+                            
+                            response = await fetch(apiUrl, {
+                                method: 'POST',
+                                mode: 'cors',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'Cache-Control': 'no-cache'
+                                },
+                                body: JSON.stringify(requestData)
+                            });
+
+                            if (response.ok) {
+                                successMethod = 'Direct API (Alternative Headers)';
+                                console.log('✅ Alternative headers successful for issue status');
+                            } else {
+                                console.log(`❌ Alternative headers failed with status: ${response.status}`);
+                            }
+                        } catch (error) {
+                            lastError = error;
+                            console.log('❌ Alternative headers failed for issue status:', error.message);
+                        }
+                    }
+
+                    if (!response || !response.ok) {
+                        const errorMessage = lastError ? lastError.message : `HTTP error! status: ${response?.status || 'Network Error'}`;
+                        console.error('❌ All methods failed. Last error:', errorMessage);
+                        throw new Error(errorMessage);
+                    }
+
+                    const result = await response.json();
+                    console.log('✅ Issue status loaded successfully:', result);
+
+                    // Display issue status in popup
+                    this.showIssueStatusPopup(result, transactionId, successMethod);
+
+                } catch (error) {
+                    console.error('❌ Failed to load issue status:', error);
+                    
+                    // Show error message
+                    this.showErrorMessage('Failed to Load Issue Status', `
+                        <div style="text-align: center;">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #dc2626; margin-bottom: 1rem;"></i>
+                            <h3 style="color: #dc2626; margin-bottom: 1rem;">Issue Status Failed</h3>
+                            <p style="margin-bottom: 1rem;">Unable to load issue status at this time.</p>
+                            <div style="background: #fef2f2; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                                <div><strong>Transaction ID:</strong> ${transactionId}</div>
+                                <div><strong>Error:</strong> ${error.message}</div>
+                                <div><strong>Protocol:</strong> ${window.location.protocol}</div>
+                            </div>
+                            <p style="font-size: 0.9rem; color: #6b7280;">
+                                Please try again or contact support if the problem persists.
+                            </p>
+                        </div>
+                    `);
+
+                } finally {
+                    // Restore button state
+                    button.disabled = false;
+                    button.innerHTML = originalContent;
+                }
+            }
+
+            showIssueStatusPopup(statusData, transactionId, method) {
+                console.log('📊 Displaying issue status popup:', statusData);
+
+                // Remove existing modal if any
+                const existingModal = document.getElementById('issueStatusModal');
+                if (existingModal) {
+                    existingModal.remove();
+                }
+
+                // Create modal
+                const modal = document.createElement('div');
+                modal.id = 'issueStatusModal';
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.5);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 10000;
+                `;
+
+                const modalContent = document.createElement('div');
+                modalContent.style.cssText = `
+                    background: white;
+                    padding: 2rem;
+                    border-radius: 12px;
+                    max-width: 600px;
+                    width: 90%;
+                    max-height: 80vh;
+                    overflow-y: auto;
+                    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+                `;
+
+                // Extract issue data from the new API response format
+                const issueData = statusData.data || statusData;
+                const statusItems = [];
+
+                // Add core issue information
+                if (issueData.id) {
+                    statusItems.push({
+                        label: 'Issue ID',
+                        value: issueData.id,
+                        style: 'font-family: monospace; color: #6b7280;'
+                    });
+                }
+
+                if (issueData.status) {
+                    const statusColor = issueData.status === 'CLOSED' ? '#10b981' : 
+                                      issueData.status === 'PROCESSING' ? '#f59e0b' : 
+                                      issueData.status === 'OPEN' ? '#3b82f6' : '#6b7280';
+                    statusItems.push({
+                        label: 'Issue Status',
+                        value: issueData.status,
+                        style: `color: ${statusColor}; font-weight: 600;`
+                    });
+                }
+
+                if (issueData.updated_at) {
+                    statusItems.push({
+                        label: 'Last Updated',
+                        value: this.formatDate(issueData.updated_at)
+                    });
+                }
+
+                if (issueData.created_at) {
+                    statusItems.push({
+                        label: 'Created At',
+                        value: this.formatDate(issueData.created_at)
+                    });
+                }
+
+                if (issueData.level) {
+                    statusItems.push({
+                        label: 'Level',
+                        value: issueData.level
+                    });
+                }
+
+                // Add descriptor information if available
+                if (issueData.descriptor) {
+                    if (issueData.descriptor.short_desc) {
+                        statusItems.push({
+                            label: 'Description',
+                            value: issueData.descriptor.short_desc
+                        });
+                    }
+                    if (issueData.descriptor.long_desc) {
+                        statusItems.push({
+                            label: 'Details',
+                            value: issueData.descriptor.long_desc
+                        });
+                    }
+                }
+
+                // Add expected times if available
+                if (issueData.expected_response_time?.duration) {
+                    statusItems.push({
+                        label: 'Expected Response Time',
+                        value: issueData.expected_response_time.duration
+                    });
+                }
+
+                if (issueData.expected_resolution_time?.duration) {
+                    statusItems.push({
+                        label: 'Expected Resolution Time',
+                        value: issueData.expected_resolution_time.duration
+                    });
+                }
+
+                // Add last action if available
+                if (issueData.last_action_id) {
+                    statusItems.push({
+                        label: 'Last Action ID',
+                        value: issueData.last_action_id,
+                        style: 'font-family: monospace; color: #6b7280;'
+                    });
+                }
+
+                modalContent.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2 style="margin: 0; color: #1e293b; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-info-circle" style="color: #3b82f6;"></i>
+                            Issue Status Details
+                        </h2>
+                        <button onclick="document.getElementById('issueStatusModal').remove()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280;">×</button>
+                    </div>
+                    
+                    <div style="background: #f8fafc; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                        <div style="font-weight: 600; color: #374151; margin-bottom: 0.5rem;">Transaction ID:</div>
+                        <div style="color: #6b7280; font-family: monospace;">${transactionId}</div>
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem;">
+                        ${statusItems.map(item => `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #e2e8f0;">
+                                <span style="font-weight: 600; color: #64748b;">${item.label}</span>
+                                <span style="color: #1e293b; ${item.style || ''}">${item.value}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    ${statusData.note ? `
+                        <div style="background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 1rem; margin-bottom: 1.5rem;">
+                            <div style="font-weight: 600; color: #92400e; margin-bottom: 0.5rem;">Note:</div>
+                            <div style="color: #92400e; font-size: 0.9rem;">${statusData.note}</div>
+                        </div>
+                    ` : ''}
+
+
+                    <div style="text-align: center;">
+                        <button onclick="document.getElementById('issueStatusModal').remove()" style="background: #6b7280; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 6px; cursor: pointer; font-weight: 600;">Close</button>
+                    </div>
+                `;
+
+                modal.appendChild(modalContent);
+                document.body.appendChild(modal);
+
+                // Close modal when clicking outside
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.remove();
+                    }
+                });
             }
 
             async acceptProposal(transactionId, issueId) {
