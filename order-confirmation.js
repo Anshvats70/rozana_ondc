@@ -180,6 +180,8 @@ function displayItems() {
         
         // Build cancellation info if item is cancelled
         let cancellationInfo = '';
+        let settlementButton = '';
+        
         if (isCancelled && item.cancelled_quantity > 0) {
             const cancellationReason = getCancellationReason(item.cancellation_reason);
             const cancelledBy = item.cancelled_by || 'System';
@@ -195,6 +197,16 @@ function displayItems() {
                         <span class="cancelled-by">Cancelled by: ${cancelledBy}</span>
                         <span class="cancellation-time">Time: ${cancellationTime}</span>
                     </div>
+                </div>
+            `;
+            
+            // Add settlement button for cancelled items
+            settlementButton = `
+                <div class="settlement-section">
+                    <button class="btn-settlement" onclick="initiateSettlement('${item.item_id}', '${item.amount || item.price || '0.00'}', '${item.cancellation_reason || '001'}')">
+                        <i class="fas fa-money-bill-wave"></i>
+                        Settlement
+                    </button>
                 </div>
             `;
         }
@@ -214,6 +226,7 @@ function displayItems() {
                     ${isCancelled && item.cancelled_quantity < item.quantity ? `<span class="remaining-quantity">Remaining: ${item.quantity - item.cancelled_quantity}</span>` : ''}
                 </div>
                 ${cancellationInfo}
+                ${settlementButton}
             </div>
             <div class="item-price">
                 ₹${item.amount || item.price || '0.00'}
@@ -354,6 +367,9 @@ function displayOrderStatus() {
     
     // Show/hide return button based on order status
     updateReturnButtonVisibility();
+    
+    // Show/hide settlement button based on cancelled orders/items
+    updateSettlementButtonVisibility();
 }
 
 function updateCancelButtonVisibility() {
@@ -404,6 +420,48 @@ function hasReturnableItems() {
         const status = item.status || 'Unknown';
         return status.toLowerCase() === 'completed';
     });
+}
+
+function hasCancelledItems() {
+    if (!orderConfirmationData) return false;
+    
+    const itemsToCheck = orderConfirmationData.order_details || orderConfirmationData.items || [];
+    
+    // Check if there are any cancelled items
+    return itemsToCheck.some(item => {
+        const status = item.status || 'Unknown';
+        return status.toLowerCase() === 'cancelled';
+    });
+}
+
+function updateSettlementButtonVisibility() {
+    // Check if order is cancelled or has cancelled items
+    const orderStatus = orderConfirmationData?.order_status?.toLowerCase() || 'processing';
+    const hasCancelled = orderStatus === 'cancelled' || hasCancelledItems();
+    
+    // Add settlement button to action buttons if there are cancelled items
+    if (hasCancelled) {
+        addSettlementButtonToActions();
+    }
+}
+
+function addSettlementButtonToActions() {
+    // Check if settlement button already exists
+    if (document.getElementById('settlementOrderBtn')) {
+        return;
+    }
+    
+    const actionGroup = document.querySelector('.action-group');
+    if (actionGroup) {
+        const settlementBtn = document.createElement('button');
+        settlementBtn.id = 'settlementOrderBtn';
+        settlementBtn.className = 'btn-settlement-action';
+        settlementBtn.innerHTML = '<i class="fas fa-money-bill-wave"></i> Settlement';
+        settlementBtn.onclick = initiateOrderSettlement;
+        
+        // Insert before the last button in the group
+        actionGroup.insertBefore(settlementBtn, actionGroup.lastElementChild);
+    }
 }
 
 function updateStatusTimeline() {
@@ -976,4 +1034,201 @@ function initiateReturn() {
     
     // Redirect to return page with transaction ID
     window.location.href = `return.html?transactionId=${transactionId}`;
+}
+
+// Settlement functions
+function initiateSettlement(itemId, amount, cancellationReason) {
+    console.log('Initiating settlement for item:', itemId, 'Amount:', amount, 'Reason:', cancellationReason);
+    
+    // Show confirmation dialog
+    const confirmed = confirm(`Initiate settlement for cancelled item?\nItem ID: ${itemId}\nAmount: ₹${amount}\nThis will process a refund for the cancelled item.`);
+    
+    if (!confirmed) {
+        return;
+    }
+    
+    // Create settlement payload for the specific item
+    const settlementPayload = createSettlementPayload(itemId, amount, cancellationReason);
+    
+    // Send settlement request
+    sendSettlementRequest(settlementPayload);
+}
+
+function initiateOrderSettlement() {
+    console.log('Initiating settlement for entire order');
+    
+    // Get all cancelled items
+    const cancelledItems = getCancelledItems();
+    
+    if (cancelledItems.length === 0) {
+        showNotification('No cancelled items found for settlement', 'error');
+        return;
+    }
+    
+    // Show confirmation dialog
+    const totalAmount = cancelledItems.reduce((sum, item) => sum + parseFloat(item.amount || item.price || 0), 0);
+    const confirmed = confirm(`Initiate settlement for ${cancelledItems.length} cancelled item(s)?\nTotal Amount: ₹${totalAmount.toFixed(2)}\nThis will process refunds for all cancelled items.`);
+    
+    if (!confirmed) {
+        return;
+    }
+    
+    // Create settlement payload for all cancelled items
+    const settlementPayload = createSettlementPayloadForOrder(cancelledItems);
+    
+    // Send settlement request
+    sendSettlementRequest(settlementPayload);
+}
+
+function getCancelledItems() {
+    if (!orderConfirmationData) return [];
+    
+    const itemsToCheck = orderConfirmationData.order_details || orderConfirmationData.items || [];
+    
+    return itemsToCheck.filter(item => {
+        const status = item.status || 'Unknown';
+        return status.toLowerCase() === 'cancelled';
+    });
+}
+
+function createSettlementPayload(itemId, amount, cancellationReason) {
+    const messageId = generateUUID();
+    const timestamp = new Date().toISOString();
+    const transactionId = orderConfirmationData?.transaction_id || localStorage.getItem('currentTransactionId');
+    
+    return {
+        "context": {
+            "domain": "ONDC:RET10",
+            "action": "update",
+            "core_version": "1.2.0",
+            "bap_id": "neo-server.rozana.in",
+            "bap_uri": "https://neo-server.rozana.in/bapl",
+            "bpp_id": "pramaan.ondc.org/beta/preprod/mock/seller",
+            "bpp_uri": "https://pramaan.ondc.org/beta/preprod/mock/seller",
+            "transaction_id": transactionId,
+            "message_id": messageId,
+            "timestamp": timestamp,
+            "city": "std:011",
+            "country": "IND",
+            "ttl": "PT30S"
+        },
+        "message": {
+            "update_target": "payment",
+            "order": {
+                "id": orderConfirmationData?.ondc_order_id || "order-72",
+                "fulfillments": [
+                    {
+                        "id": generateUUID(),
+                        "type": "Cancel"
+                    }
+                ],
+                "payment": {
+                    "@ondc/org/settlement_details": [
+                        {
+                            "settlement_timestamp": timestamp,
+                            "settlement_counterparty": "buyer",
+                            "settlement_phase": "refund",
+                            "settlement_type": "wallet",
+                            "settlement_amount": amount
+                        }
+                    ]
+                }
+            }
+        }
+    };
+}
+
+function createSettlementPayloadForOrder(cancelledItems) {
+    const messageId = generateUUID();
+    const timestamp = new Date().toISOString();
+    const transactionId = orderConfirmationData?.transaction_id || localStorage.getItem('currentTransactionId');
+    
+    // Calculate total settlement amount
+    const totalAmount = cancelledItems.reduce((sum, item) => sum + parseFloat(item.amount || item.price || 0), 0);
+    
+    // Create fulfillments for all cancelled items
+    const fulfillments = cancelledItems.map(item => ({
+        "id": generateUUID(),
+        "type": "Cancel"
+    }));
+    
+    return {
+        "context": {
+            "domain": "ONDC:RET10",
+            "action": "update",
+            "core_version": "1.2.0",
+            "bap_id": "neo-server.rozana.in",
+            "bap_uri": "https://neo-server.rozana.in/bapl",
+            "bpp_id": "pramaan.ondc.org/beta/preprod/mock/seller",
+            "bpp_uri": "https://pramaan.ondc.org/beta/preprod/mock/seller",
+            "transaction_id": transactionId,
+            "message_id": messageId,
+            "timestamp": timestamp,
+            "city": "std:011",
+            "country": "IND",
+            "ttl": "PT30S"
+        },
+        "message": {
+            "update_target": "payment",
+            "order": {
+                "id": orderConfirmationData?.ondc_order_id || "order-72",
+                "fulfillments": fulfillments,
+                "payment": {
+                    "@ondc/org/settlement_details": [
+                        {
+                            "settlement_timestamp": timestamp,
+                            "settlement_counterparty": "buyer",
+                            "settlement_phase": "refund",
+                            "settlement_type": "wallet",
+                            "settlement_amount": totalAmount.toFixed(2)
+                        }
+                    ]
+                }
+            }
+        }
+    };
+}
+
+async function sendSettlementRequest(payload) {
+    try {
+        console.log('Sending settlement request to Praman:', payload);
+        
+        const response = await fetch('https://pramaan.ondc.org/beta/preprod/mock/seller/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'User-Agent': 'ONDC-Settlement-Client/1.0'
+            },
+            body: JSON.stringify(payload),
+            mode: 'cors',
+            credentials: 'omit'
+        });
+        
+        console.log('Settlement API response status:', response.status);
+        
+        if (!response.ok) {
+            let errorMessage = `Settlement API error! status: ${response.status}`;
+            try {
+                const errorText = await response.text();
+                console.log('Settlement API error response:', errorText);
+                errorMessage += ` - ${errorText}`;
+            } catch (e) {
+                console.log('Could not read settlement API error response');
+            }
+            throw new Error(errorMessage);
+        }
+        
+        const settlementResponse = await response.json();
+        console.log('Settlement API success:', settlementResponse);
+        
+        showNotification('Settlement request sent successfully! Refund will be processed.', 'success');
+        
+        return settlementResponse;
+        
+    } catch (error) {
+        console.error('Error sending settlement request:', error);
+        showNotification(`Settlement failed: ${error.message}`, 'error');
+        throw error;
+    }
 }

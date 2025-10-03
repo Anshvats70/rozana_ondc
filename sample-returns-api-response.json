@@ -1,0 +1,110 @@
+{
+  "success": true,
+  "message": "Return requests retrieved successfully",
+  "data": [
+    {
+      "return_request_id": "uuid-string-1",
+      "order_id": 12345,
+      "transaction_id": "ebacec41-6fb3-4153-bb61-85b05685bc0f",
+      "return_type": "full",
+      "return_reason": "001",
+      "return_reason_text": "Defective Product",
+      "return_description": "Product arrived damaged and not working",
+      "return_method": "pickup",
+      "total_return_amount": "299.99",
+      "status": "submitted",
+      "items": [
+        {
+          "item_id": "item-123",
+          "name": "Samsung Galaxy S21",
+          "price": 299.99,
+          "quantity": 1,
+          "return_quantity": 1,
+          "status": "Completed"
+        }
+      ],
+      "order_data": {
+        "order_date": "2024-01-15T10:30:00Z",
+        "original_total": "299.99",
+        "payment_status": "Paid",
+        "order_status": "Completed"
+      },
+      "created_at": "2024-01-15T11:45:00Z",
+      "updated_at": "2024-01-15T11:45:00Z"
+    },
+    {
+      "return_request_id": "uuid-string-2",
+      "order_id": 12346,
+      "transaction_id": "f8e2d1a3-4b5c-6d7e-8f9a-b0c1d2e3f4g5",
+      "return_type": "partial",
+      "return_reason": "003",
+      "return_reason_text": "Size/Color Mismatch",
+      "return_description": "Received wrong size, need to exchange",
+      "return_method": "drop",
+      "total_return_amount": "150.00",
+      "status": "approved",
+      "items": [
+        {
+          "item_id": "item-456",
+          "name": "Nike Air Max Shoes",
+          "price": 150.00,
+          "quantity": 1,
+          "return_quantity": 1,
+          "status": "Completed"
+        },
+        {
+          "item_id": "item-789",
+          "name": "Adidas T-Shirt",
+          "price": 75.00,
+          "quantity": 2,
+          "return_quantity": 1,
+          "status": "Completed"
+        }
+      ],
+      "order_data": {
+        "order_date": "2024-01-14T09:15:00Z",
+        "original_total": "375.00",
+        "payment_status": "Paid",
+        "order_status": "Completed"
+      },
+      "created_at": "2024-01-14T14:20:00Z",
+      "updated_at": "2024-01-15T08:30:00Z"
+    },
+    {
+      "return_request_id": "uuid-string-3",
+      "order_id": 12347,
+      "transaction_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "return_type": "full",
+      "return_reason": "005",
+      "return_reason_text": "Damaged in Transit",
+      "return_description": "Package was damaged during delivery",
+      "return_method": "pickup",
+      "total_return_amount": "89.99",
+      "status": "pending",
+      "items": [
+        {
+          "item_id": "item-101",
+          "name": "Wireless Headphones",
+          "price": 89.99,
+          "quantity": 1,
+          "return_quantity": 1,
+          "status": "Completed"
+        }
+      ],
+      "order_data": {
+        "order_date": "2024-01-16T16:45:00Z",
+        "original_total": "89.99",
+        "payment_status": "Paid",
+        "order_status": "Completed"
+      },
+      "created_at": "2024-01-16T17:30:00Z",
+      "updated_at": "2024-01-16T17:30:00Z"
+    }
+  ],
+  "pagination": {
+    "total": 3,
+    "page": 1,
+    "limit": 10,
+    "total_pages": 1
+  }
+}
