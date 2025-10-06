@@ -671,7 +671,15 @@ function createConfirmPayload() {
     const deliveryInfo = JSON.parse(localStorage.getItem('deliveryInfo') || '{}');
     const selectedType = document.querySelector('input[name="paymentType"]:checked').value;
     
+    // Extract fulfillment_id from the API response
+    const fulfillmentId = cartConfirmation.fulfillments && cartConfirmation.fulfillments.length > 0 
+        ? cartConfirmation.fulfillments[0].fulfillment_id 
+        : (cartConfirmation.items && cartConfirmation.items.length > 0 
+            ? cartConfirmation.items[0].fulfillment_id 
+            : "f1166011-2ef3-4392-a5c8-9362ebe59c5b"); // fallback
+    
     console.log('Cart confirmation data:', cartConfirmation);
+    console.log('Using fulfillment_id from API:', fulfillmentId);
     console.log('Delivery info:', deliveryInfo);
     console.log('Selected payment type:', selectedType);
     
@@ -681,7 +689,7 @@ function createConfirmPayload() {
     if (cartConfirmation.items && cartConfirmation.items.length > 0) {
         items = cartConfirmation.items.map(item => ({
             id: item.item_id,
-            fulfillment_id: "86d1b76d-0f6e-4482-847f-70de9ce74d5a",
+            fulfillment_id: fulfillmentId,
             quantity: {
                 count: item.quantity
             }
@@ -694,7 +702,7 @@ function createConfirmPayload() {
         if (originalCartItems.length > 0) {
             items = originalCartItems.map((item, index) => ({
                 id: item.id || `item_${index + 1}`,
-                fulfillment_id: "86d1b76d-0f6e-4482-847f-70de9ce74d5a",
+                fulfillment_id: fulfillmentId,
                 quantity: {
                     count: item.quantity || 1
                 }
@@ -707,7 +715,7 @@ function createConfirmPayload() {
         console.log('No items found in cart confirmation or original cart, creating default item');
         items.push({
             id: "default_item_1",
-            fulfillment_id: "86d1b76d-0f6e-4482-847f-70de9ce74d5a",
+            fulfillment_id: fulfillmentId,
             quantity: {
                 count: 1
             }
@@ -765,7 +773,7 @@ function createConfirmPayload() {
                 }
             },
             {
-                "@ondc/org/item_id": "86d1b76d-0f6e-4482-847f-70de9ce74d5a",
+                "@ondc/org/item_id": fulfillmentId,
                 "title": "Delivery charges",
                 "@ondc/org/title_type": "delivery",
                 "price": {
@@ -774,7 +782,7 @@ function createConfirmPayload() {
                 }
             },
             {
-                "@ondc/org/item_id": "86d1b76d-0f6e-4482-847f-70de9ce74d5a",
+                "@ondc/org/item_id": fulfillmentId,
                 "title": "Convenience Fee",
                 "@ondc/org/title_type": "misc",
                 "price": {
@@ -835,7 +843,7 @@ function createConfirmPayload() {
                 },
                 "fulfillments": [
                     {
-                        "id": "86d1b76d-0f6e-4482-847f-70de9ce74d5a",
+                        "id": fulfillmentId,
                         "type": "Delivery",
                         "@ondc/org/TAT": "PT24H",
                         "tracking": true,

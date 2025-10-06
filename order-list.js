@@ -460,6 +460,23 @@ class OrderListManager {
         });
 
         const statusClass = `status-${order.order_status.toLowerCase()}`;
+        
+        // Test: Force a delivery status to ensure it's visible
+        const testDeliveryStatus = 'TEST DELIVERY';
+        console.log(`TEST: Forcing delivery status to: ${testDeliveryStatus}`);
+        
+        // Derive delivery status from order status since API doesn't provide delivery_status
+        let deliveryStatus;
+        try {
+            deliveryStatus = this.deriveDeliveryStatus(order);
+            console.log(`Order #${order.order_id} - Order Status: ${order.order_status}, Derived Delivery Status: ${deliveryStatus}`);
+        } catch (error) {
+            console.error(`Error deriving delivery status for order #${order.order_id}:`, error);
+            deliveryStatus = 'ERROR';
+        }
+        
+        const deliveryStatusClass = `status-${deliveryStatus.toLowerCase().replace(/\s+/g, '-')}`;
+        
         const formattedDate = this.formatDate(order.created_at);
         const formattedAmount = this.formatCurrency(order.total_value, order.currency);
         
@@ -493,8 +510,13 @@ class OrderListManager {
                     <div class="order-id">${order.ondc_order_id || order.transaction_id}</div>
                 </div>
                 <div class="order-status-container">
-                    <div class="order-status ${statusClass}">
-                        ${order.order_status}
+                    <div class="status-row">
+                        <div class="order-status ${statusClass}">
+                            ${order.order_status}
+                        </div>
+                        <div class="delivery-status" style="background: #e0e7ff !important; color: #3730a3 !important; padding: 0.25rem 0.75rem !important; border-radius: 20px !important; font-size: 0.75rem !important; font-weight: 600 !important; text-transform: uppercase !important; margin-top: 0.25rem !important; display: block !important; visibility: visible !important;">
+                            📦 ${testDeliveryStatus}
+                        </div>
                     </div>
                     ${hasIssue ? 
                         `<div class="issue-badge">
@@ -1496,6 +1518,69 @@ class OrderListManager {
                 modal.remove();
             }
         });
+    }
+
+    // Derive delivery status from order status
+    deriveDeliveryStatus(order) {
+        const orderStatus = order.order_status;
+        const paymentStatus = order.payment_status;
+        const createdDate = new Date(order.created_at);
+        const now = new Date();
+        const daysSinceCreated = Math.floor((now - createdDate) / (1000 * 60 * 60 * 24));
+        
+        console.log(`Deriving delivery status for order #${order.order_id}:`, {
+            orderStatus,
+            paymentStatus,
+            createdDate: order.created_at,
+            daysSinceCreated
+        });
+        
+        // Logic to determine delivery status based on order status and time
+        switch (orderStatus) {
+            case 'Completed':
+                // If order is completed and payment is done, likely delivered
+                if (paymentStatus === 'PAID' || paymentStatus === 'NOT-PAID') {
+                    return 'Delivered';
+                }
+                return 'Delivered';
+                
+            case 'Confirmed':
+                // If confirmed recently, might be processing
+                if (daysSinceCreated < 1) {
+                    return 'Processing';
+                } else if (daysSinceCreated < 3) {
+                    return 'Shipped';
+                } else {
+                    return 'Out for Delivery';
+                }
+                
+            case 'Pending':
+                // If pending, likely not shipped yet
+                if (daysSinceCreated < 1) {
+                    return 'Processing';
+                } else {
+                    return 'Pending Delivery';
+                }
+                
+            case 'Cancelled':
+                return 'Cancelled';
+                
+            default:
+                // For any other status, try to infer from time
+                if (daysSinceCreated < 1) {
+                    return 'Processing';
+                } else if (daysSinceCreated < 3) {
+                    return 'Shipped';
+                } else if (daysSinceCreated < 7) {
+                    return 'Out for Delivery';
+                } else {
+                    return 'Delivered';
+                }
+        }
+        
+        // Fallback - should never reach here
+        console.warn(`No delivery status determined for order #${order.order_id} with status: ${orderStatus}`);
+        return 'Unknown';
     }
 
     // Additional utility methods will be added here as needed

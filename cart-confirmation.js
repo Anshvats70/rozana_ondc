@@ -492,6 +492,15 @@ function createInitPayload(deliveryInfo) {
     // Get cart confirmation data
     const cartConfirmation = JSON.parse(localStorage.getItem('cartConfirmation') || '{}');
     
+    // Extract fulfillment_id from the API response
+    const fulfillmentId = cartConfirmation.fulfillments && cartConfirmation.fulfillments.length > 0 
+        ? cartConfirmation.fulfillments[0].fulfillment_id 
+        : (cartConfirmation.items && cartConfirmation.items.length > 0 
+            ? cartConfirmation.items[0].fulfillment_id 
+            : "f1166011-2ef3-4392-a5c8-9362ebe59c5b"); // fallback
+    
+    console.log('Using fulfillment_id from API:', fulfillmentId);
+    
     // Create items array from cart confirmation - using exact structure from payload
     const items = cartConfirmation.items ? cartConfirmation.items.map(item => ({
         id: item.item_id,
@@ -511,7 +520,7 @@ function createInitPayload(deliveryInfo) {
             maximum_value: item.price ? item.price.toString() : "0.00"
         },
         location_id: "SSL1",
-        fulfillment_id: "f1166011-2ef3-4392-a5c8-9362ebe59c5b"
+        fulfillment_id: fulfillmentId
     })) : [];
     
     // Create quote breakdown from cart confirmation
@@ -550,7 +559,7 @@ function createInitPayload(deliveryInfo) {
                 "items": items,
                 "fulfillments": [
                     {
-                        "id": "f1166011-2ef3-4392-a5c8-9362ebe59c5b",
+                        "id": fulfillmentId,
                         "type": "Delivery",
                         "tracking": true,
                         "@ondc/org/provider_name": "Pramaan Store 1",

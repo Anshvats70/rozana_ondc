@@ -251,6 +251,20 @@
             font-size: 0.9rem;
         }
 
+        .order-status-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.5rem;
+        }
+
+        .status-row {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: flex-end;
+        }
+
         .order-status {
             padding: 0.25rem 0.75rem;
             border-radius: 20px;
@@ -259,10 +273,30 @@
             text-transform: uppercase;
         }
 
+        .delivery-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            background: #f3f4f6;
+            color: #374151;
+        }
+
         .status-completed { background: #dcfce7; color: #166534; }
         .status-pending { background: #fef3c7; color: #92400e; }
         .status-confirmed { background: #dbeafe; color: #1e40af; }
         .status-cancelled { background: #fee2e2; color: #991b1b; }
+
+        /* Delivery status specific colors */
+        .status-delivered { background: #dcfce7; color: #166534; }
+        .status-shipped { background: #dbeafe; color: #1e40af; }
+        .status-out-for-delivery { background: #fef3c7; color: #92400e; }
+        .status-pending-delivery { background: #f3f4f6; color: #374151; }
+        .status-processing { background: #e0e7ff; color: #3730a3; }
+        .status-cancelled { background: #fee2e2; color: #991b1b; }
+        .status-failed-delivery { background: #fee2e2; color: #991b1b; }
+        .status-unknown { background: #f3f4f6; color: #6b7280; }
 
         .order-details {
             display: grid;
@@ -2314,7 +2348,7 @@
                                 Cancel
                             </button>` : ''
                         }
-                        ${(order.order_status === 'Order-delivered') ? 
+                        ${(order.delivery_status === 'Order-delivered') ? 
                             `<button class="action-btn" style="background: #f59e0b; color: white;" onclick="event.stopPropagation(); window.returnOrder(${order.order_id})">
                                 <i class="fas fa-undo"></i>
                                 Return
@@ -2333,10 +2367,6 @@
                             <i class="fas fa-eye"></i>
                             View Details
                         </button>
-                        <button class="action-btn" style="background: #f59e0b; color: white;" onclick="event.stopPropagation(); window.orderListManager.showRaiseIssueModalByIndex(${index})">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            Raise Issue
-                        </button>
                         <button class="action-btn" style="background: #10b981; color: white;" onclick="event.stopPropagation(); window.getOrderStatus(${order.order_id})">
                             <i class="fas fa-sync-alt"></i>
                             Get Status
@@ -2351,7 +2381,7 @@
                                 Cancel
                             </button>` : ''
                         }
-                        ${(order.order_status === 'Order-delivered') ? 
+                        ${(order.delivery_status === 'Order-delivered') ? 
                             `<button class="action-btn" style="background: #f59e0b; color: white;" onclick="event.stopPropagation(); window.returnOrder(${order.order_id})">
                                 <i class="fas fa-undo"></i>
                                 Return
@@ -2379,7 +2409,7 @@
                                 Cancel
                             </button>` : ''
                         }
-                        ${(order.order_status === 'Order-delivered') ? 
+                        ${(order.delivery_status === 'Order-delivered') ? 
                             `<button class="action-btn" style="background: #f59e0b; color: white;" onclick="event.stopPropagation(); window.returnOrder(${order.order_id})">
                                 <i class="fas fa-undo"></i>
                                 Return
@@ -2406,7 +2436,7 @@
                                 Cancel
                             </button>` : ''
                         }
-                        ${(order.order_status === 'Order-delivered') ? 
+                        ${(order.delivery_status === 'Order-delivered') ? 
                             `<button class="action-btn" style="background: #f59e0b; color: white;" onclick="event.stopPropagation(); window.returnOrder(${order.order_id})">
                                 <i class="fas fa-undo"></i>
                                 Return
@@ -2421,8 +2451,15 @@
                             <h3>Order #${order.order_id}</h3>
                             <div class="order-id">${order.ondc_order_id || order.transaction_id}</div>
                         </div>
-                        <div class="order-status ${statusClass}">
-                            ${order.order_status}
+                        <div class="order-status-container">
+                            <div class="status-row">
+                                <div class="order-status ${statusClass}">
+                                    ${order.order_status}
+                                </div>
+                                <div class="delivery-status" style="background: #e0e7ff !important; color: #3730a3 !important; padding: 0.25rem 0.75rem !important; border-radius: 20px !important; font-size: 0.75rem !important; font-weight: 600 !important; text-transform: uppercase !important; margin-top: 0.25rem !important; display: block !important; visibility: visible !important;">
+                                    📦 ${order.delivery_status || (order.order_status === 'Completed' ? 'Delivered' : order.order_status === 'Confirmed' ? 'Processing' : order.order_status === 'Pending' ? 'Pending Delivery' : order.order_status === 'Cancelled' ? 'Cancelled' : 'Processing')}
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="order-details">
@@ -3796,8 +3833,8 @@
             
             // Check if order has completed items that can be returned
             if (!this.hasReturnableItems(order)) {
-                console.log('Order not returnable. Status:', order.order_status);
-                this.showRefreshNotification(`Order status "${order.order_status}" is not eligible for return`);
+                console.log('Order not returnable. Delivery Status:', order.delivery_status);
+                this.showRefreshNotification(`Delivery status "${order.delivery_status || 'Not delivered'}" is not eligible for return`);
                 return;
             }
             
@@ -3810,12 +3847,12 @@
         hasReturnableItems(order) {
             if (!order) return false;
             
-            // For order list, we'll allow return if order status is Order-delivered
+            // For order list, we'll allow return if delivery status is Order-delivered
             // regardless of individual item status since we don't have detailed item data
-            const orderStatus = order.order_status || '';
+            const deliveryStatus = order.delivery_status || '';
             const returnableStatuses = ['Order-delivered'];
             
-            return returnableStatuses.includes(orderStatus);
+            return returnableStatuses.includes(deliveryStatus);
         }
         
         // Send ONDC cancel event (similar to order-confirmation page)
