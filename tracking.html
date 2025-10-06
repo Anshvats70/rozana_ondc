@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Tracking - ROZANA ONDC</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Tracking page specific styles */
+        .tracking-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .tracking-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .tracking-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .tracking-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .tracking-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .tracking-info-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+        }
+        
+        .tracking-info-card h3 {
+            color: #1f2937;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: 500;
+            color: #6b7280;
+        }
+        
+        .info-value {
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .status-active {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .status-inactive {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        
+        .tracking-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+        
+        .btn-tracking {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+        
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+        }
+        
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+        
+        .tracking-url {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .tracking-url-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-bottom: 0.5rem;
+        }
+        
+        .tracking-url-value {
+            font-family: monospace;
+            color: #1f2937;
+            word-break: break-all;
+        }
+        
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .loading-spinner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 2rem;
+            color: #6b7280;
+        }
+        
+        @media (max-width: 768px) {
+            .tracking-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .tracking-container {
+                padding: 1rem;
+            }
+            
+            .tracking-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <h1><i class="fas fa-shopping-cart"></i> ROZANA ONDC</h1>
+                </div>
+                <nav class="nav">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="cart.html" class="nav-link">Cart</a>
+                    <a href="order-confirmation.html" class="nav-link">Orders</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- Tracking Page Content -->
+    <main class="tracking-container">
+        <!-- Tracking Header -->
+        <div class="tracking-header">
+            <h1 class="tracking-title">
+                <i class="fas fa-truck"></i>
+                Order Tracking
+            </h1>
+            <p class="tracking-subtitle">Track your order in real-time</p>
+        </div>
+
+        <!-- Tracking Content -->
+        <div class="tracking-content">
+            <!-- Order Information -->
+            <div class="tracking-info-card">
+                <h3>
+                    <i class="fas fa-info-circle"></i>
+                    Order Information
+                </h3>
+                <div class="info-item">
+                    <span class="info-label">Order ID:</span>
+                    <span class="info-value" id="orderId">Loading...</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Transaction ID:</span>
+                    <span class="info-value" id="transactionId">Loading...</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Tracking ID:</span>
+                    <span class="info-value" id="trackingId">Loading...</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value">
+                        <span class="status-badge status-active" id="trackingStatus">Active</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Tracking Details -->
+            <div class="tracking-info-card">
+                <h3>
+                    <i class="fas fa-map-marker-alt"></i>
+                    Tracking Details
+                </h3>
+                <div class="info-item">
+                    <span class="info-label">Tracking URL:</span>
+                    <span class="info-value" id="trackingUrl">Loading...</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Last Updated:</span>
+                    <span class="info-value" id="lastUpdated">Loading...</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Domain:</span>
+                    <span class="info-value" id="domain">ONDC:RET10</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">BPP:</span>
+                    <span class="info-value" id="bppId">pramaan.ondc.org</span>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Tracking URL Details -->
+        <div class="tracking-info-card">
+            <h3>
+                <i class="fas fa-link"></i>
+                External Tracking
+            </h3>
+            <div class="tracking-url">
+                <div class="tracking-url-label">External Tracking URL:</div>
+                <div class="tracking-url-value" id="externalTrackingUrl">http://sequelstring-lsp-ondc.com/track</div>
+            </div>
+            <div class="tracking-actions">
+                <a href="#" class="btn-tracking btn-primary" id="openTrackingUrl" target="_blank">
+                    <i class="fas fa-external-link-alt"></i>
+                    Open External Tracking
+                </a>
+                <button class="btn-tracking btn-secondary" id="refreshTracking">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh Status
+                </button>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="tracking-actions">
+            <a href="order-list.html" class="btn-tracking btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Back to Orders
+            </a>
+            <a href="index.html" class="btn-tracking btn-primary">
+                <i class="fas fa-home"></i>
+                Back to Home
+            </a>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>ONDC Buyer</h4>
+                    <p>Your trusted shopping platform</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="cart.html">Cart</a></li>
+                        <li><a href="order-confirmation.html">Orders</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2024 ONDC Buyer. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script src="tracking.js"></script>
+</body>
+</html>
