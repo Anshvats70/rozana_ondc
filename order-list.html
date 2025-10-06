@@ -2330,7 +2330,7 @@
                     `;
 
                     actionButtons = `
-                        <button class="action-btn btn-primary" onclick="event.stopPropagation(); window.orderListManager.showOrderDetailsByIndex(${index})">
+                        <button class="action-btn btn-primary" onclick="event.stopPropagation(); window.location.href='order-details.html?transaction_id=' + encodeURIComponent('${order.transaction_id}') + '&order_id=' + ${order.order_id}">
                             <i class="fas fa-eye"></i>
                             View Details
                         </button>
@@ -2354,16 +2354,10 @@
                                 Return
                             </button>` : ''
                         }
-                        ${actionStatus === 'INFO_REQUESTED' ? 
-                            `<button class="action-btn" style="background: #10b981; color: white;" onclick="event.stopPropagation(); window.orderListManager.showInfoProvideModal(${order.order_id}, '${order.issue_id}')">
-                                <i class="fas fa-upload"></i>
-                                Info Provide
-                            </button>` : ''
-                        }
                     `;
                 } else if (order.order_status === 'Completed' && order.issue_raised === 0) {
                     actionButtons = `
-                        <button class="action-btn btn-primary" onclick="event.stopPropagation(); window.orderListManager.showOrderDetailsByIndex(${index})">
+                        <button class="action-btn btn-primary" onclick="event.stopPropagation(); window.location.href='order-details.html?transaction_id=' + encodeURIComponent('${order.transaction_id}') + '&order_id=' + ${order.order_id}">
                             <i class="fas fa-eye"></i>
                             View Details
                         </button>
@@ -2391,7 +2385,7 @@
                 } else if (order.order_status === 'Completed' && order.issue_raised === 1) {
                     // For completed orders with issues already raised, only show View Details
                     actionButtons = `
-                        <button class="action-btn btn-primary" onclick="event.stopPropagation(); window.orderListManager.showOrderDetailsByIndex(${index})">
+                        <button class="action-btn btn-primary" onclick="event.stopPropagation(); window.location.href='order-details.html?transaction_id=' + encodeURIComponent('${order.transaction_id}') + '&order_id=' + ${order.order_id}">
                             <i class="fas fa-eye"></i>
                             View Details
                         </button>
@@ -2418,7 +2412,7 @@
                     `;
                 } else {
                     actionButtons = `
-                        <button class="action-btn btn-primary" onclick="event.stopPropagation(); window.orderListManager.showOrderDetailsByIndex(${index})">
+                        <button class="action-btn btn-primary" onclick="event.stopPropagation(); window.location.href='order-details.html?transaction_id=' + encodeURIComponent('${order.transaction_id}') + '&order_id=' + ${order.order_id}">
                             <i class="fas fa-eye"></i>
                             View Details
                         </button>
