@@ -240,12 +240,28 @@ function displayQuoteBreakdown() {
     if (!quoteBreakdownDiv || !cartConfirmationData.quote_breakup) return;
     
     quoteBreakdownDiv.innerHTML = '';
-    console.log("", cartConfirmationData.quote_breakup);
+    console.log("Quote breakdown data:", cartConfirmationData.quote_breakup);
+    
+    // Get original cart items from localStorage to get product names and measurements
+    const originalCartItems = JSON.parse(localStorage.getItem('ondcCart') || '[]');
+    console.log('Original cart items for quote breakdown:', originalCartItems);
+    
     cartConfirmationData.quote_breakup.forEach(item => {
+        // For item type breakdowns, try to find the original cart item to get the variation/measure
+        let displayTitle = item.title;
+        
+        if (item.title_type === 'item' && item.item_id) {
+            const originalCartItem = originalCartItems.find(cartItem => cartItem.id === item.item_id);
+            if (originalCartItem && originalCartItem.measure) {
+                // Use the product name with measurement from the original cart item
+                displayTitle = `${originalCartItem.name} (${originalCartItem.measure})`;
+            }
+        }
+        
         const breakdownDiv = document.createElement('div');
         breakdownDiv.className = 'breakdown-row';
         breakdownDiv.innerHTML = `
-            <div class="breakdown-title">${item.title}</div>
+            <div class="breakdown-title">${displayTitle}</div>
             <div class="breakdown-amount">₹${item.amount}</div>
         `;
         quoteBreakdownDiv.appendChild(breakdownDiv);
