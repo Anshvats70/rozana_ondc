@@ -184,6 +184,8 @@ function loadPaymentData() {
     const transactionId = localStorage.getItem('currentTransactionId');
     if (transactionId && paymentTransactionIdSpan) {
         paymentTransactionIdSpan.textContent = `Transaction ID: ${transactionId}`;
+        paymentTransactionIdSpan.style.color = '#fff';
+        paymentTransactionIdSpan.style.fontWeight = '500';
     }
     
     // Load cart confirmation data
@@ -223,6 +225,19 @@ function displayOrderItems(cartConfirmation) {
             </div>
             <div class="item-price">${item.price}</div>
         `;
+        
+        // Apply styling to ensure visibility
+        const itemName = itemDiv.querySelector('.item-name');
+        const itemPrice = itemDiv.querySelector('.item-price');
+        
+        if (itemName) {
+            itemName.style.color = '#1f2937';
+            itemName.style.fontWeight = '500';
+        }
+        if (itemPrice) {
+            itemPrice.style.color = '#1f2937';
+            itemPrice.style.fontWeight = '600';
+        }
         orderItemsDiv.appendChild(itemDiv);
     });
 }
@@ -275,12 +290,33 @@ function updatePaymentTotals(cartConfirmation) {
     
     console.log('Calculated totals:', { subtotal, delivery, convenience, total });
     
-    // Update display
-    if (subtotalAmountSpan) subtotalAmountSpan.textContent = `₹${subtotal.toFixed(2)}`;
-    if (deliveryAmountSpan) deliveryAmountSpan.textContent = `₹${delivery.toFixed(2)}`;
-    if (convenienceAmountSpan) convenienceAmountSpan.textContent = `₹${convenience.toFixed(2)}`;
-    if (finalTotalAmountSpan) finalTotalAmountSpan.textContent = `₹${total.toFixed(2)}`;
-    if (paymentTotalAmountSpan) paymentTotalAmountSpan.textContent = `Total: ₹${total.toFixed(2)}`;
+    // Update display with proper styling
+    if (subtotalAmountSpan) {
+        subtotalAmountSpan.textContent = `₹${subtotal.toFixed(2)}`;
+        subtotalAmountSpan.style.color = '#fff';
+        subtotalAmountSpan.style.fontWeight = '600';
+    }
+    if (deliveryAmountSpan) {
+        deliveryAmountSpan.textContent = `₹${delivery.toFixed(2)}`;
+        deliveryAmountSpan.style.color = '#fff';
+        deliveryAmountSpan.style.fontWeight = '600';
+    }
+    if (convenienceAmountSpan) {
+        convenienceAmountSpan.textContent = `₹${convenience.toFixed(2)}`;
+        convenienceAmountSpan.style.color = '#fff';
+        convenienceAmountSpan.style.fontWeight = '600';
+    }
+    if (finalTotalAmountSpan) {
+        finalTotalAmountSpan.textContent = `₹${total.toFixed(2)}`;
+        finalTotalAmountSpan.style.color = '#fff';
+        finalTotalAmountSpan.style.fontWeight = '700';
+        finalTotalAmountSpan.style.fontSize = '1.2rem';
+    }
+    if (paymentTotalAmountSpan) {
+        paymentTotalAmountSpan.textContent = `Total: ₹${total.toFixed(2)}`;
+        paymentTotalAmountSpan.style.color = '#fff';
+        paymentTotalAmountSpan.style.fontWeight = '600';
+    }
 }
 
 function handlePaymentTypeChange(paymentType) {

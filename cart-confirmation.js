@@ -163,11 +163,19 @@ function displayCartConfirmation() {
     }
     
     if (totalValueSpan) {
-        totalValueSpan.textContent = `Total: ₹${cartConfirmationData.total_value}`;
+        const totalValue = cartConfirmationData.total_value || '0.00';
+        totalValueSpan.textContent = `Total: ₹${totalValue}`;
+        totalValueSpan.style.color = '#1f2937';
+        totalValueSpan.style.fontWeight = '600';
+        console.log('Set totalValueSpan:', totalValueSpan.textContent);
     }
     
     if (totalValueDisplaySpan) {
-        totalValueDisplaySpan.textContent = `₹${cartConfirmationData.total_value}`;
+        const totalValue = cartConfirmationData.total_value || '0.00';
+        totalValueDisplaySpan.textContent = `₹${totalValue}`;
+        totalValueDisplaySpan.style.color = '#1f2937';
+        totalValueDisplaySpan.style.fontWeight = '700';
+        console.log('Set totalValueDisplaySpan:', totalValueDisplaySpan.textContent);
     }
     
     // Display order status
@@ -320,10 +328,19 @@ function copyTransactionIdConfirmation() {
 function showErrorState() {
     if (transactionIdSpan) {
         transactionIdSpan.textContent = 'Transaction ID: Not available';
+        transactionIdSpan.style.color = '#1f2937';
     }
     
     if (totalValueSpan) {
         totalValueSpan.textContent = 'Total: Not available';
+        totalValueSpan.style.color = '#1f2937';
+        totalValueSpan.style.fontWeight = '600';
+    }
+    
+    if (totalValueDisplaySpan) {
+        totalValueDisplaySpan.textContent = '₹0.00';
+        totalValueDisplaySpan.style.color = '#1f2937';
+        totalValueDisplaySpan.style.fontWeight = '700';
     }
     
     if (itemsListDiv) {

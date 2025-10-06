@@ -173,23 +173,23 @@ function displayReturnItems() {
     
     console.log('All items from API:', allItems);
     
-    // Filter only completed items for return
+    // Filter only items with Order-delivered status for return
     const returnableItems = allItems.filter(item => {
         const status = item.status || 'Unknown';
-        const isCompleted = status.toLowerCase() === 'completed';
-        console.log(`Item: ${item.title || item.name}, Status: ${status}, Can Return: ${isCompleted}`);
-        return isCompleted;
+        const isOrderDelivered = status === 'Order-delivered';
+        console.log(`Item: ${item.title || item.name}, Status: ${status}, Can Return: ${isOrderDelivered}`);
+        return isOrderDelivered;
     });
     
-    console.log('Returnable items (completed only):', returnableItems);
+    console.log('Returnable items (Order-delivered only):', returnableItems);
     
     if (returnableItems.length === 0) {
-        returnItemsList.innerHTML = '<div class="no-items">No completed items available for return</div>';
+        returnItemsList.innerHTML = '<div class="no-items">No Order-delivered items available for return</div>';
         return;
     }
     
     returnableItems.forEach((item, index) => {
-        const status = item.status || 'Completed';
+        const status = item.status || 'Order-delivered';
         
         const itemDiv = document.createElement('div');
         itemDiv.className = 'return-item';
@@ -488,10 +488,10 @@ function createReturnPayload(returnType, returnReason, returnDescription, return
     let totalReturnAmount = 0;
     
     if (returnType === 'full') {
-        // Calculate total for all completed items
+        // Calculate total for all Order-delivered items
         const orderDetails = orderData.order_details || [];
         totalReturnAmount = orderDetails
-            .filter(item => item.status === 'Completed')
+            .filter(item => item.status === 'Order-delivered')
             .reduce((sum, item) => sum + parseFloat(item.amount || item.price || 0), 0);
     } else {
         // Calculate total for selected items
@@ -691,10 +691,10 @@ function createReturnRequestData(payload) {
     let items = [];
     
     if (returnType === 'full') {
-        // Include all completed items for full return
+        // Include all Order-delivered items for full return
         const orderDetails = orderData.order_details || [];
         items = orderDetails
-            .filter(item => item.status === 'Completed')
+            .filter(item => item.status === 'Order-delivered')
             .map(item => ({
                 item_id: item.item_id,
                 name: item.title || item.name,
@@ -711,7 +711,7 @@ function createReturnRequestData(payload) {
             price: item.price,
             quantity: item.max_quantity,
             return_quantity: item.return_quantity,
-            status: 'Completed'
+            status: 'Order-delivered'
         }));
     }
     
@@ -842,35 +842,35 @@ async function submitReturnRequest(payload) {
         let retryCount = 0;
         
         while (retryCount < maxRetries && !ondcResult) {
-            try {
+        try {
                 console.log(`🌐 Step 2: Submitting to ONDC on_update... (Attempt ${retryCount + 1}/${maxRetries})`);
                 console.log('ONDC Payload being sent:', JSON.stringify(payload, null, 2));
                 
-                const ondcResponse = await fetch('https://pramaan.ondc.org/beta/preprod/mock/seller/update', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
+            const ondcResponse = await fetch('https://pramaan.ondc.org/beta/preprod/mock/seller/update', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'User-Agent': 'ONDC-Return-Client/1.0'
-                    },
+                },
                     body: JSON.stringify(payload),
                     mode: 'cors',
                     credentials: 'omit'
-                });
+            });
 
-                console.log('ONDC API response status:', ondcResponse.status);
+            console.log('ONDC API response status:', ondcResponse.status);
                 console.log('ONDC API response headers:', Object.fromEntries(ondcResponse.headers.entries()));
 
-                if (!ondcResponse.ok) {
-                    let errorMessage = `ONDC API error! status: ${ondcResponse.status}`;
+            if (!ondcResponse.ok) {
+                let errorMessage = `ONDC API error! status: ${ondcResponse.status}`;
                     let errorDetails = '';
-                    try {
-                        const errorText = await ondcResponse.text();
-                        console.log('ONDC API error response:', errorText);
-                        errorMessage += ` - ${errorText}`;
+                try {
+                    const errorText = await ondcResponse.text();
+                    console.log('ONDC API error response:', errorText);
+                    errorMessage += ` - ${errorText}`;
                         errorDetails = errorText;
-                    } catch (e) {
-                        console.log('Could not read ONDC API error response');
+                } catch (e) {
+                    console.log('Could not read ONDC API error response');
                         errorDetails = 'Unable to read error response';
                     }
                     
@@ -888,7 +888,7 @@ async function submitReturnRequest(payload) {
                     if (retryCount >= maxRetries - 1) {
                         console.warn('⚠️ ONDC submission failed after all retries, but database was successful:', errorMessage);
                         break;
-                    } else {
+            } else {
                         console.log(`⏳ Retrying ONDC submission in 2 seconds... (${retryCount + 1}/${maxRetries})`);
                         await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds before retry
                         retryCount++;
@@ -896,17 +896,17 @@ async function submitReturnRequest(payload) {
                     }
                 } else {
                     try {
-                        ondcResult = await ondcResponse.json();
-                        console.log('✅ ONDC API success:', ondcResult);
+                ondcResult = await ondcResponse.json();
+                console.log('✅ ONDC API success:', ondcResult);
                         break; // Success, exit retry loop
                     } catch (parseError) {
                         console.warn('⚠️ ONDC response received but could not parse JSON:', parseError);
                         ondcResult = { success: true, message: 'Response received but not JSON' };
                         break; // Exit retry loop
                     }
-                }
-                
-            } catch (ondcError) {
+            }
+            
+        } catch (ondcError) {
                 console.error('ONDC Update Network Error:', {
                     name: ondcError.name,
                     message: ondcError.message,

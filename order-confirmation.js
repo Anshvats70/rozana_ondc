@@ -892,23 +892,35 @@ async function trackOrder() {
     }
     
     try {
-        showNotification('Tracking order...', 'info');
+        showNotification('Redirecting to tracking page...', 'info');
         
         // Send ONDC track event
         const trackResponse = await sendONDCTrackEvent(transactionId);
         
         if (trackResponse) {
             console.log('ONDC Track event sent successfully');
-            showNotification('Order tracking initiated successfully!', 'success');
             
-            // You can add additional logic here to handle the track response
-            // For example, display tracking information or update the UI
-            console.log('Track response:', trackResponse);
+            // Store tracking data for the tracking page
+            if (trackResponse.message && trackResponse.message.tracking) {
+                localStorage.setItem('trackingData', JSON.stringify(trackResponse));
+            }
+            
+            showNotification('Redirecting to tracking page...', 'success');
+            
+            // Redirect to tracking page after a short delay
+            setTimeout(() => {
+                window.location.href = 'tracking.html';
+            }, 1000);
         }
         
     } catch (error) {
         console.error('Error tracking order:', error);
         showNotification(`Failed to track order: ${error.message}`, 'error');
+        
+        // Still redirect to tracking page even if API call fails
+        setTimeout(() => {
+            window.location.href = 'tracking.html';
+        }, 2000);
     } finally {
         // Re-enable button and restore original text
         if (trackBtn) {

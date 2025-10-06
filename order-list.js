@@ -3,6 +3,20 @@
  * Fetches and displays orders from the ONDC API
  * Auto-refreshes on page load
  */
+
+// Immediate global function definition - available right away
+window.getOrderStatus = function(orderId) {
+    console.log('🌍 Global getOrderStatus triggered for order:', orderId);
+    if (window.orderListManager && typeof window.orderListManager.getOrderStatus === 'function') {
+        return window.orderListManager.getOrderStatus(orderId);
+    } else {
+        console.error('❌ OrderListManager or getOrderStatus method not available');
+        alert('Order status functionality is not available. Please refresh the page.');
+    }
+};
+
+console.log('🔧 Global getOrderStatus function defined:', typeof window.getOrderStatus);
+
 class OrderListManager {
     constructor() {
         this.apiUrl = 'https://neo-server.rozana.in/orders';
@@ -1152,13 +1166,352 @@ class OrderListManager {
         }, 3000);
     }
 
+    // Get order status function - works like refresh status in order-confirmation page
+    async getOrderStatus(orderId) {
+        console.log('🔄 Getting status for order:', orderId);
+        
+        try {
+            // Show loading state
+            this.showLoadingModal('Checking order status...');
+            
+            // Find the order in our current orders list
+            const order = this.orders.find(o => o.order_id == orderId);
+            if (!order) {
+                throw new Error('Order not found in current orders list');
+            }
+            
+            const transactionId = order.transaction_id || order.ondc_order_id;
+            if (!transactionId) {
+                throw new Error('No transaction ID found for this order');
+            }
+            
+            let ondcStatusResponse = null;
+            let orderData = null;
+            
+            // First send ONDC status event (like in order-confirmation page)
+            try {
+                ondcStatusResponse = await this.sendONDCStatusEvent(transactionId, order);
+                console.log('ONDC Status event sent successfully');
+            } catch (ondcError) {
+                console.warn('ONDC Status event failed, continuing with API fetch:', ondcError);
+                // Continue with API fetch even if ONDC status fails
+            }
+            
+            // Then fetch updated order data from API
+            try {
+                orderData = await this.fetchOrderStatus(transactionId);
+            } catch (apiError) {
+                console.error('API fetch failed:', apiError);
+                throw new Error('Failed to fetch order data from server');
+            }
+            
+            // Close loading modal
+            this.closeLoadingModal();
+            
+            if (orderData) {
+                // Update the order in our local list
+                const orderIndex = this.orders.findIndex(o => o.order_id == orderId);
+                if (orderIndex !== -1) {
+                    this.orders[orderIndex] = { ...this.orders[orderIndex], ...orderData };
+                    // Re-render the orders to show updated status
+                    this.renderOrders();
+                }
+                
+                // Show status-specific notification
+                const status = orderData.order_status || 'Unknown';
+                const paymentStatus = orderData.payment_status || 'Unknown';
+                
+                let notificationMessage = `Order Status: ${status} | Payment: ${paymentStatus}`;
+                if (ondcStatusResponse) {
+                    notificationMessage += ' | ONDC Status: Updated';
+                }
+                
+                this.showRefreshNotification(notificationMessage);
+                
+                // Show detailed status in a modal
+                this.showOrderStatusModal(orderId, orderData);
+            } else {
+                throw new Error('No order data received');
+            }
+            
+        } catch (error) {
+            console.error('❌ Failed to get order status:', error);
+            
+            // Close loading modal
+            this.closeLoadingModal();
+            
+            // Show error notification
+            this.showErrorModal('Failed to Get Order Status', `
+                <div style="text-align: center;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #dc2626; margin-bottom: 1rem;"></i>
+                    <h3 style="color: #dc2626; margin-bottom: 1rem;">Status Check Failed</h3>
+                    <p style="margin-bottom: 1rem;">Unable to fetch status for order #${orderId}.</p>
+                    <div style="background: #fef2f2; padding: 1rem; border-radius: 6px; margin-bottom: 1rem;">
+                        <div><strong>Order ID:</strong> ${orderId}</div>
+                        <div><strong>Error:</strong> ${error.message}</div>
+                    </div>
+                    <p style="font-size: 0.9rem; color: #6b7280;">
+                        Please try again or contact support if the issue persists.
+                    </p>
+                </div>
+            `);
+        }
+    }
+    
+    // Send ONDC status event (similar to order-confirmation page)
+    async sendONDCStatusEvent(transactionId, order) {
+        const messageId = this.generateUUID();
+        const timestamp = new Date().toISOString();
+        
+        const statusPayload = {
+            "context": {
+                "domain": "ONDC:RET10",
+                "action": "status",
+                "core_version": "1.2.0",
+                "bap_id": "neo-server.rozana.in",
+                "bap_uri": "https://neo-server.rozana.in/bapl",
+                "bpp_id": "pramaan.ondc.org",
+                "bpp_uri": "https://pramaan.ondc.org",
+                "transaction_id": transactionId,
+                "message_id": messageId,
+                "timestamp": timestamp,
+                "city": "std:011",
+                "country": "IND",
+                "ttl": "PT30S"
+            },
+            "message": {
+                "order_id": order.ondc_order_id || order.order_id
+            }
+        };
+        
+        console.log('Sending ONDC Status event:', statusPayload);
+        
+        return fetch('https://pramaan.ondc.org/status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(statusPayload)
+        }).then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        });
+    }
+    
+    // Fetch order status from API
+    async fetchOrderStatus(transactionId) {
+        const response = await fetch(`https://neo-server.rozana.in/order/${transactionId}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const orderData = await response.json();
+        console.log('Order status API response:', orderData);
+        
+        return orderData;
+    }
+    
+    // Generate UUID function
+    generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0;
+            const v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+    
+    showOrderStatusModal(orderId, statusData) {
+        // Create modal HTML
+        const modal = document.createElement('div');
+        modal.id = 'orderStatusModal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 1rem;
+        `;
+
+        const status = statusData.success && statusData.data ? statusData.data : statusData;
+        
+        modal.innerHTML = `
+            <div style="background: white; border-radius: 10px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto;">
+                <div style="padding: 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; background: white; z-index: 1;">
+                    <h2 style="margin: 0; color: #333; font-size: 1.5rem;">
+                        <i class="fas fa-sync-alt" style="color: #10b981; margin-right: 0.5rem;"></i>
+                        Order Status
+                    </h2>
+                    <button onclick="this.closest('#orderStatusModal').remove()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280; padding: 0.5rem;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div style="padding: 1.5rem;">
+                    ${this.generateOrderStatusHTML(orderId, status)}
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Close modal when clicking outside
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+    }
+    
+    generateOrderStatusHTML(orderId, statusData) {
+        if (!statusData) {
+            return `
+                <div style="text-align: center; padding: 2rem;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #f59e0b; margin-bottom: 1rem;"></i>
+                    <h3 style="color: #f59e0b; margin-bottom: 1rem;">No Status Data</h3>
+                    <p style="color: #6b7280;">Unable to retrieve status information for order #${orderId}.</p>
+                </div>
+            `;
+        }
+        
+        return `
+            <div style="display: grid; gap: 1.5rem;">
+                <!-- Order Overview -->
+                <div style="background: #f9fafb; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #10b981;">
+                    <h3 style="margin: 0 0 1rem 0; color: #333; display: flex; align-items: center; gap: 0.5rem;">
+                        <i class="fas fa-info-circle"></i>
+                        Order Overview
+                    </h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div>
+                            <strong>Order ID:</strong><br>
+                            <span style="color: #333; font-family: monospace;">${orderId}</span>
+                        </div>
+                        <div>
+                            <strong>Current Status:</strong><br>
+                            <span class="status-badge" style="background: #10b981; color: white; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600;">${statusData.order_status || 'Unknown'}</span>
+                        </div>
+                        <div>
+                            <strong>Payment Status:</strong><br>
+                            <span style="color: #333;">${statusData.payment_status || 'Unknown'}</span>
+                        </div>
+                        <div>
+                            <strong>Last Updated:</strong><br>
+                            <span style="color: #6b7280;">${this.formatDate(statusData.updated_at)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Details -->
+                ${statusData.status_details ? `
+                    <div>
+                        <h3 style="margin: 0 0 1rem 0; color: #333; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-list"></i>
+                            Status Details
+                        </h3>
+                        <div style="background: #f3f4f6; padding: 1rem; border-radius: 6px;">
+                            <pre style="margin: 0; white-space: pre-wrap; font-family: monospace; font-size: 0.9rem;">${JSON.stringify(statusData.status_details, null, 2)}</pre>
+                        </div>
+                    </div>
+                ` : ''}
+
+                <!-- Additional Information -->
+                ${statusData.additional_info ? `
+                    <div>
+                        <h3 style="margin: 0 0 1rem 0; color: #333; display: flex; align-items: center; gap: 0.5rem;">
+                            <i class="fas fa-info"></i>
+                            Additional Information
+                        </h3>
+                        <div style="background: #f3f4f6; padding: 1rem; border-radius: 6px;">
+                            <pre style="margin: 0; white-space: pre-wrap; font-family: monospace; font-size: 0.9rem;">${JSON.stringify(statusData.additional_info, null, 2)}</pre>
+                        </div>
+                    </div>
+                ` : ''}
+
+                <!-- Timestamps -->
+                <div style="background: #f9fafb; padding: 1rem; border-radius: 8px; font-size: 0.9rem; color: #6b7280;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div><strong>Created:</strong> ${this.formatDate(statusData.created_at)}</div>
+                        <div><strong>Last Updated:</strong> ${this.formatDate(statusData.updated_at)}</div>
+                        ${statusData.expected_delivery ? `<div><strong>Expected Delivery:</strong> ${this.formatDate(statusData.expected_delivery)}</div>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    showErrorModal(title, content) {
+        // Create modal HTML
+        const modal = document.createElement('div');
+        modal.id = 'errorModal';
+        modal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 1rem;
+        `;
+
+        modal.innerHTML = `
+            <div style="background: white; border-radius: 10px; max-width: 500px; width: 100%;">
+                <div style="padding: 1.5rem; border-bottom: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center;">
+                    <h2 style="margin: 0; color: #dc2626; font-size: 1.5rem;">${title}</h2>
+                    <button onclick="this.closest('#errorModal').remove()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280; padding: 0.5rem;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div style="padding: 1.5rem;">
+                    ${content}
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Close modal when clicking outside
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+            }
+        });
+    }
+
     // Additional utility methods will be added here as needed
 }
 
 // Initialize the OrderListManager when the page loads
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Page loaded - initializing OrderListManager');
-    window.orderListManager = new OrderListManager();
+    try {
+        window.orderListManager = new OrderListManager();
+        console.log('✅ OrderListManager initialized successfully');
+        console.log('🔍 Available methods:', Object.getOwnPropertyNames(Object.getPrototypeOf(window.orderListManager)));
+        console.log('🔍 getOrderStatus method exists:', typeof window.orderListManager.getOrderStatus);
+    } catch (error) {
+        console.error('❌ Failed to initialize OrderListManager:', error);
+    }
     
     // Global function to trigger refresh from anywhere
     window.forceRefreshOrders = function() {
@@ -1175,7 +1528,9 @@ document.addEventListener('DOMContentLoaded', function() {
             window.orderListManager.triggerStatusChangeRefresh();
         }
     };
+    
 });
+
 
 // Cleanup when page unloads
 window.addEventListener('beforeunload', function() {
