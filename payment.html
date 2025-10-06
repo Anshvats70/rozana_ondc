@@ -163,99 +163,7 @@
                             </div>
                         </div>
 
-                        <!-- Payment Method Selection -->
-                        <div class="payment-methods" id="paymentMethodsSection">
-                            <h4>Select Payment Method</h4>
-                            <div class="payment-options">
-                                <label class="payment-option">
-                                    <input type="radio" name="paymentMethod" value="card" checked>
-                                    <div class="payment-option-content">
-                                        <i class="fas fa-credit-card"></i>
-                                        <span>Credit/Debit Card</span>
-                                    </div>
-                                </label>
-                                <label class="payment-option">
-                                    <input type="radio" name="paymentMethod" value="upi">
-                                    <div class="payment-option-content">
-                                        <i class="fab fa-google-pay"></i>
-                                        <span>UPI</span>
-                                    </div>
-                                </label>
-                                <label class="payment-option">
-                                    <input type="radio" name="paymentMethod" value="netbanking">
-                                    <div class="payment-option-content">
-                                        <i class="fas fa-university"></i>
-                                        <span>Net Banking</span>
-                                    </div>
-                                </label>
-                                <label class="payment-option">
-                                    <input type="radio" name="paymentMethod" value="wallet">
-                                    <div class="payment-option-content">
-                                        <i class="fas fa-wallet"></i>
-                                        <span>Digital Wallet</span>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
 
-                        <!-- Card Payment Details -->
-                        <div class="payment-details" id="cardDetails">
-                            <div class="form-group">
-                                <label for="cardNumber">Card Number</label>
-                                <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456" maxlength="19">
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="expiryDate">Expiry Date</label>
-                                    <input type="text" id="expiryDate" placeholder="MM/YY" maxlength="5">
-                                </div>
-                                <div class="form-group">
-                                    <label for="cvv">CVV</label>
-                                    <input type="text" id="cvv" placeholder="123" maxlength="4">
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label for="cardName">Name on Card</label>
-                                <input type="text" id="cardName" placeholder="John Doe">
-                            </div>
-                        </div>
-
-                        <!-- UPI Payment Details -->
-                        <div class="payment-details" id="upiDetails" style="display: none;">
-                            <div class="form-group">
-                                <label for="upiId">UPI ID</label>
-                                <input type="text" id="upiId" placeholder="yourname@paytm">
-                            </div>
-                        </div>
-
-                        <!-- Net Banking Details -->
-                        <div class="payment-details" id="netbankingDetails" style="display: none;">
-                            <div class="form-group">
-                                <label for="bankName">Select Bank</label>
-                                <select id="bankName">
-                                    <option value="">Select your bank</option>
-                                    <option value="sbi">State Bank of India</option>
-                                    <option value="hdfc">HDFC Bank</option>
-                                    <option value="icici">ICICI Bank</option>
-                                    <option value="axis">Axis Bank</option>
-                                    <option value="kotak">Kotak Mahindra Bank</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Wallet Details -->
-                        <div class="payment-details" id="walletDetails" style="display: none;">
-                            <div class="form-group">
-                                <label for="walletType">Select Wallet</label>
-                                <select id="walletType">
-                                    <option value="">Select your wallet</option>
-                                    <option value="paytm">Paytm</option>
-                                    <option value="phonepe">PhonePe</option>
-                                    <option value="gpay">Google Pay</option>
-                                    <option value="amazonpay">Amazon Pay</option>
-                                </select>
-                            </div>
-                        </div>
 
                         <!-- Post-paid Details -->
                         <div class="payment-details" id="postpaidDetails" style="display: none;">
@@ -375,6 +283,8 @@
         </div>
     </div>
 
+    <!-- Razorpay SDK -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script src="script.js"></script>
     <script src="payment.js"></script>
 </body>
