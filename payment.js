@@ -1,6 +1,23 @@
 // Payment page JavaScript
 console.log('=== PAYMENT PAGE INITIALIZATION ===');
 
+// Razorpay Configuration
+const RAZORPAY_CONFIG = {
+    key: 'rzp_test_RQ8F4A6JDH8Cde', // Your Razorpay test key
+    currency: 'INR',
+    name: 'ROZANA ONDC',
+    description: 'ONDC Order Payment',
+    image: 'https://via.placeholder.com/150x150/667eea/ffffff?text=ROZANA',
+    theme: {
+        color: '#667eea'
+    }
+};
+
+// Check if Razorpay is loaded
+function isRazorpayLoaded() {
+    return typeof Razorpay !== 'undefined';
+}
+
 // Generate UUID function
 function generateUUID() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -40,7 +57,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     loadPaymentData();
     setupEventListeners();
-    setupPaymentMethodHandlers();
     setupPaymentTypeOptions();
     
     console.log('=== PAYMENT PAGE INITIALIZATION COMPLETE ===');
@@ -59,32 +75,8 @@ function setupEventListeners() {
         });
     });
     
-    // Card number formatting
-    const cardNumberInput = document.getElementById('cardNumber');
-    if (cardNumberInput) {
-        cardNumberInput.addEventListener('input', formatCardNumber);
-    }
-    
-    // Expiry date formatting
-    const expiryDateInput = document.getElementById('expiryDate');
-    if (expiryDateInput) {
-        expiryDateInput.addEventListener('input', formatExpiryDate);
-    }
-    
-    // CVV formatting
-    const cvvInput = document.getElementById('cvv');
-    if (cvvInput) {
-        cvvInput.addEventListener('input', formatCVV);
-    }
 }
 
-function setupPaymentMethodHandlers() {
-    paymentMethodRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            showPaymentDetails(this.value);
-        });
-    });
-}
 
 function setupPaymentTypeOptions() {
     // Check COD availability and set payment type options accordingly
@@ -453,7 +445,13 @@ async function handlePaymentSubmission(event) {
         console.error('Payment processing error:', error);
         hideLoadingModal();
         
-        if (error.message.includes('confirm')) {
+        if (error.message.includes('cancelled')) {
+            showNotification('Payment was cancelled. You can try again.', 'warning');
+        } else if (error.message.includes('Razorpay SDK not loaded')) {
+            showNotification('Payment system is not ready. Please refresh the page and try again.', 'error');
+        } else if (error.message.includes('Invalid order amount')) {
+            showNotification('Invalid order amount. Please refresh the page and try again.', 'error');
+        } else if (error.message.includes('confirm')) {
             showNotification('Order confirmation failed. Please try again.', 'error');
         } else {
             showNotification('Payment failed. Please try again.', 'error');
@@ -487,90 +485,11 @@ function validatePaymentForm() {
         // For post-paid, no additional validation needed
         return true;
     } else {
-        // For pre-paid, validate payment method
-        const selectedMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-        
-        switch (selectedMethod) {
-            case 'card':
-                return validateCardPayment();
-            case 'upi':
-                return validateUPIPayment();
-            case 'netbanking':
-                return validateNetBankingPayment();
-            case 'wallet':
-                return validateWalletPayment();
-            default:
-                return false;
-        }
+        // For pre-paid, no additional validation needed since Razorpay handles everything
+        return true;
     }
 }
 
-function validateCardPayment() {
-    const cardNumber = document.getElementById('cardNumber').value.replace(/\s/g, '');
-    const expiryDate = document.getElementById('expiryDate').value;
-    const cvv = document.getElementById('cvv').value;
-    const cardName = document.getElementById('cardName').value.trim();
-    
-    if (!cardNumber || cardNumber.length < 16) {
-        showNotification('Please enter a valid card number', 'error');
-        return false;
-    }
-    
-    if (!expiryDate || !/^\d{2}\/\d{2}$/.test(expiryDate)) {
-        showNotification('Please enter a valid expiry date (MM/YY)', 'error');
-        return false;
-    }
-    
-    if (!cvv || cvv.length < 3) {
-        showNotification('Please enter a valid CVV', 'error');
-        return false;
-    }
-    
-    if (!cardName) {
-        showNotification('Please enter the name on card', 'error');
-        return false;
-    }
-    
-    return true;
-}
-
-function validateUPIPayment() {
-    const upiId = document.getElementById('upiId').value.trim();
-    
-    if (!upiId) {
-        showNotification('Please enter your UPI ID', 'error');
-        return false;
-    }
-    
-    if (!/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+$/.test(upiId)) {
-        showNotification('Please enter a valid UPI ID', 'error');
-        return false;
-    }
-    
-    return true;
-}
-
-function validateNetBankingPayment() {
-    const bankName = document.getElementById('bankName').value;
-    
-    if (!bankName) {
-        showNotification('Please select your bank', 'error');
-        return false;
-    }
-    
-    return true;
-}
-
-function validateWalletPayment() {
-    const walletType = document.getElementById('walletType').value;
-    
-    if (!walletType) {
-        showNotification('Please select your wallet', 'error');
-        return false;
-    }
-    
-    return true;
-}
 
 async function processPayment() {
     const selectedType = document.querySelector('input[name="paymentType"]:checked').value;
@@ -583,16 +502,109 @@ async function processPayment() {
         // Send confirm event for post-paid
         await sendConfirmEvent();
     } else {
-        // For pre-paid, simulate payment processing
-        await new Promise(resolve => setTimeout(resolve, 3000));
-        console.log('Payment processed successfully');
+        // For pre-paid, use Razorpay payment gateway
+        console.log('Processing pre-paid payment with Razorpay...');
+        const paymentSuccess = await processRazorpayPayment();
         
-        // Send confirm event for pre-paid
-        await sendConfirmEvent();
+        if (paymentSuccess) {
+            console.log('Razorpay payment successful');
+            // Send confirm event for pre-paid
+            await sendConfirmEvent();
+        } else {
+            throw new Error('Razorpay payment failed');
+        }
     }
     
     // Clear cart after successful order confirmation
     clearCartAfterOrder();
+}
+
+// Razorpay Payment Processing
+async function processRazorpayPayment() {
+    return new Promise((resolve, reject) => {
+        try {
+            // Check if Razorpay is loaded
+            if (!isRazorpayLoaded()) {
+                throw new Error('Razorpay SDK not loaded. Please refresh the page and try again.');
+            }
+            
+            // Get order amount from the page
+            const totalAmount = getTotalAmount();
+            if (totalAmount <= 0) {
+                throw new Error('Invalid order amount. Please refresh the page and try again.');
+            }
+            
+            const orderId = generateUUID();
+            
+            console.log('Creating Razorpay order:', {
+                amount: totalAmount,
+                orderId: orderId,
+                currency: RAZORPAY_CONFIG.currency
+            });
+            
+            const options = {
+                key: RAZORPAY_CONFIG.key,
+                amount: Math.round(totalAmount * 100), // Razorpay expects amount in paise
+                currency: RAZORPAY_CONFIG.currency,
+                name: RAZORPAY_CONFIG.name,
+                description: `${RAZORPAY_CONFIG.description} - Order #${orderId}`,
+                image: RAZORPAY_CONFIG.image,
+                theme: RAZORPAY_CONFIG.theme,
+                handler: function (response) {
+                    console.log('Razorpay payment successful:', response);
+                    console.log('Payment ID:', response.razorpay_payment_id);
+                    console.log('Order ID:', response.razorpay_order_id);
+                    console.log('Signature:', response.razorpay_signature);
+                    
+                    // Store payment details for later use
+                    localStorage.setItem('razorpay_payment_id', response.razorpay_payment_id);
+                    localStorage.setItem('razorpay_order_id', response.razorpay_order_id);
+                    localStorage.setItem('razorpay_signature', response.razorpay_signature);
+                    
+                    // Payment successful
+                    resolve(true);
+                },
+                modal: {
+                    ondismiss: function() {
+                        console.log('Razorpay payment cancelled by user');
+                        reject(new Error('Payment cancelled by user'));
+                    }
+                },
+                prefill: {
+                    name: 'Customer Name', // You can get this from user profile
+                    email: 'customer@example.com', // You can get this from user profile
+                    contact: '9999999999' // You can get this from user profile
+                },
+                notes: {
+                    address: 'ONDC Order Payment',
+                    order_id: orderId,
+                    transaction_id: localStorage.getItem('currentTransactionId') || 'unknown'
+                },
+                retry: {
+                    enabled: true,
+                    max_count: 3
+                }
+            };
+            
+            // Open Razorpay checkout
+            const rzp = new Razorpay(options);
+            rzp.open();
+            
+        } catch (error) {
+            console.error('Razorpay payment error:', error);
+            reject(error);
+        }
+    });
+}
+
+// Get total amount from the page
+function getTotalAmount() {
+    const totalAmountElement = document.getElementById('finalTotalAmount');
+    if (totalAmountElement) {
+        const amountText = totalAmountElement.textContent.replace('₹', '').replace(',', '');
+        return parseFloat(amountText) || 0;
+    }
+    return 0;
 }
 
 function showLoadingModal() {
@@ -663,7 +675,8 @@ async function sendConfirmEvent() {
 function createConfirmPayload() {
     const transactionId = localStorage.getItem('currentTransactionId');
     const messageId = generateUUID();
-    const timestamp = new Date().toISOString();
+    // Use the same timestamp from init event
+    const timestamp = localStorage.getItem('initTimestamp') || new Date().toISOString();
     const orderId = 'O' + Date.now();
     
     // Get cart confirmation data

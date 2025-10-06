@@ -13,6 +13,7 @@ function generateUUID() {
 let orderData = null;
 let returnSelectedItems = []; // Renamed to avoid conflict with script.js
 let returnRequestId = null;
+let returnReasons = []; // Store fetched return reasons
 
 // DOM Elements
 const orderIdDisplay = document.getElementById("orderIdDisplay");
@@ -42,9 +43,182 @@ document.addEventListener("DOMContentLoaded", function () {
 
   loadOrderData();
   setupEventListeners();
+  loadReturnReasons(); // Load return reasons from API
 
   console.log("=== RETURN PAGE INITIALIZATION COMPLETE ===");
 });
+
+// Fetch return reasons from API
+async function loadReturnReasons() {
+  try {
+    console.log('Fetching return reasons from API...');
+    
+    // Fetch reasons for both categories
+    const [itemReasons, orderReasons] = await Promise.all([
+      fetchReturnReasons('Item'),
+      fetchReturnReasons('Order')
+    ]);
+    
+    returnReasons = {
+      item: itemReasons,
+      order: orderReasons
+    };
+    
+    console.log('Return reasons loaded:', returnReasons);
+    console.log('Item reasons:', itemReasons);
+    console.log('Order reasons:', orderReasons);
+    
+    // Update the reason dropdown based on current return type
+    updateReturnReasonDropdown();
+    
+  } catch (error) {
+    console.error('Error loading return reasons:', error);
+    // Fallback to static reasons if API fails
+    setStaticReturnReasons();
+  }
+}
+
+// Fetch return reasons for a specific category
+async function fetchReturnReasons(category) {
+  try {
+    console.log(`Fetching return reasons for category: ${category}`);
+    
+    const response = await fetch('https://neo-server.rozana.in/api/issues', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        category: category
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    console.log(`Raw API response for ${category}:`, data);
+    console.log(`Response type:`, typeof data);
+    console.log(`Is array:`, Array.isArray(data));
+    
+    // Handle different possible response formats
+    let reasons = [];
+    
+    if (Array.isArray(data)) {
+      // Direct array response
+      reasons = data;
+    } else if (data && Array.isArray(data.issues)) {
+      // Response with issues property (your API format)
+      reasons = data.issues;
+    } else if (data && Array.isArray(data.data)) {
+      // Response with data property
+      reasons = data.data;
+    } else if (data && Array.isArray(data.reasons)) {
+      // Response with reasons property
+      reasons = data.reasons;
+    } else if (data && Array.isArray(data.items)) {
+      // Response with items property
+      reasons = data.items;
+    } else if (data && typeof data === 'object') {
+      // Single object response, convert to array
+      reasons = [data];
+    } else {
+      console.log(`Unexpected response format for ${category}:`, data);
+      reasons = [];
+    }
+    
+    console.log(`Processed reasons for ${category}:`, reasons);
+    console.log(`Number of reasons:`, reasons.length);
+    
+    return reasons;
+  } catch (error) {
+    console.error(`Error fetching return reasons for ${category}:`, error);
+    return [];
+  }
+}
+
+// Update return reason dropdown based on return type
+function updateReturnReasonDropdown() {
+  const returnType = document.querySelector('input[name="returnType"]:checked');
+  const returnReasonSelect = document.getElementById('returnReason');
+  
+  console.log('Updating return reason dropdown...');
+  console.log('Return type:', returnType ? returnType.value : 'none');
+  console.log('Return reasons loaded:', returnReasons);
+  
+  if (!returnType || !returnReasonSelect) {
+    console.log('Missing return type or reason select element');
+    return;
+  }
+  
+  const category = returnType.value === 'full' ? 'order' : 'item';
+  const reasons = returnReasons[category] || [];
+  
+  console.log(`Category: ${category}, Reasons:`, reasons);
+  
+  // Clear existing options except the first one
+  returnReasonSelect.innerHTML = '<option value="">Choose a reason...</option>';
+  
+  // Add dynamic reasons
+  if (reasons && reasons.length > 0) {
+    console.log(`Adding ${reasons.length} dynamic reasons for ${category}`);
+    console.log('Sample reason object:', reasons[0]);
+    
+    reasons.forEach((reason, index) => {
+      console.log(`Processing reason ${index}:`, reason);
+      console.log(`Available keys:`, Object.keys(reason));
+      
+      const option = document.createElement('option');
+      
+      // Try different possible field names for value
+      const value = reason.code || reason.id || reason.reason_id || reason.value || reason.key || `reason_${index}`;
+      
+      // Try different possible field names for text
+      const text = reason.description || reason.name || reason.title || reason.reason_name || reason.label || reason.text || reason.reason || `Reason ${index + 1}`;
+      
+      option.value = value;
+      option.textContent = text;
+      
+      console.log(`Adding option: value="${value}", text="${text}"`);
+      console.log(`Full reason object:`, JSON.stringify(reason, null, 2));
+      returnReasonSelect.appendChild(option);
+    });
+  } else {
+    console.log('No API data available, using static reasons');
+    // Fallback to static reasons if no API data
+    setStaticReturnReasons();
+  }
+  
+  // Debug: Log the final dropdown options
+  console.log('Final dropdown options:');
+  for (let i = 0; i < returnReasonSelect.options.length; i++) {
+    console.log(`Option ${i}: value="${returnReasonSelect.options[i].value}", text="${returnReasonSelect.options[i].text}"`);
+  }
+}
+
+// Set static return reasons as fallback
+function setStaticReturnReasons() {
+  const returnReasonSelect = document.getElementById('returnReason');
+  if (!returnReasonSelect) return;
+  
+  const staticReasons = [
+    { value: '001', text: 'Defective Product' },
+    { value: '002', text: 'Wrong Item Delivered' },
+    { value: '003', text: 'Size/Color Mismatch' },
+    { value: '004', text: 'Quality Issues' },
+    { value: '005', text: 'Damaged in Transit' }
+  ];
+  
+  returnReasonSelect.innerHTML = '<option value="">Choose a reason...</option>';
+  staticReasons.forEach(reason => {
+    const option = document.createElement('option');
+    option.value = reason.value;
+    option.textContent = reason.text;
+    returnReasonSelect.appendChild(option);
+  });
+}
 
 function setupEventListeners() {
   // Return type selection
@@ -259,6 +433,7 @@ function generateQuantityOptions(maxQuantity) {
 
 function handleReturnTypeChange(event) {
   const returnType = event.target.value;
+  console.log('Return type changed to:', returnType);
 
   if (returnType === "full") {
     itemSelectionCard.style.display = "none";
@@ -270,6 +445,10 @@ function handleReturnTypeChange(event) {
     selectAllItems(false);
   }
 
+  // Update return reason dropdown based on return type
+  console.log('Calling updateReturnReasonDropdown...');
+  updateReturnReasonDropdown();
+  
   updateReturnSummary();
 }
 
@@ -350,10 +529,32 @@ function updateReturnSummary() {
   let summaryHTML = "";
 
   if (returnType === "full") {
-    const totalItems = orderData.order_details
-      ? orderData.order_details.length
-      : orderData.items.length;
-    const totalAmount = orderData.total_value || "0.00";
+    // Calculate returnable amount: (Total Item Value + Convenience Fee) - Delivery Charges
+    const quoteBreakup = orderData.quote_breakup || [];
+    
+    let itemValue = 0;
+    let convenienceFee = 0;
+    let deliveryCharges = 0;
+    let itemCount = 0;
+    
+    // Calculate delivery charges from quote_breakup
+    quoteBreakup.forEach(item => {
+      const amount = parseFloat(item.amount || 0);
+      
+      if (item.title_type === 'item') {
+        // Count items
+        itemCount++;
+      } else if (item.title_type === 'delivery' || item.title.toLowerCase().includes('delivery')) {
+        // Delivery charges
+        deliveryCharges += amount;
+      }
+    });
+    
+    // Get total amount from order data
+    const totalOrderAmount = parseFloat(orderData.total_value || 0);
+    
+    // Returnable amount = Total Amount - Delivery Charges
+    const totalAmount = totalOrderAmount - deliveryCharges;
 
     summaryHTML = `
             <div class="summary-item">
@@ -362,11 +563,23 @@ function updateReturnSummary() {
             </div>
             <div class="summary-item">
                 <span class="summary-label">Items to Return:</span>
-                <span class="summary-value">${totalItems} item(s)</span>
+                <span class="summary-value">${itemCount} item(s)</span>
             </div>
             <div class="summary-item">
-                <span class="summary-label">Total Amount:</span>
-                <span class="summary-value">₹${totalAmount}</span>
+                <span class="summary-label">Total Order Amount:</span>
+                <span class="summary-value">₹${totalOrderAmount.toFixed(2)}</span>
+            </div>
+            <div class="summary-item">
+                <span class="summary-label">Delivery Charges:</span>
+                <span class="summary-value">-₹${deliveryCharges.toFixed(2)}</span>
+            </div>
+            <div class="summary-item" style="font-weight: bold; border-top: 1px solid #ddd; padding-top: 0.5rem;">
+                <span class="summary-label">Return Amount:</span>
+                <span class="summary-value">₹${totalAmount.toFixed(2)}</span>
+            </div>
+            <div class="summary-item" style="color: #666; font-size: 0.9rem;">
+                <span class="summary-label">Note:</span>
+                <span class="summary-value">Delivery charges are not refundable</span>
             </div>
         `;
   } else {
@@ -552,14 +765,33 @@ function createReturnPayload(
   let totalReturnAmount = 0;
 
   if (returnType === "full") {
-    // Calculate total for all Order-delivered items
-    const orderDetails = orderData.order_details || [];
-    totalReturnAmount = orderDetails
-      .filter((item) => item.status === "Order-delivered")
-      .reduce(
-        (sum, item) => sum + parseFloat(item.amount || item.price || 0),
-        0
-      );
+    // Calculate returnable amount: (Total Item Value + Convenience Fee) - Delivery Charges
+    const quoteBreakup = orderData.quote_breakup || [];
+    
+    let itemValue = 0;
+    let convenienceFee = 0;
+    let deliveryCharges = 0;
+    
+    // Calculate each component from quote_breakup
+    quoteBreakup.forEach(item => {
+      const amount = parseFloat(item.amount || 0);
+      
+      if (item.title_type === 'delivery' || item.title.toLowerCase().includes('delivery')) {
+        // Delivery charges (to be deducted)
+        deliveryCharges += amount;
+      }
+    });
+    
+    // Get total amount from order data
+    const totalOrderAmount = parseFloat(orderData.total_value || 0);
+    
+    // Returnable amount = Total Amount - Delivery Charges
+    totalReturnAmount = totalOrderAmount - deliveryCharges;
+    
+    console.log('Full return calculation:');
+    console.log('- Total Order Amount:', totalOrderAmount);
+    console.log('- Delivery Charges:', deliveryCharges);
+    console.log('- Returnable Amount:', totalReturnAmount);
   } else {
     // Calculate total for selected items
     totalReturnAmount = returnSelectedItems.reduce(
@@ -585,7 +817,7 @@ function createReturnPayload(
       ttl: "PT30S",
     },
     message: {
-      update_target: "payment",
+      update_target: "item",
       order: {
         id: orderData.ondc_order_id || orderData.transaction_id, // Use ondc_order_id for ONDC payload
         fulfillments: [
@@ -598,15 +830,15 @@ function createReturnPayload(
                 list: [
                   {
                     code: "id",
-                    value: "2ee46c7d-0b7f-4e4c-9286-c5a016e718b6",
+                    value: orderData.fulfillments[0].fulfillment_id,
                   },
                   {
                     code: "item_id",
-                    value: "id_13owvn_0_0",
+                    value: getReturnItemIds(),
                   },
                   {
                     code: "item_quantity",
-                    value: "1",
+                    value: getReturnItemQuantities(),
                   },
                   {
                     code: "reason_id",
@@ -670,6 +902,42 @@ function createReturnPayload(
   console.log("=== END ONDC PAYLOAD DEBUG ===");
 
   return payload;
+}
+
+// Helper function to get return item IDs based on return type
+function getReturnItemIds() {
+  const returnType = document.querySelector('input[name="returnType"]:checked').value;
+  
+  if (returnType === "full") {
+    // For full return, get all Order-delivered items
+    const orderDetails = orderData.order_details || [];
+    const allItems = orderDetails
+      .filter((item) => item.status === "Order-delivered")
+      .map((item) => item.item_id);
+    return allItems.join(',');
+  } else {
+    // For partial return, get selected items
+    const selectedItems = returnSelectedItems.map((item) => item.item_id);
+    return selectedItems.join(',');
+  }
+}
+
+// Helper function to get return item quantities based on return type
+function getReturnItemQuantities() {
+  const returnType = document.querySelector('input[name="returnType"]:checked').value;
+  
+  if (returnType === "full") {
+    // For full return, get quantities of all Order-delivered items
+    const orderDetails = orderData.order_details || [];
+    const allQuantities = orderDetails
+      .filter((item) => item.status === "Order-delivered")
+      .map((item) => item.quantity || 1);
+    return allQuantities.join(',');
+  } else {
+    // For partial return, get quantities of selected items
+    const selectedQuantities = returnSelectedItems.map((item) => item.return_quantity);
+    return selectedQuantities.join(',');
+  }
 }
 
 function validateONDCPayload(payload) {

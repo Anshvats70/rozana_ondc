@@ -489,6 +489,9 @@ function createInitPayload(deliveryInfo) {
     const timestamp = new Date().toISOString();
     const orderId = 'order-' + Date.now();
     
+    // Store timestamp for use in confirm event
+    localStorage.setItem('initTimestamp', timestamp);
+    
     // Get cart confirmation data
     const cartConfirmation = JSON.parse(localStorage.getItem('cartConfirmation') || '{}');
     
