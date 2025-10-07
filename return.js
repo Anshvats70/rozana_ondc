@@ -529,15 +529,14 @@ function updateReturnSummary() {
   let summaryHTML = "";
 
   if (returnType === "full") {
-    // Calculate returnable amount: (Total Item Value + Convenience Fee) - Delivery Charges
+    // Calculate returnable amount: Total Amount - Delivery Charges - Convenience Fee
     const quoteBreakup = orderData.quote_breakup || [];
     
-    let itemValue = 0;
-    let convenienceFee = 0;
     let deliveryCharges = 0;
+    let convenienceFee = 0;
     let itemCount = 0;
     
-    // Calculate delivery charges from quote_breakup
+    // Calculate delivery charges and convenience fee from quote_breakup
     quoteBreakup.forEach(item => {
       const amount = parseFloat(item.amount || 0);
       
@@ -547,14 +546,17 @@ function updateReturnSummary() {
       } else if (item.title_type === 'delivery' || item.title.toLowerCase().includes('delivery')) {
         // Delivery charges
         deliveryCharges += amount;
+      } else if (item.title_type === 'misc' || item.title.toLowerCase().includes('convenience')) {
+        // Convenience fee
+        convenienceFee += amount;
       }
     });
     
     // Get total amount from order data
     const totalOrderAmount = parseFloat(orderData.total_value || 0);
     
-    // Returnable amount = Total Amount - Delivery Charges
-    const totalAmount = totalOrderAmount - deliveryCharges;
+    // Returnable amount = Total Amount - Delivery Charges - Convenience Fee
+    const totalAmount = totalOrderAmount - deliveryCharges - convenienceFee;
 
     summaryHTML = `
             <div class="summary-item">
@@ -573,13 +575,17 @@ function updateReturnSummary() {
                 <span class="summary-label">Delivery Charges:</span>
                 <span class="summary-value">-₹${deliveryCharges.toFixed(2)}</span>
             </div>
+            <div class="summary-item">
+                <span class="summary-label">Convenience Fee:</span>
+                <span class="summary-value">-₹${convenienceFee.toFixed(2)}</span>
+            </div>
             <div class="summary-item" style="font-weight: bold; border-top: 1px solid #ddd; padding-top: 0.5rem;">
                 <span class="summary-label">Return Amount:</span>
                 <span class="summary-value">₹${totalAmount.toFixed(2)}</span>
             </div>
             <div class="summary-item" style="color: #666; font-size: 0.9rem;">
                 <span class="summary-label">Note:</span>
-                <span class="summary-value">Delivery charges are not refundable</span>
+                <span class="summary-value">Delivery charges and convenience fee are not refundable</span>
             </div>
         `;
   } else {
@@ -765,32 +771,35 @@ function createReturnPayload(
   let totalReturnAmount = 0;
 
   if (returnType === "full") {
-    // Calculate returnable amount: (Total Item Value + Convenience Fee) - Delivery Charges
+    // Calculate returnable amount: Total Amount - Delivery Charges - Convenience Fee
     const quoteBreakup = orderData.quote_breakup || [];
     
-    let itemValue = 0;
-    let convenienceFee = 0;
     let deliveryCharges = 0;
+    let convenienceFee = 0;
     
-    // Calculate each component from quote_breakup
+    // Calculate delivery charges and convenience fee from quote_breakup
     quoteBreakup.forEach(item => {
       const amount = parseFloat(item.amount || 0);
       
       if (item.title_type === 'delivery' || item.title.toLowerCase().includes('delivery')) {
         // Delivery charges (to be deducted)
         deliveryCharges += amount;
+      } else if (item.title_type === 'misc' || item.title.toLowerCase().includes('convenience')) {
+        // Convenience fee (to be deducted)
+        convenienceFee += amount;
       }
     });
     
     // Get total amount from order data
     const totalOrderAmount = parseFloat(orderData.total_value || 0);
     
-    // Returnable amount = Total Amount - Delivery Charges
-    totalReturnAmount = totalOrderAmount - deliveryCharges;
+    // Returnable amount = Total Amount - Delivery Charges - Convenience Fee
+    totalReturnAmount = totalOrderAmount - deliveryCharges - convenienceFee;
     
     console.log('Full return calculation:');
     console.log('- Total Order Amount:', totalOrderAmount);
     console.log('- Delivery Charges:', deliveryCharges);
+    console.log('- Convenience Fee:', convenienceFee);
     console.log('- Returnable Amount:', totalReturnAmount);
   } else {
     // Calculate total for selected items
@@ -799,6 +808,48 @@ function createReturnPayload(
       0
     );
   }
+
+  // Get items to return based on return type
+  const itemsToReturn = getReturnItems(returnType);
+  
+  // Build tags array with separate return_request for each item
+  const returnRequestTags = itemsToReturn.map((item) => ({
+    code: "return_request",
+    list: [
+      {
+        code: "id",
+        value: orderData.fulfillments[0].fulfillment_id,
+      },
+      {
+        code: "item_id",
+        value: item.item_id,
+      },
+      {
+        code: "item_quantity",
+        value: item.quantity.toString(),
+      },
+      {
+        code: "reason_id",
+        value: returnReason,
+      },
+      {
+        code: "reason_desc",
+        value: returnDescription || "",
+      },
+      {
+        code: "images",
+        value: "https://some-images-for-item.com",
+      },
+      {
+        code: "ttl_approval",
+        value: "PT24H",
+      },
+      {
+        code: "ttl_reverseqc",
+        value: "P3D",
+      },
+    ],
+  }));
 
   const payload = {
     context: {
@@ -824,45 +875,7 @@ function createReturnPayload(
           {
             //"id": generateUUID(),
             type: "Return",
-            tags: [
-              {
-                code: "return_request",
-                list: [
-                  {
-                    code: "id",
-                    value: orderData.fulfillments[0].fulfillment_id,
-                  },
-                  {
-                    code: "item_id",
-                    value: getReturnItemIds(),
-                  },
-                  {
-                    code: "item_quantity",
-                    value: getReturnItemQuantities(),
-                  },
-                  {
-                    code: "reason_id",
-                    value: returnReason,
-                  },
-                  {
-                    code: "reason_desc",
-                    value: returnDescription || "",
-                  },
-                  {
-                    code: "images",
-                    value: "https://some-images-for-item.com",
-                  },
-                  {
-                    code: "ttl_approval",
-                    value: "PT24H",
-                  },
-                  {
-                    code: "ttl_reverseqc",
-                    value: "P3D",
-                  },
-                ],
-              },
-            ],
+            tags: returnRequestTags,
           },
         ],
         payment: {
@@ -904,40 +917,37 @@ function createReturnPayload(
   return payload;
 }
 
-// Helper function to get return item IDs based on return type
-function getReturnItemIds() {
-  const returnType = document.querySelector('input[name="returnType"]:checked').value;
-  
+// Helper function to get return items with their details based on return type
+function getReturnItems(returnType) {
   if (returnType === "full") {
     // For full return, get all Order-delivered items
     const orderDetails = orderData.order_details || [];
-    const allItems = orderDetails
+    return orderDetails
       .filter((item) => item.status === "Order-delivered")
-      .map((item) => item.item_id);
-    return allItems.join(',');
+      .map((item) => ({
+        item_id: item.item_id,
+        quantity: item.quantity || 1,
+      }));
   } else {
     // For partial return, get selected items
-    const selectedItems = returnSelectedItems.map((item) => item.item_id);
-    return selectedItems.join(',');
+    return returnSelectedItems.map((item) => ({
+      item_id: item.item_id,
+      quantity: item.return_quantity,
+    }));
   }
 }
 
-// Helper function to get return item quantities based on return type
+// Legacy helper functions (kept for backward compatibility if needed elsewhere)
+function getReturnItemIds() {
+  const returnType = document.querySelector('input[name="returnType"]:checked').value;
+  const items = getReturnItems(returnType);
+  return items.map(item => item.item_id).join(',');
+}
+
 function getReturnItemQuantities() {
   const returnType = document.querySelector('input[name="returnType"]:checked').value;
-  
-  if (returnType === "full") {
-    // For full return, get quantities of all Order-delivered items
-    const orderDetails = orderData.order_details || [];
-    const allQuantities = orderDetails
-      .filter((item) => item.status === "Order-delivered")
-      .map((item) => item.quantity || 1);
-    return allQuantities.join(',');
-  } else {
-    // For partial return, get quantities of selected items
-    const selectedQuantities = returnSelectedItems.map((item) => item.return_quantity);
-    return selectedQuantities.join(',');
-  }
+  const items = getReturnItems(returnType);
+  return items.map(item => item.quantity).join(',');
 }
 
 function validateONDCPayload(payload) {
@@ -1561,3 +1571,4 @@ window.handleReturnMethodChange = handleReturnMethodChange;
 window.handleItemSelection = handleItemSelection;
 window.updateItemQuantity = updateItemQuantity;
 window.closeReturnConfirmation = closeReturnConfirmation;
+
