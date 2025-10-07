@@ -3121,9 +3121,14 @@
                                 id="sub_category" 
                                 name="sub_category" 
                                 style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem; color: #374151;"
+                                onchange="window.orderDetailsManager.checkMandatoryImages()"
                             >
                                 <option value="Loading...">Loading subcategories...</option>
                             </select>
+                            <div id="mandatoryImageNote" style="display: none; margin-top: 0.5rem; padding: 0.5rem; background: #fef3c7; border: 1px solid #f59e0b; border-radius: 4px; font-size: 0.85rem; color: #92400e;">
+                                <i class="fas fa-exclamation-triangle" style="margin-right: 0.5rem;"></i>
+                                <strong>Images Required:</strong> This sub-category requires at least one image to be uploaded.
+                            </div>
                         </div>
 
                         <!-- Short Description -->
@@ -3165,7 +3170,7 @@
                                 type="email" 
                                 id="email" 
                                 name="email" 
-                                value="test@test.com" 
+                                placeholder="enter email here"
                                 style="width: 100%; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem; background: #f8fafc;"
                             >
                         </div>
@@ -3174,6 +3179,7 @@
                         <div>
                             <label style="font-weight: 600; color: #374151; margin-bottom: 0.75rem; display: block;">
                                 Images (Maximum 4)
+                                <span id="mandatoryImageLabel" style="display: none; color: #dc2626; font-weight: 700; margin-left: 0.5rem;">* REQUIRED</span>
                             </label>
                             <div class="file-upload-area" onclick="document.getElementById('issueFileInput').click()" style="border: 2px dashed #d1d5db; border-radius: 8px; padding: 2rem; text-align: center; background: #f9fafb; transition: all 0.2s ease; cursor: pointer;">
                                 <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; color: #6b7280; margin-bottom: 0.5rem;"></i>
@@ -3457,6 +3463,46 @@
                 this.updateIssueFilesList();
             }
 
+            checkMandatoryImages() {
+                const subCategory = document.getElementById('sub_category').value;
+                const mandatoryImageNote = document.getElementById('mandatoryImageNote');
+                const mandatoryImageLabel = document.getElementById('mandatoryImageLabel');
+                const fileUploadArea = document.querySelector('.file-upload-area');
+                const mandatoryImageSubCategories = ['ITM02', 'ITM03', 'ITM04', 'ITM05', 'FLM04'];
+                
+                if (mandatoryImageSubCategories.includes(subCategory)) {
+                    // Show warning note
+                    mandatoryImageNote.style.display = 'block';
+                    
+                    // Show required label
+                    mandatoryImageLabel.style.display = 'inline';
+                    
+                    // Highlight upload area
+                    if (fileUploadArea) {
+                        fileUploadArea.style.borderColor = '#dc2626';
+                        fileUploadArea.style.backgroundColor = '#fef2f2';
+                        fileUploadArea.style.borderStyle = 'solid';
+                        fileUploadArea.style.borderWidth = '2px';
+                    }
+                    
+                    console.log(`⚠️ Images are mandatory for sub-category: ${subCategory}`);
+                } else {
+                    // Hide warning note
+                    mandatoryImageNote.style.display = 'none';
+                    
+                    // Hide required label
+                    mandatoryImageLabel.style.display = 'none';
+                    
+                    // Reset upload area styling
+                    if (fileUploadArea) {
+                        fileUploadArea.style.borderColor = '#d1d5db';
+                        fileUploadArea.style.backgroundColor = '#f9fafb';
+                        fileUploadArea.style.borderStyle = 'dashed';
+                        fileUploadArea.style.borderWidth = '2px';
+                    }
+                }
+            }
+
             async submitRaiseIssueForm(transactionId, orderId) {
                 console.log('📤 Submitting raise issue form');
 
@@ -3476,6 +3522,35 @@
                 if (!shortDesc || !longDesc) {
                     alert('Please fill in both short and long descriptions.');
                     return;
+                }
+
+                // Check for mandatory images for specific sub-categories
+                const subCategory = document.getElementById('sub_category').value;
+                const mandatoryImageSubCategories = ['ITM02', 'ITM03', 'ITM04', 'ITM05', 'FLM04'];
+                
+                // Ensure issueFiles is initialized
+                if (!this.issueFiles) {
+                    this.issueFiles = [];
+                }
+                
+                console.log('🔍 Validation check:', {
+                    subCategory: subCategory,
+                    isMandatory: mandatoryImageSubCategories.includes(subCategory),
+                    issueFiles: this.issueFiles,
+                    filesLength: this.issueFiles.length,
+                    filesArray: Array.isArray(this.issueFiles)
+                });
+                
+                if (mandatoryImageSubCategories.includes(subCategory)) {
+                    if (!this.issueFiles || this.issueFiles.length === 0) {
+                        console.log('❌ Validation failed: No images uploaded for mandatory sub-category');
+                        alert(`Images are mandatory for sub-category ${subCategory}. Please upload at least one image.`);
+                        return;
+                    } else {
+                        console.log('✅ Validation passed: Images found for mandatory sub-category');
+                    }
+                } else {
+                    console.log('ℹ️ No mandatory images required for this sub-category');
                 }
 
                 // Disable button and show loading state
@@ -5485,6 +5560,43 @@
                     });
                     return { success: false, error: error.message };
                 }
+            };
+
+            // Test function for mandatory image validation
+            window.testMandatoryImageValidation = function() {
+                console.log('🧪 Testing mandatory image validation...');
+                
+                const orderDetailsManager = window.orderDetailsManager;
+                if (!orderDetailsManager) {
+                    console.error('❌ OrderDetailsManager not found');
+                    return;
+                }
+                
+                // Test with different sub-categories
+                const testCases = [
+                    { subCategory: 'ITM02', shouldRequireImages: true },
+                    { subCategory: 'ITM03', shouldRequireImages: true },
+                    { subCategory: 'ITM04', shouldRequireImages: true },
+                    { subCategory: 'ITM05', shouldRequireImages: true },
+                    { subCategory: 'FLM04', shouldRequireImages: true },
+                    { subCategory: 'OTHER', shouldRequireImages: false }
+                ];
+                
+                testCases.forEach(testCase => {
+                    const mandatoryImageSubCategories = ['ITM02', 'ITM03', 'ITM04', 'ITM05', 'FLM04'];
+                    const isMandatory = mandatoryImageSubCategories.includes(testCase.subCategory);
+                    const shouldBlock = isMandatory && (!orderDetailsManager.issueFiles || orderDetailsManager.issueFiles.length === 0);
+                    
+                    console.log(`📋 Test case: ${testCase.subCategory}`, {
+                        isMandatory: isMandatory,
+                        shouldRequireImages: testCase.shouldRequireImages,
+                        shouldBlock: shouldBlock,
+                        currentFiles: orderDetailsManager.issueFiles ? orderDetailsManager.issueFiles.length : 0
+                    });
+                });
+                
+                console.log('🧪 Test completed. Check results above.');
+                console.log('💡 To test validation: Select a mandatory sub-category (ITM02-ITM05, FLM04) and try to submit without images.');
             };
         });
     </script>
