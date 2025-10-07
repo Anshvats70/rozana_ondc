@@ -1596,6 +1596,10 @@
 
                 console.log('🔍 All resolutions data:', resolutions);
 
+                // Store resolutions in instance variable for later use
+                this.currentResolutions = resolutions;
+                this.selectedResolution = null;
+
                 // Get proposal description from first resolution's descriptor
                 const proposalDescription = hasResolutions && resolutions[0]?.descriptor?.short_desc ? 
                     resolutions[0].descriptor.short_desc : 
@@ -1711,28 +1715,39 @@
                             <i class="${headerIcon}" style="color: ${headerColor};"></i>
                             <div class="proposal-title">${title}</div>
                         </div>
-                        <div class="proposal-description">
-                            ${description}
-                        </div>
-                        
-                        ${refundAmount ? `
-                            <div style="background: #f0fdf4; border: 1px solid #10b981; border-radius: 8px; padding: 1rem; margin: 1rem 0; text-align: center;">
-                                <div style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                                    <i class="fas fa-money-bill-wave" style="color: #10b981; font-size: 1.2rem;"></i>
-                                    <span style="font-weight: 600; color: #166534;">Refund Amount</span>
-                                </div>
-                                <div style="font-size: 1.5rem; font-weight: 700; color: #10b981;">₹${refundAmount}</div>
-                            </div>
-                        ` : ''}
                         
                         ${resolutionDetailsHtml}
                         
                         ${issueActions === 'RESOLVED' || issueActions === 'RESOLUTION_ACCEPTED' ? '' : `
+                            ${issueActions === 'RESOLUTION_PROPOSED' && hasResolutions ? `
+                                <div style="margin-top: 1.5rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+                                    <label style="display: block; font-weight: 600; color: #1e293b; margin-bottom: 0.75rem; font-size: 0.95rem;">
+                                        <i class="fas fa-list-ul" style="margin-right: 0.5rem; color: #0ea5e9;"></i>
+                                        Select Resolution Option
+                                    </label>
+                                    <select 
+                                        id="resolutionSelect" 
+                                        onchange="window.orderDetailsManager.onResolutionChange()"
+                                        style="width: 100%; padding: 0.75rem; border: 2px solid #cbd5e1; border-radius: 6px; font-size: 1rem; background: white; cursor: pointer; transition: all 0.2s ease;"
+                                        onfocus="this.style.borderColor='#0ea5e9'; this.style.outline='none';"
+                                        onblur="this.style.borderColor='#cbd5e1';"
+                                    >
+                                        <option value="">-- Select a resolution option --</option>
+                                        ${resolutions.map((resolution, index) => {
+                                            const code = resolution.descriptor?.code || 'UNKNOWN';
+                                            const shortDesc = resolution.descriptor?.short_desc || code;
+                                            return `<option value="${index}">${code} - ${shortDesc}</option>`;
+                                        }).join('')}
+                                    </select>
+                                    <div id="resolutionDetails" style="margin-top: 1rem; display: none;"></div>
+                                </div>
+                            ` : ''}
                             <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1rem;">
                                 <button 
                                     class="accept-proposal-btn" 
                                     onclick="window.orderDetailsManager.acceptProposal('${orderInfo.transaction_id}', '${orderInfo.issue_id}')"
                                     id="acceptProposalBtn"
+                                    ${issueActions === 'RESOLUTION_PROPOSED' && hasResolutions ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}
                                 >
                                     <i class="fas fa-check"></i>
                                     Accept Proposal
@@ -1741,6 +1756,83 @@
                         `}
                     </div>
                 `;
+            }
+
+            onResolutionChange() {
+                const selectElement = document.getElementById('resolutionSelect');
+                const detailsDiv = document.getElementById('resolutionDetails');
+                const acceptButton = document.getElementById('acceptProposalBtn');
+                
+                if (!selectElement || !detailsDiv || !acceptButton) {
+                    console.error('❌ Required elements not found');
+                    return;
+                }
+                
+                const selectedIndex = selectElement.value;
+                
+                if (selectedIndex === '') {
+                    detailsDiv.style.display = 'none';
+                    detailsDiv.innerHTML = '';
+                    acceptButton.disabled = true;
+                    acceptButton.style.opacity = '0.5';
+                    acceptButton.style.cursor = 'not-allowed';
+                    this.selectedResolution = null;
+                    console.log('❌ No resolution selected');
+                    return;
+                }
+                
+                const resolution = this.currentResolutions[parseInt(selectedIndex)];
+                console.log('✅ Selected resolution:', resolution);
+                
+                // Store selected resolution
+                this.selectedResolution = resolution;
+                
+                // Enable accept button
+                acceptButton.disabled = false;
+                acceptButton.style.opacity = '1';
+                acceptButton.style.cursor = 'pointer';
+                
+                // Display resolution details
+                const code = resolution.descriptor?.code || 'UNKNOWN';
+                const shortDesc = resolution.descriptor?.short_desc || '';
+                
+                // Extract details from tags
+                let detailsHtml = '<div style="padding: 1rem; background: white; border: 1px solid #cbd5e1; border-radius: 6px;">';
+                detailsHtml += `<div style="font-weight: 600; color: #0ea5e9; margin-bottom: 0.5rem;"><i class="fas fa-info-circle"></i> Resolution Details</div>`;
+                detailsHtml += `<div style="margin-bottom: 0.5rem;"><strong>Type:</strong> ${code}</div>`;
+                if (shortDesc) {
+                    detailsHtml += `<div style="margin-bottom: 0.5rem;"><strong>Description:</strong> ${shortDesc}</div>`;
+                }
+                
+                // Check for tags and extract information
+                if (resolution.tags && Array.isArray(resolution.tags)) {
+                    resolution.tags.forEach(tag => {
+                        if (tag.list && Array.isArray(tag.list)) {
+                            tag.list.forEach(item => {
+                                const itemCode = item.descriptor?.code || '';
+                                const itemValue = item.value || '';
+                                
+                                if (itemCode === 'REFUND_AMOUNT') {
+                                    detailsHtml += `<div style="margin-top: 0.75rem; padding: 0.75rem; background: #f0fdf4; border-radius: 6px; border: 1px solid #10b981;">`;
+                                    detailsHtml += `<div style="color: #166534; font-weight: 600;"><i class="fas fa-money-bill-wave"></i> Refund Amount</div>`;
+                                    detailsHtml += `<div style="font-size: 1.25rem; font-weight: 700; color: #10b981;">₹${itemValue}</div>`;
+                                    detailsHtml += `</div>`;
+                                } else if (itemCode === 'ITEM') {
+                                    detailsHtml += `<div style="margin-bottom: 0.5rem;"><strong>Item ID:</strong> ${itemValue}</div>`;
+                                } else if (itemCode) {
+                                    detailsHtml += `<div style="margin-bottom: 0.5rem;"><strong>${itemCode}:</strong> ${itemValue}</div>`;
+                                }
+                            });
+                        }
+                    });
+                }
+                
+                detailsHtml += '</div>';
+                
+                detailsDiv.innerHTML = detailsHtml;
+                detailsDiv.style.display = 'block';
+                
+                console.log('📋 Resolution details displayed');
             }
 
             displayRaiseIssueButton(orderInfo) {
@@ -1919,19 +2011,6 @@
 
                 return `
                     <div class="resolution-details">
-                        ${code ? `
-                            <div class="resolution-item">
-                                <span class="resolution-label">Resolution Code:</span>
-                                <span class="resolution-value">${code}</span>
-                            </div>
-                        ` : ''}
-                        
-                        ${shortDesc ? `
-                            <div class="resolution-item">
-                                <span class="resolution-label">Description:</span>
-                                <span class="resolution-value">${shortDesc}</span>
-                            </div>
-                        ` : ''}
                         
                         ${refundAmount ? `
                             <div class="resolution-item">
@@ -2540,6 +2619,19 @@
                 
                 console.log('✅ Accept Proposal button found:', button);
 
+                // Check if a resolution is selected (when dropdown is present)
+                const selectElement = document.getElementById('resolutionSelect');
+                if (selectElement && !this.selectedResolution) {
+                    this.showErrorMessage('No Resolution Selected', `
+                        <div style="text-align: center;">
+                            <i class="fas fa-exclamation-circle" style="font-size: 3rem; color: #f59e0b; margin-bottom: 1rem;"></i>
+                            <h3 style="color: #f59e0b; margin-bottom: 1rem;">Please Select a Resolution</h3>
+                            <p>You must select a resolution option before accepting the proposal.</p>
+                        </div>
+                    `);
+                    return;
+                }
+
                 // Disable button and show loading state
                 button.disabled = true;
                 const originalContent = button.innerHTML;
@@ -2551,6 +2643,12 @@
                     const requestData = {
                         transaction_id: transactionId
                     };
+
+                    // Add selected resolution data if available
+                    if (this.selectedResolution) {
+                        requestData.selected_resolution = this.selectedResolution;
+                        console.log('✅ Including selected resolution in request:', this.selectedResolution);
+                    }
 
                     console.log('📡 Sending accept proposal request:', requestData);
                     console.log('🌐 Current origin:', window.location.origin);
